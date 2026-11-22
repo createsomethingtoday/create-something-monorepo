@@ -334,3 +334,38 @@ test('installed Puppeteer keeps operator extensions enabled without extension de
   assert.ok(!args.includes('--enable-unsafe-extension-debugging'));
   assert.ok(args.includes(`--user-data-dir=${config.profile_dir}`));
 });
+
+test('launcher accepts tagged verified Half Dozen occurrence and rejects incomplete or foreign tags', () => {
+  const halfConfig = { ...config, identity_email: 'canon@createsomething.io' };
+  const selected = {
+    ...selection,
+    identity_email: halfConfig.identity_email,
+    invited_emails: [halfConfig.identity_email],
+    internal_test: false,
+    selection_scope: 'halfdozen-occurrence',
+    host_permission_verified: true,
+    organizer_email: 'host@halfdozen.co',
+    calendar_id: 'host@halfdozen.co'
+  };
+  assert.equal(planParticipant(selected, halfConfig, {}, now).action, 'open-prejoin');
+  for (const change of [
+    { host_permission_verified: false },
+    { calendar_id: undefined },
+    { organizer_email: 'host@sub.halfdozen.co' },
+    { selection_scope: 'client' }
+  ])
+    assert.throws(() => planParticipant({ ...selected, ...change }, halfConfig, {}, now));
+});
+
+test('Zoom selection explicitly requires intentional manual host-admitted join', () => {
+  assert.throws(
+    () =>
+      planParticipant(
+        { ...selection, platform: 'zoom', selection_scope: 'halfdozen-guest-occurrence' },
+        config,
+        {},
+        now
+      ),
+    /intentional manual browser Join/
+  );
+});

@@ -21,7 +21,66 @@ export function schedulerEventId(calendarId, key) {
   }
   return out;
 }
+const roster = (attendees) =>
+  JSON.stringify((attendees ?? []).map((a) => a.email?.toLowerCase()).sort());
+const canonAttendee = (a, options) =>
+  a.email?.toLowerCase() === options.canonEmail.toLowerCase() &&
+  (halfDozen(options) ||
+    a.displayName === 'Canon' ||
+    (options.canonEmail === 'canon@createsomething.io' &&
+      (!a.displayName || a.displayName === 'Canon Meeting Notes')));
+const halfDozen = (options) => options.scope === 'halfdozen-occurrence';
 export function validate(event, options, action = 'prepare') {
+  if (halfDozen(options)) {
+    if (
+      options.approved !== true ||
+      options.selectionAttested !== true ||
+      options.hostPermissionVerified !== true ||
+      options.canonIdentityVerified !== true ||
+      options.selectedEventId !== options.eventId ||
+      !options.eventId ||
+      !options.calendarId ||
+      !/^[^@\s]+@halfdozen\.co$/.test(options.hostEmail ?? '') ||
+      options.canonEmail !== 'canon@createsomething.io' ||
+      options.intendedCanonEmail !== options.canonEmail ||
+      options.canonEmail.toLowerCase() === options.hostEmail.toLowerCase()
+    )
+      throw Error(
+        'Attested Half Dozen occurrence, verified host permission and exact Canon identity required'
+      );
+    if (options.transcriptionMode !== 'off')
+      throw Error('Half Dozen occurrence must not change shared Meet space settings');
+    if (
+      event.id !== options.eventId ||
+      event.organizer?.email?.toLowerCase() !== options.hostEmail ||
+      event.organizer?.self !== true
+    )
+      throw Error('Selected occurrence and authenticated Half Dozen organizer mismatch');
+    if (
+      event.status !== 'confirmed' ||
+      (event.eventType && event.eventType !== 'default') ||
+      event.recurrence ||
+      (event.recurringEventId && !event.originalStartTime) ||
+      !Number.isFinite(Date.parse(event.start?.dateTime)) ||
+      (action === 'prepare' && Date.parse(event.start.dateTime) <= Date.now())
+    )
+      throw Error('Select one confirmed future normal event or explicit recurring occurrence');
+    if (!event.etag || event.attendeesOmitted)
+      throw Error('Concurrency evidence and complete attendees required');
+    const url = new URL(event.hangoutLink ?? 'https://invalid.invalid');
+    if (
+      !/^https:\/\/meet\.google\.com\/[a-z]{3}-[a-z]{4}-[a-z]{3}$/.test(url.href) ||
+      event.conferenceData?.conferenceSolution?.key?.type !== 'hangoutsMeet'
+    )
+      throw Error('Google Meet event required');
+    if (
+      (event.attendees ?? []).filter(
+        (a) => a.email?.toLowerCase() === options.canonEmail.toLowerCase()
+      ).length > 1
+    )
+      throw Error('Duplicate Canon invitation');
+    return url.pathname.slice(1);
+  }
   if (
     options.internalTest !== true ||
     options.hostEmail !== 'micah@createsomething.io' ||
@@ -84,6 +143,16 @@ export function validate(event, options, action = 'prepare') {
   return url.pathname.slice(1);
 }
 export function safeInvite(event, options) {
+  if (halfDozen(options)) {
+    return {
+      description: event.description?.includes(NOTICE)
+        ? event.description
+        : `${event.description ?? ''}${event.description ? '\n\n' : ''}${NOTICE}`,
+      attendees: event.attendees?.some((a) => a.email?.toLowerCase() === options.canonEmail)
+        ? [...event.attendees]
+        : [...(event.attendees ?? []), { email: options.canonEmail, displayName: 'Canon' }]
+    };
+  }
   // Meaningful existing content must never be silently replaced, even for an internal test.
   if (event.description !== 'Scheduled via CREATE SOMETHING.')
     throw Error('Internal pilot requires plain scheduler marker only');
@@ -99,6 +168,91 @@ export function safeInvite(event, options) {
   return {
     description: `Scheduled via CREATE SOMETHING.\n\n${options.approvedPublicDescription}\n\n${NOTICE}`,
     attendees: [...(event.attendees ?? []), { email: options.canonEmail, displayName: 'Canon' }]
+  };
+}
+export function verifyGuestOccurrence(event, options) {
+  if (
+    options.approved !== true ||
+    options.selectionAttested !== true ||
+    options.guestAdditionPermissionVerified !== true ||
+    options.canonIdentityVerified !== true ||
+    options.selectedEventId !== options.eventId ||
+    event.id !== options.eventId ||
+    !options.calendarId ||
+    options.canonEmail !== 'canon@createsomething.io' ||
+    !/^[^@\s]+@halfdozen\.co$/.test(options.organizerEmail ?? '') ||
+    event.organizer?.email?.toLowerCase() !== options.organizerEmail ||
+    event.organizer?.self === true ||
+    (event.guestsCanInviteOthers !== undefined && event.guestsCanInviteOthers !== true) ||
+    !event.attendees?.some(
+      (a) => a.self === true && a.email?.toLowerCase() === options.guestEmail?.toLowerCase()
+    ) ||
+    options.guestEmail?.toLowerCase() === options.organizerEmail ||
+    event.attendeesOmitted ||
+    event.status !== 'confirmed' ||
+    event.recurrence ||
+    (event.recurringEventId && !event.originalStartTime) ||
+    !Number.isFinite(Date.parse(event.start?.dateTime))
+  )
+    throw Error(
+      'Exact Half Dozen guest occurrence, signed-in guest and explicit guest-addition permission required'
+    );
+  const canon = event.attendees.filter((a) => a.email?.toLowerCase() === options.canonEmail);
+  if (canon.length !== 1 || canon[0].responseStatus === 'declined')
+    throw Error(
+      'Exact existing Canon invitation required; this guest verification cannot invite or capture'
+    );
+  const sources = [
+    ...(event.conferenceData?.entryPoints ?? [])
+      .filter((p) => p.entryPointType === 'video')
+      .map((p) => p.uri),
+    event.location,
+    event.description
+  ];
+  const urls = new Set();
+  for (const source of sources) {
+    for (const candidate of String(source ?? '').match(/https:\/\/[^\s<>"']+/g) ?? []) {
+      let url;
+      try {
+        url = new URL(candidate);
+      } catch {
+        continue;
+      }
+      if (
+        /^(?:[a-z0-9-]+\.)?zoom\.us$/.test(url.hostname) &&
+        !url.username &&
+        !url.password &&
+        !url.port &&
+        /^\/j\/[0-9]{9,11}$/.test(url.pathname)
+      )
+        urls.add(`${url.origin}${url.pathname}`);
+    }
+  }
+  if (urls.size !== 1) throw Error('One unambiguous validated Zoom meeting link required');
+  return {
+    inviteVerified: true,
+    participantPresence: 'unverified',
+    captureAuthorized: false,
+    participantSelection: {
+      selection_scope: 'halfdozen-guest-occurrence',
+      event_id: event.id,
+      calendar_id: options.calendarId,
+      identity_email: options.canonEmail,
+      organizer_email: options.organizerEmail,
+      signed_in_guest_email: options.guestEmail,
+      invitation_verified: true,
+      guest_addition_permission_verified: true,
+      invited_emails: event.attendees.map((a) => a.email),
+      starts_at: event.start.dateTime,
+      status: event.status,
+      platform: 'zoom',
+      meeting_url: [...urls][0],
+      verified_at: new Date().toISOString(),
+      capture_authorized: false,
+      host_recording_consent: 'required-separately',
+      join_mode: 'manual-host-admitted'
+    },
+    next: 'Use the dedicated Canon account for an intentional manual browser Join. Host must admit Canon; obtain explicit host recording consent separately before capture. This verifies an invitation only.'
   };
 }
 export async function runPilot({ action, options, state, save, fetcher = fetch, token }) {
@@ -124,11 +278,21 @@ export async function runPilot({ action, options, state, save, fetcher = fetch, 
     return response.json();
   }
   let event = await api(eventUrl);
+  if (options.scope === 'halfdozen-guest-occurrence') {
+    if (action !== 'verify')
+      throw Error('Guest occurrence is read-only: verify only; no invitations or capture');
+    return verifyGuestOccurrence(event, options);
+  }
   if (
     action === 'verify' &&
     event.status === 'cancelled' &&
     event.id === options.eventId &&
-    event.id === schedulerEventId(options.calendarId, options.schedulerIdempotencyKey)
+    (halfDozen(options)
+      ? options.approved === true &&
+        options.selectionAttested === true &&
+        options.hostPermissionVerified === true &&
+        options.selectedEventId === event.id
+      : event.id === schedulerEventId(options.calendarId, options.schedulerIdempotencyKey))
   ) {
     return { cancelled: true, inviteVerified: false, participantPresence: 'unverified' };
   }
@@ -159,14 +323,21 @@ export async function runPilot({ action, options, state, save, fetcher = fetch, 
     meeting_url: event.hangoutLink,
     starts_at: event.start.dateTime,
     status: event.status,
-    invited_emails: event.attendees.map((a) => a.email),
+    invited_emails: (event.attendees ?? []).map((a) => a.email),
     organizer_email: event.organizer.email,
-    internal_test: true,
+    internal_test: !halfDozen(options),
+    ...(halfDozen(options)
+      ? {
+          selection_scope: 'halfdozen-occurrence',
+          host_permission_verified: true,
+          calendar_id: options.calendarId
+        }
+      : {}),
     verified_at: new Date().toISOString()
   });
   if (action === 'verify') {
     const inviteVerified =
-      event.attendees?.some((a) => a.email === options.canonEmail && a.displayName === 'Canon') &&
+      event.attendees?.some((a) => canonAttendee(a, options)) &&
       event.description?.includes(NOTICE);
     return {
       inviteVerified,
@@ -190,8 +361,11 @@ export async function runPilot({ action, options, state, save, fetcher = fetch, 
       calendarId: options.calendarId,
       canonEmail: options.canonEmail,
       spaceName: space.name,
-      originalDescription: event.description,
+      originalDescription: event.description ?? '',
       originalAttendees: event.attendees ?? [],
+      addedCanon: !(event.attendees ?? []).some(
+        (a) => a.email?.toLowerCase() === options.canonEmail.toLowerCase()
+      ),
       originalTranscription: transcription(space),
       patch,
       phase: 'prepared'
@@ -221,18 +395,22 @@ export async function runPilot({ action, options, state, save, fetcher = fetch, 
     // Preserve all other edits; fail closed if our exact fields changed.
     if (
       event.description !== state.patch.description ||
-      JSON.stringify(event.attendees?.map((a) => a.email)) !==
-        JSON.stringify(state.patch.attendees.map((a) => a.email))
+      roster(event.attendees) !== roster(state.patch.attendees)
     )
       throw Error('Invite fields changed externally; manual host rollback required');
     // Remove Canon while the description remains public-safe, then verify removal before restoring private content.
-    const retained = event.attendees.filter(
-      (a) => a.email?.toLowerCase() !== options.canonEmail.toLowerCase()
+    const addedCanon = state.addedCanon !== false;
+    const retained = (event.attendees ?? []).filter(
+      (a) => !addedCanon || a.email?.toLowerCase() !== options.canonEmail.toLowerCase()
     );
     await api(`${eventUrl}?sendUpdates=all`, 'PATCH', { attendees: retained }, event.etag);
     const removed = await api(eventUrl);
     if (
-      removed.attendees?.some((a) => a.email?.toLowerCase() === options.canonEmail.toLowerCase()) ||
+      (addedCanon &&
+        removed.attendees?.some(
+          (a) => a.email?.toLowerCase() === options.canonEmail.toLowerCase()
+        )) ||
+      roster(removed.attendees) !== roster(retained) ||
       removed.description !== state.patch.description
     )
       throw Error('Canon removal unverified; private description not restored');
@@ -245,7 +423,7 @@ export async function runPilot({ action, options, state, save, fetcher = fetch, 
     const restored = await api(eventUrl);
     if (
       restored.description !== state.originalDescription ||
-      restored.attendees?.some((a) => a.email === options.canonEmail)
+      roster(restored.attendees) !== roster(retained)
     )
       throw Error('Invite rollback unverified');
     state.phase = 'rolled_back';
@@ -255,26 +433,32 @@ export async function runPilot({ action, options, state, save, fetcher = fetch, 
   if (!['prepare', 'resume'].includes(action)) throw Error('Unknown action');
   // A timed-out PATCH is resolved by readback, never by blindly reinviting.
   if (
+    (halfDozen(options) &&
+      JSON.stringify(event.attendees?.map((a) => a.email?.toLowerCase()).sort()) !==
+        JSON.stringify(state.patch.attendees.map((a) => a.email?.toLowerCase()).sort())) ||
     event.description !== state.patch.description ||
-    !event.attendees?.some((a) => a.email === options.canonEmail && a.displayName === 'Canon')
+    !event.attendees?.some((a) => canonAttendee(a, options))
   ) {
     if (
-      event.description !== state.originalDescription ||
-      JSON.stringify(event.attendees?.map((a) => a.email)) !==
-        JSON.stringify(state.originalAttendees.map((a) => a.email))
+      (event.description ?? '') !== state.originalDescription ||
+      roster(event.attendees) !== roster(state.originalAttendees)
     )
       throw Error('Invite changed externally; host review required');
-    state.patch.attendees = [
-      ...(event.attendees ?? []),
-      { email: options.canonEmail, displayName: 'Canon' }
-    ];
+    state.patch.attendees = event.attendees?.some(
+      (a) => a.email?.toLowerCase() === options.canonEmail.toLowerCase()
+    )
+      ? [...event.attendees]
+      : [...(event.attendees ?? []), { email: options.canonEmail, displayName: 'Canon' }];
     save(state);
     await api(`${eventUrl}?sendUpdates=all`, 'PATCH', state.patch, event.etag);
     event = await api(eventUrl);
   }
   if (
+    (halfDozen(options) &&
+      JSON.stringify(event.attendees?.map((a) => a.email?.toLowerCase()).sort()) !==
+        JSON.stringify(state.patch.attendees.map((a) => a.email?.toLowerCase()).sort())) ||
     event.description !== state.patch.description ||
-    !event.attendees?.some((a) => a.email === options.canonEmail && a.displayName === 'Canon')
+    !event.attendees?.some((a) => canonAttendee(a, options))
   )
     throw Error('Invite readback failed; transcription not enabled');
   state.phase = 'invite_verified';

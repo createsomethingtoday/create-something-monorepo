@@ -29,7 +29,8 @@ export async function readPrivateSpeech(path) {
     !/^[0-9a-f]{64}$/.test(source.audioSHA256) ||
     !Array.isArray(source.segments) ||
     !source.segments.length ||
-    !(duration > 0 && duration <= 600)
+    !Number.isFinite(duration) ||
+    !(duration > 0 && duration <= 3600)
   )
     throw Error('Expected the private on-device transcript from the internal pilot.');
   const entries = [];
@@ -45,6 +46,7 @@ export async function readPrivateSpeech(path) {
       start > duration ||
       !Number.isFinite(segment.durationSeconds) ||
       segment.durationSeconds < 0 ||
+      start + segment.durationSeconds > duration + 0.05 ||
       typeof segment.text !== 'string' ||
       !segment.text.trim()
     )

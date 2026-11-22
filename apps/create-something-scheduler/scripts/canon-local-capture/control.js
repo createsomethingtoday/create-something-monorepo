@@ -1,17 +1,30 @@
-import { MAX_SECONDS, validMeetingURL, encodeWav } from './audio.mjs';
+import { MAX_SECONDS, validMeetingURL, matchesCaptureSource, StreamingWav } from './audio.mjs';
 const $ = (id) => document.getElementById(id);
 let stream,
   context,
   processor,
   timer,
   handle,
-  chunks = [],
+  sink,
   count = 0,
   recording = false,
   stopping = false,
   starting = false,
   runVersion = 0,
-  selected;
+  selected,
+  boundURL,
+  shouldSave = true,
+  flushing = false,
+  finishFlush;
+const stoppedTracks = new WeakSet();
+function stopTracks() {
+  stream?.getTracks().forEach((track) => {
+    if (!stoppedTracks.has(track)) {
+      stoppedTracks.add(track);
+      track.stop();
+    }
+  });
+}
 const status = (text) => {
   $('status').textContent = text;
 };
@@ -23,46 +36,68 @@ function buttons() {
 }
 async function cleanup() {
   clearTimeout(timer);
-  stream?.getTracks().forEach((t) => t.stop());
+  stopTracks();
   processor?.disconnect();
   if (context && context.state !== 'closed') await context.close();
   stream = context = processor = null;
 }
-async function stop(save = true) {
+async function stop(save = true, flush = false) {
+  if (stopping) {
+    if (!save) {
+      shouldSave = false;
+      flushing = false;
+      finishFlush?.(false);
+    }
+    return;
+  }
   if (starting && !recording) {
     runVersion++;
     await cleanup();
     status('Start cancelled. No recording retained.');
     return;
   }
-  if (!recording || stopping) return;
+  if (!recording) return;
   runVersion++;
   stopping = true;
+  shouldSave = save;
   recording = false;
   buttons();
   const rate = context.sampleRate;
+  let tailFlushed = true;
   try {
+    clearTimeout(timer);
+    if (save && flush && processor) {
+      flushing = true;
+      const pendingFlush = new Promise((resolve) => {
+        finishFlush = resolve;
+      });
+      const timeout = setTimeout(() => finishFlush?.(false), 1000);
+      processor.port.postMessage('flush');
+      stopTracks();
+      tailFlushed = await pendingFlush;
+      clearTimeout(timeout);
+      flushing = false;
+      finishFlush = null;
+    }
     await cleanup();
-    if (save) {
-      const wav = encodeWav(chunks, rate);
-      const writer = await handle.createWritable();
-      try {
-        await writer.write(wav);
-        await writer.close();
-      } catch (e) {
-        await writer.abort().catch(() => {});
-        throw e;
-      }
+    if (shouldSave) {
+      await sink.finish(() => shouldSave);
       status(
-        `Saved private local WAV (${Math.round(count / rate)} seconds). Check file permissions before transcription.`
+        `Saved private local WAV (${Math.round(count / rate)} seconds). ${tailFlushed ? '' : 'Final audio tail unavailable (flush timed out). '}Check file permissions before transcription.`
       );
-    } else status('Stopped; audio discarded.');
+    } else {
+      await sink?.abort();
+      status('Stopped; audio discarded because the source changed or capture failed.');
+    }
   } catch {
+    await sink?.abort();
     status('Capture stopped. Local save failed; audio discarded. No upload attempted.');
   } finally {
-    chunks = [];
+    sink = null;
     count = 0;
     handle = null;
+    flushing = false;
+    finishFlush = null;
     stopping = false;
     buttons();
   }
@@ -70,11 +105,14 @@ async function stop(save = true) {
 $('configure').onclick = async () => {
   const url = validMeetingURL($('meeting').value);
   if (!url) {
-    status('Enter one exact https://meet.google.com/abc-defg-hij URL without query or fragment.');
+    status(
+      'Enter an official HTTPS Zoom meeting-number URL or an exact Google Meet URL. Unknown query parameters are rejected.'
+    );
     return;
   }
   await chrome.storage.local.set({ testURL: url });
-  status('Selected test URL saved locally. No recording started.');
+  $('meeting').value = url; // Remove any embedded passcode from the visible control immediately.
+  status('Meeting reference saved locally. No recording started.');
 };
 $('start').onclick = async () => {
   if (recording || stopping || starting) return;
@@ -85,29 +123,31 @@ $('start').onclick = async () => {
     if (version !== runVersion) throw new Error('Capture start cancelled.');
     const tab = await chrome.tabs.get(selected);
     const { testURL } = await chrome.storage.local.get('testURL');
-    if (version !== runVersion || tab.url !== testURL)
+    if (version !== runVersion || testURL !== boundURL || !matchesCaptureSource(tab.url, boundURL))
       throw new Error('Source changed; capture cancelled.');
   }
   try {
-    if (!$('consent').checked)
-      throw new Error('Confirm consent for this dedicated participant-profile test.');
+    if (!$('consent').checked) throw new Error('Confirm consent for this meeting recording.');
     const { testURL } = await chrome.storage.local.get('testURL');
     if (!validMeetingURL(testURL))
-      throw new Error('Configure the exact authorized test URL first.');
+      throw new Error('Configure the exact authorized meeting reference first.');
     const tab = await chrome.tabs.get(Number(location.hash.slice(1)));
-    if (!tab?.id || tab.url !== testURL)
-      throw new Error('Selected source tab must exactly match the configured Canon test URL.');
+    boundURL = validMeetingURL(testURL);
+    if (!tab?.id || !matchesCaptureSource(tab.url, boundURL))
+      throw new Error(
+        'Selected source must match the saved origin and meeting number. For Zoom, join audio in the browser web client first.'
+      );
     selected = tab.id;
     // The user chooses a local destination before any audio stream is opened.
     status(
-      'Preparing selected test capture. Choose a private local WAV destination; no audio is recording yet.'
+      'Preparing meeting capture. Choose a private local WAV destination; no audio is recording yet.'
     );
     handle = await window.showSaveFilePicker({
-      suggestedName: 'canon-internal-test.wav',
+      suggestedName: 'canon-meeting.wav',
       types: [{ description: 'PCM WAV audio', accept: { 'audio/wav': ['.wav'] } }]
     });
     const current = await chrome.tabs.get(selected);
-    if (current?.id !== selected || current.url !== testURL)
+    if (current?.id !== selected || !matchesCaptureSource(current.url, boundURL))
       throw new Error('Selected tab changed; no capture started.');
     await verifySource();
     const consumer = await chrome.tabs.getCurrent();
@@ -122,6 +162,9 @@ $('start').onclick = async () => {
     });
     await verifySource();
     context = new AudioContext();
+    sink = new StreamingWav(await handle.createWritable(), context.sampleRate);
+    await sink.begin();
+    await verifySource();
     await context.audioWorklet.addModule(chrome.runtime.getURL('processor.js'));
     await context.resume();
     const remote = context.createMediaStreamSource(stream);
@@ -139,26 +182,40 @@ $('start').onclick = async () => {
     processor.connect(silent);
     silent.connect(context.destination);
     await verifySource();
-    chunks = [];
     count = 0;
     starting = false;
     recording = true;
+    shouldSave = true;
     processor.port.onmessage = ({ data }) => {
-      if (!recording) return;
-      const remaining = Math.floor(context.sampleRate * MAX_SECONDS) - count;
-      const samples = data.slice(0, remaining);
-      chunks.push(samples);
-      count += samples.length;
-      if (samples.length < data.length) void stop();
+      if (!recording && !flushing) return;
+      if (data.error) {
+        void stop(false);
+        return;
+      }
+      const samples = data.type === 'flushed' ? data.samples : data;
+      processor.port.postMessage('ack');
+      try {
+        const full = sink.append(samples);
+        count = sink.count;
+        if (data.type === 'flushed') {
+          finishFlush?.(true);
+          return;
+        }
+        if (full && recording) void stop(true, true);
+      } catch {
+        void stop(false);
+      }
     };
-    stream.getAudioTracks()[0].onended = () => void stop();
-    timer = setTimeout(() => void stop(), MAX_SECONDS * 1000);
+    stream.getAudioTracks()[0].onended = () => void stop(true);
+    timer = setTimeout(() => void stop(true, true), MAX_SECONDS * 1000);
+    $('consent').checked = false;
     buttons();
-    status('RECORDING selected test tab only (no microphone). Stop and save when finished.');
+    status('RECORDING selected meeting tab only (no microphone). Stop and save when finished.');
   } catch (error) {
     await cleanup();
+    await sink?.abort();
     handle = null;
-    chunks = [];
+    sink = null;
     count = 0;
     status(error.message || 'Capture failed.');
     buttons();
@@ -167,32 +224,48 @@ $('start').onclick = async () => {
     buttons();
   }
 };
-$('stop').onclick = () => void stop();
+$('stop').onclick = () => void stop(true, true);
 window.addEventListener('pagehide', () => {
   runVersion++;
   recording = false;
-  stream?.getTracks().forEach((t) => t.stop());
+  stopTracks();
   void context?.close();
-  chunks = [];
+  void sink?.abort();
+  sink = null;
 });
-// Navigation or tab changes invalidate this bounded test session, including same-tab room changes.
+// Reload/navigation remains uncertain even if an ended/removed event is also delivered.
 chrome.tabs.onUpdated.addListener((id, change) => {
-  if ((recording || starting) && id === selected && (change.url || change.status === 'loading'))
-    void stop();
+  if (
+    (recording || starting || stopping) &&
+    id === selected &&
+    (change.status === 'loading' || (change.url && !matchesCaptureSource(change.url, boundURL)))
+  )
+    void stop(false);
 });
 chrome.tabs.onRemoved.addListener((id) => {
-  if ((recording || starting) && id === selected) void stop();
+  if ((recording || starting) && id === selected) void stop(true);
 });
 const watch = setInterval(async () => {
   if (!recording) return;
   try {
     const tab = await chrome.tabs.get(Number(location.hash.slice(1)));
     const { testURL } = await chrome.storage.local.get('testURL');
-    if (tab?.id !== selected || tab.url !== testURL) void stop();
+    if (!recording) return; // An in-flight poll must not turn a normal close into a failed save.
+    if (tab?.id !== selected || testURL !== boundURL || !matchesCaptureSource(tab.url, boundURL))
+      void stop(false);
   } catch {
-    void stop();
+    if (!recording) return;
+    try {
+      // A vanished tab can precede onRemoved. Preserve it only after confirming absence.
+      const tabs = await chrome.tabs.query({});
+      if (recording) void stop(tabs.every((tab) => tab.id !== selected));
+    } catch {
+      if (recording) void stop(false);
+    }
   }
 }, 500);
 chrome.storage.local.get('testURL').then(({ testURL }) => {
-  $('meeting').value = testURL || '';
+  const clean = validMeetingURL(testURL);
+  $('meeting').value = clean || '';
+  if (testURL && clean !== testURL) void chrome.storage.local.set({ testURL: clean || '' });
 });

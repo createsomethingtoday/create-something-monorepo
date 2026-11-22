@@ -146,14 +146,13 @@ Rollback: remove only the monitor's cron from its owning config and redeploy its
 
 The monitor enables `global_fetch_strictly_public` so its authenticated HTTPS status request reaches the scheduler Worker through Cloudflare’s public routing rather than bypassing Worker routing or failing a same-zone fetch.
 
-## Canon Meeting Notes internal pilot
+## Canon Meeting Notes
 
-One host-only scheduler booking is the pilot boundary. Use a dedicated CREATE SOMETHING Google account with the visible display name **Canon** and the [profile image](docs/canon-meet-avatar.png). The image uses the approved r42 head and optical frame from the [character specification](../../packages/canon/src/lib/character/assets.ts), padded for the round Google account crop. Google's interface controls its final display size. Keep the name legible independently of the avatar.
+Canon can join an explicitly selected CREATE SOMETHING pilot or a selected Half Dozen Google Meet or Zoom web meeting. The account is `canon@createsomething.io`, with the display name **Canon Meeting Notes**. The [profile image](docs/canon-meet-avatar.png) uses the approved r42 head from the [character specification](../../packages/canon/src/lib/character/assets.ts).
 
-1. Provision and sign in to the dedicated account through the organization's normal Google account setup. Keep the profile local to the operator Mac. Confirm the email, name and account photo. In the host profile, grant Calendar and the selected Meet permissions for this test.
-2. Follow the [one-event invite instructions](scripts/canon-pilot.md). Verify the exact guest and notice in Google Calendar. Enable native transcription for this meeting if the host's Workspace supports it.
-3. Start the [local participant launcher](scripts/canon-participant.md) for the same event. At call time, the host verifies the name and avatar in People. Host admission and participant consent remain distinct steps.
-4. For a second, locally processed transcript, the host confirms consent before starting [the dedicated tab recorder](scripts/canon-local-capture/README.md). Use the [local transcription instructions](scripts/canon-local-transcript.README.md) with consented audio. Stop capture and native transcription separately when requested.
-5. Once Google produces the transcript, generate a [private Canon recap](scripts/canon-recap.README.md). Review the source before sharing anything. End the participant session in Meet and use the invite rollback if necessary.
+1. Select the exact Calendar occurrence and verify the organizer, roster and Meet link. Use the [invitation workflow](scripts/canon-pilot.md) to add Canon and the notice. For recurring Half Dozen meetings, select each intended instance for that week. When a Half Dozen teammate organizes a Zoom call, use Calendar’s guest invitation controls for that occurrence, then verify the invitation from Canon’s calendar. Only the host controls meeting admission and approves capture.
+2. Sign the dedicated Chrome profile into Canon and start the [local participant launcher](scripts/canon-participant.md) for a Google Meet occurrence. For Zoom, open the original invitation in Canon’s dedicated Chrome profile and choose **Join from your browser**. Use the visible name **Canon Meeting Notes** and keep Canon’s microphone and camera off. The host verifies Canon in the participant list.
+3. After everyone agrees, the operator starts the [local tab recorder](scripts/canon-local-capture/README.md) in Canon's profile. It captures audio heard by that tab for up to 60 minutes. Stop ends capture early. The host can also remove Canon from the call.
+4. Run [on-device transcription](scripts/canon-local-transcript.README.md) on the saved audio. Generate the [private review](scripts/canon-recap.README.md) using `--local-transcript`. Local audio supplies timing, and the reviewer confirms speakers, decisions and commitments before sharing. A host with access to an existing native Meet transcript can instead use `--conference`.
 
-Domain-wide scheduling, client calls, and a host-opened Meet side panel are outside the internal pilot. Run `pnpm test:canon-meet` for its offline checks.
+Run `pnpm test:canon-meet` for the local checks. Live acceptance includes the guest invitation, visible admission, explicit consent, a saved recording and a host-reviewed transcript.

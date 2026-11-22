@@ -9,29 +9,31 @@
     <main>
       <small>CANON</small>
       <h1>Canon Meeting Notes</h1>
-      <p>Private local capture · ten minute limit</p>
+      <p>Private local capture · 60 minute limit</p>
       <label
-        >Exact authorized test meeting URL
-        <input id="meeting" type="url" placeholder="https://meet.google.com/abc-defg-hij"
+        >Exact authorized meeting URL
+        <input id="meeting" type="url" placeholder="https://zoom.us/j/12345678901"
       /></label>
-      <button id="configure">Save test URL</button>
+      <button id="configure">Save meeting reference</button>
       <p id="selection"></p>
       <label
-        ><input id="consent" type="checkbox" /> Everyone in this call has agreed to this internal
-        test recording.</label
+        ><input id="consent" type="checkbox" /> The host and every guest know this participant is
+        recording and have explicitly agreed.</label
       >
       <p>
-        Use the dedicated Canon participant profile. All speakers must join from other identities; a
-        host-only test is supported. Captures tab audio only; no microphone.
+        Use the dedicated Canon participant profile, visibly named “Canon Meeting Notes”. For Zoom,
+        choose Join from your browser and connect computer audio first. All speakers must join from
+        other identities; a host-only meeting is supported. Captures tab audio only; no microphone.
       </p>
-      <button id="start">Start selected test</button
+      <button id="start">Start consented recording</button
       ><button id="stop" disabled>Stop and save WAV</button>
       <p id="status" role="status">Stopped. No audio captured.</p>
       <p>
-        This control tab must remain open. Closing it ends capture and discards unsaved audio. No
-        background recording. Select the local WAV destination before starting.
+        This control tab must remain open. Closing it ends capture and discards unsaved audio. Stop
+        before leaving or changing rooms. Zoom does not announce this local recorder. No background
+        recording. Select the local WAV destination before starting.
       </p>
-      <small>CREATE SOMETHING · internal test only</small>
+      <small>CREATE SOMETHING · private local recording</small>
     </main>
     <script type="module" src="control.js"></script>
   </body>

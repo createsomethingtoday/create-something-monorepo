@@ -2,6 +2,10 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0"><dict>
 <key>CFBundleIdentifier</key><string>com.createsomething.canon-local-transcript</string>
+<key>CFBundleExecutable</key><string>CanonLocalTranscript</string>
+<key>CFBundlePackageType</key><string>APPL</string>
+<key>CFBundleVersion</key><string>1</string>
+<key>LSUIElement</key><true/>
 <key>CFBundleName</key><string>Canon Local Transcript</string>
-<key>NSSpeechRecognitionUsageDescription</key><string>Transcribe the explicitly selected consented internal-test audio on this Mac only. No audio is uploaded and cloud fallback is disabled.</string>
+<key>NSSpeechRecognitionUsageDescription</key><string>Transcribe the explicitly selected consented meeting audio (up to one hour, in bounded local segments) on this Mac only. No audio is uploaded and cloud fallback is disabled.</string>
 </dict></plist>

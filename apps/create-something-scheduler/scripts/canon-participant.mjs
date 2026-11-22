@@ -33,10 +33,20 @@ export function validateProfile(profile) {
   return normalized;
 }
 export function planParticipant(selection, config, state = {}, now = Date.now()) {
+  assert(
+    selection.platform !== 'zoom' && selection.selection_scope !== 'halfdozen-guest-occurrence',
+    'Zoom requires intentional manual browser Join using the dedicated Canon account and host admission; this launcher supports Google Meet only. Invitation is not recording consent.'
+  );
   const profile = validateProfile(config.profile_dir);
   assert(
-    selection.internal_test === true && selection.event_id,
-    'Explicit internal test event selection required'
+    (selection.internal_test === true ||
+      (selection.selection_scope === 'halfdozen-occurrence' &&
+        selection.host_permission_verified === true &&
+        selection.identity_email === 'canon@createsomething.io' &&
+        /^[^@\s]+@halfdozen\.co$/.test(selection.organizer_email ?? '') &&
+        selection.calendar_id)) &&
+      selection.event_id,
+    'Explicit verified internal test or Half Dozen occurrence selection required'
   );
   assert(
     selection.identity_email && selection.identity_email === config.identity_email,
