@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en">
+  <meta charset="utf-8" /><meta
+    name="viewport"
+    content="width=device-width,initial-scale=1"
+  /><title>Canon Meeting Notes</title
+  ><link rel="stylesheet" href="style.css" />
+  <body>
+    <main>
+      <small>CANON</small>
+      <h1>Canon Meeting Notes</h1>
+      <p>Private local capture · ten minute limit</p>
+      <label
+        >Exact authorized test meeting URL
+        <input id="meeting" type="url" placeholder="https://meet.google.com/abc-defg-hij"
+      /></label>
+      <button id="configure">Save test URL</button>
+      <p id="selection"></p>
+      <label
+        ><input id="consent" type="checkbox" /> Everyone in this call has agreed to this internal
+        test recording.</label
+      >
+      <p>
+        Use the dedicated Canon participant profile. All speakers must join from other identities; a
+        host-only test is supported. Captures tab audio only; no microphone.
+      </p>
+      <button id="start">Start selected test</button
+      ><button id="stop" disabled>Stop and save WAV</button>
+      <p id="status" role="status">Stopped. No audio captured.</p>
+      <p>
+        This control tab must remain open. Closing it ends capture and discards unsaved audio. No
+        background recording. Select the local WAV destination before starting.
+      </p>
+      <small>CREATE SOMETHING · internal test only</small>
+    </main>
+    <script type="module" src="control.js"></script>
+  </body>
+</html>

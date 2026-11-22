@@ -1,0 +1,81 @@
+* {
+  box-sizing: border-box;
+}
+body {
+  margin: 0;
+  background: #090909;
+  color: #f2f0e9;
+  font: 16px/1.6 system-ui;
+}
+main {
+  max-width: 42rem;
+  margin: 0 auto;
+  padding: clamp(20px, 5vw, 48px);
+}
+h1 {
+  font-size: clamp(24px, 5vw, 36px);
+  line-height: 1.2;
+  margin: 8px 0 16px;
+  font-weight: 500;
+  letter-spacing: -0.03em;
+}
+label {
+  display: block;
+  margin: 24px 0;
+}
+input[type='url'] {
+  display: block;
+  width: 100%;
+  margin-top: 8px;
+  min-height: 48px;
+  padding: 10px;
+  background: #151515;
+  color: inherit;
+  border: 1px solid #777;
+  border-radius: 0;
+  font: inherit;
+}
+input[type='checkbox'] {
+  min-width: 20px;
+  min-height: 20px;
+  vertical-align: middle;
+  margin-right: 8px;
+}
+button {
+  min-height: 48px;
+  padding: 10px 16px;
+  margin: 4px 8px 4px 0;
+  border: 1px solid #aaa;
+  border-radius: 0;
+  background: #eae7df;
+  color: #151515;
+  font: inherit;
+  cursor: pointer;
+}
+button:focus-visible,
+input:focus-visible {
+  outline: 3px solid #e5bc7d;
+  outline-offset: 3px;
+}
+p {
+  color: #c7c5bf;
+  overflow-wrap: anywhere;
+}
+small {
+  color: #aaa;
+  font-size: 12px;
+  letter-spacing: 0.12em;
+}
+#stop:enabled {
+  background: #f1b7a3;
+}
+button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+#status {
+  border: 1px solid #555;
+  padding: 16px;
+  min-height: 64px;
+  color: #f2f0e9;
+}

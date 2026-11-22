@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0"><dict>
+<key>CFBundleIdentifier</key><string>com.createsomething.canon-local-transcript</string>
+<key>CFBundleName</key><string>Canon Local Transcript</string>
+<key>NSSpeechRecognitionUsageDescription</key><string>Transcribe the explicitly selected consented internal-test audio on this Mac only. No audio is uploaded and cloud fallback is disabled.</string>
+</dict></plist>

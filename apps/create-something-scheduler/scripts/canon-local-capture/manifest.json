@@ -1,0 +1,16 @@
+{
+  "manifest_version": 3,
+  "name": "Canon Internal Test Audio",
+  "version": "0.1.0",
+  "description": "Explicit, bounded local audio capture for one consented Canon test tab.",
+  "permissions": ["activeTab", "tabCapture", "storage"],
+  "action": {
+    "default_title": "Open Canon test audio control"
+  },
+  "content_security_policy": {
+    "extension_pages": "script-src 'self'; object-src 'none'; connect-src 'none'"
+  },
+  "background": {
+    "service_worker": "launch.js"
+  }
+}

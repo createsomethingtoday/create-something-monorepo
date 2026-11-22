@@ -145,3 +145,15 @@ Rollback: remove only the monitor's cron from its owning config and redeploy its
 `POST /reconcile` requires operator authorization plus `explicitIntent: true`, the exact pending `idempotencyKey`, a `reason`, and an evidence-backed `outcome` of `delivered` or `not_delivered`. A delivered outcome also requires the provider `messageId`. It records an atomic reconciliation receipt; stale keys are rejected and identical retries are idempotent. Confirming non-delivery archives the old incident so future checks can open a new incident; confirming delivery resumes the existing incident/recovery flow. Never confirm an outcome without checking provider evidence.
 
 The monitor enables `global_fetch_strictly_public` so its authenticated HTTPS status request reaches the scheduler Worker through Cloudflare’s public routing rather than bypassing Worker routing or failing a same-zone fetch.
+
+## Canon Meeting Notes internal pilot
+
+One host-only scheduler booking is the pilot boundary. Use a dedicated CREATE SOMETHING Google account with the visible display name **Canon** and the [profile image](docs/canon-meet-avatar.png). The image uses the approved r42 head and optical frame from the [character specification](../../packages/canon/src/lib/character/assets.ts), padded for the round Google account crop. Google's interface controls its final display size. Keep the name legible independently of the avatar.
+
+1. Provision and sign in to the dedicated account through the organization's normal Google account setup. Keep the profile local to the operator Mac. Confirm the email, name and account photo. In the host profile, grant Calendar and the selected Meet permissions for this test.
+2. Follow the [one-event invite instructions](scripts/canon-pilot.md). Verify the exact guest and notice in Google Calendar. Enable native transcription for this meeting if the host's Workspace supports it.
+3. Start the [local participant launcher](scripts/canon-participant.md) for the same event. At call time, the host verifies the name and avatar in People. Host admission and participant consent remain distinct steps.
+4. For a second, locally processed transcript, the host confirms consent before starting [the dedicated tab recorder](scripts/canon-local-capture/README.md). Use the [local transcription instructions](scripts/canon-local-transcript.README.md) with consented audio. Stop capture and native transcription separately when requested.
+5. Once Google produces the transcript, generate a [private Canon recap](scripts/canon-recap.README.md). Review the source before sharing anything. End the participant session in Meet and use the invite rollback if necessary.
+
+Domain-wide scheduling, client calls, and a host-opened Meet side panel are outside the internal pilot. Run `pnpm test:canon-meet` for its offline checks.
