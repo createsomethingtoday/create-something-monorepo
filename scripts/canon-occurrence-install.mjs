@@ -146,12 +146,14 @@ export function activate(
         const result = execute('/bin/launchctl', ['bootout', `gui/${process.getuid()}`, target], {
           encoding: 'utf8'
         });
-        if (result.error) rollbackErrors.push(basename(target));
+        if (result.error || result.status !== 0) rollbackErrors.push(basename(target));
       } catch {
         rollbackErrors.push(basename(target));
       }
     }
-    for (const target of copied) rmSync(target, { force: true });
+    for (const target of copied) {
+      if (!rollbackErrors.includes(basename(target))) rmSync(target, { force: true });
+    }
     if (rollbackErrors.length)
       throw Error(`${error.message}; inspect rollback for ${rollbackErrors.join(', ')}`);
     throw error;

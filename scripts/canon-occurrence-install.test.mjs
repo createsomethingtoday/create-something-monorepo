@@ -85,6 +85,16 @@ test('prepares private portable snapshot, remaps commands, includes assets, acti
       ['bootstrap', 'bootstrap', 'bootout', 'bootout']
     );
     assert.equal(readdirSync(rollbackDirectory).length, 0);
+    const retained = join(temp, 'UncertainRollback');
+    assert.throws(
+      () =>
+        activate(receipt, {
+          agentsDirectory: retained,
+          execute: () => ({ status: 1 })
+        }),
+      /inspect rollback/
+    );
+    assert.equal(readdirSync(retained).length, 1);
     const calls = [];
     activate(receipt, {
       agentsDirectory: join(temp, 'LaunchAgents'),
