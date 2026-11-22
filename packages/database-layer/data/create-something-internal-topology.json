@@ -4,11 +4,11 @@
   "atlasCanvasId": "create-something-internal-operating-topology",
   "rootNodeId": "substrate:create-something:root",
   "coverage": {
-    "generatedAt": "2026-11-16T21:22:33.530Z",
+    "generatedAt": "2026-11-22T16:47:41.405Z",
     "rootPath": ".",
-    "packageCount": 255,
-    "appCount": 15,
-    "workerCount": 124,
+    "packageCount": 258,
+    "appCount": 16,
+    "workerCount": 125,
     "clientOverlayCount": 8,
     "policyCount": 64,
     "guideCount": 88,
@@ -31,6 +31,23 @@
         "substrate",
         "topology"
       ]
+    },
+    {
+      "id": "substrate:create-something:package:window-take-scripts-agents-skills-window-take-scripts",
+      "atlasNodeId": "atlas_create-something_package_window-take-scripts-agents-skills-window-take-scripts",
+      "title": "window-take-scripts",
+      "path": ".agents/skills/window-take/scripts",
+      "tier": "Automation",
+      "surface": "agent",
+      "owner": "CREATE SOMETHING",
+      "status": "mapped",
+      "summary": "Workspace package at .agents/skills/window-take/scripts.",
+      "tags": [
+        "package",
+        "agent"
+      ],
+      "packageName": "window-take-scripts",
+      "runtime": "node"
     },
     {
       "id": "substrate:create-something:package:create-something-components-archive-components-deprecated",
@@ -157,6 +174,23 @@
       ],
       "packageName": "@create-something/create-something-scheduler",
       "runtime": "cloudflare, node"
+    },
+    {
+      "id": "substrate:create-something:app:create-something-draw-landing-webflow-apps-draw-landing-webflow",
+      "atlasNodeId": "atlas_create-something_app_create-something-draw-landing-webflow-apps-draw-landing-webflow",
+      "title": "@create-something/draw-landing-webflow",
+      "path": "apps/draw-landing-webflow",
+      "tier": "Mixed",
+      "surface": "app",
+      "owner": "CREATE SOMETHING",
+      "status": "mapped",
+      "summary": "Workspace package at apps/draw-landing-webflow.",
+      "tags": [
+        "package",
+        "app"
+      ],
+      "packageName": "@create-something/draw-landing-webflow",
+      "runtime": "node"
     },
     {
       "id": "substrate:create-something:app:create-something-draw-native-apps-draw-native",
@@ -4207,6 +4241,23 @@
       "runtime": "cloudflare, node"
     },
     {
+      "id": "substrate:create-something:package:create-something-webflow-sla-notifications-packages-webflow-dashboard-workers-sla-notifications",
+      "atlasNodeId": "atlas_create-something_package_create-something-webflow-sla-notifications-packages-webflow-dashboard-workers-sla-notifications",
+      "title": "@create-something/webflow-sla-notifications",
+      "path": "packages/webflow-dashboard/workers/sla-notifications",
+      "tier": "Automation",
+      "surface": "worker",
+      "owner": "CREATE SOMETHING",
+      "status": "mapped",
+      "summary": "Workspace package at packages/webflow-dashboard/workers/sla-notifications.",
+      "tags": [
+        "package",
+        "worker"
+      ],
+      "packageName": "@create-something/webflow-sla-notifications",
+      "runtime": "cloudflare, node"
+    },
+    {
       "id": "substrate:create-something:package:create-something-webflow-guidelines-registry-packages-webflow-guidelines-registry",
       "atlasNodeId": "atlas_create-something_package_create-something-webflow-guidelines-registry-packages-webflow-guidelines-registry",
       "title": "@create-something/webflow-guidelines-registry",
@@ -6699,6 +6750,23 @@
       "owner": "CREATE SOMETHING",
       "status": "mapped",
       "summary": "Cloudflare runtime configuration at packages/webflow-automation/worker/wrangler.toml.",
+      "tags": [
+        "worker",
+        "cloudflare",
+        "runtime"
+      ],
+      "runtime": "cloudflare"
+    },
+    {
+      "id": "substrate:create-something:worker:packages-webflow-dashboard-workers-sla-notifications-wrangler-toml",
+      "atlasNodeId": "atlas_create-something_worker_packages-webflow-dashboard-workers-sla-notifications-wrangler-toml",
+      "title": "packages/webflow-dashboard/workers/sla-notifications/wrangler.toml",
+      "path": "packages/webflow-dashboard/workers/sla-notifications/wrangler.toml",
+      "tier": "Automation",
+      "surface": "worker",
+      "owner": "CREATE SOMETHING",
+      "status": "mapped",
+      "summary": "Cloudflare runtime configuration at packages/webflow-dashboard/workers/sla-notifications/wrangler.toml.",
       "tags": [
         "worker",
         "cloudflare",
@@ -10025,6 +10093,13 @@
   ],
   "edges": [
     {
+      "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-package-window-take-scripts-agents-skills-window-take-scripts",
+      "source": "substrate:create-something:root",
+      "target": "substrate:create-something:package:window-take-scripts-agents-skills-window-take-scripts",
+      "relation": "contains",
+      "evidence": ".agents/skills/window-take/scripts is present in the repo scan."
+    },
+    {
       "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-package-create-something-components-archive-components-deprecated",
       "source": "substrate:create-something:root",
       "target": "substrate:create-something:package:create-something-components-archive-components-deprecated",
@@ -10072,6 +10147,13 @@
       "target": "substrate:create-something:app:create-something-create-something-scheduler-apps-create-something-scheduler",
       "relation": "contains",
       "evidence": "apps/create-something-scheduler is present in the repo scan."
+    },
+    {
+      "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-app-create-something-draw-landing-webflow-apps-draw-landing-webflow",
+      "source": "substrate:create-something:root",
+      "target": "substrate:create-something:app:create-something-draw-landing-webflow-apps-draw-landing-webflow",
+      "relation": "contains",
+      "evidence": "apps/draw-landing-webflow is present in the repo scan."
     },
     {
       "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-app-create-something-draw-native-apps-draw-native",
@@ -11544,6 +11626,13 @@
       "evidence": "packages/webflow-dashboard is present in the repo scan."
     },
     {
+      "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-package-create-something-webflow-sla-notifications-packages-webflow-dashboard-workers-sla-notifications",
+      "source": "substrate:create-something:root",
+      "target": "substrate:create-something:package:create-something-webflow-sla-notifications-packages-webflow-dashboard-workers-sla-notifications",
+      "relation": "contains",
+      "evidence": "packages/webflow-dashboard/workers/sla-notifications is present in the repo scan."
+    },
+    {
       "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-package-create-something-webflow-guidelines-registry-packages-webflow-guidelines-registry",
       "source": "substrate:create-something:root",
       "target": "substrate:create-something:package:create-something-webflow-guidelines-registry-packages-webflow-guidelines-registry",
@@ -12550,6 +12639,13 @@
       "target": "substrate:create-something:worker:packages-webflow-automation-worker-wrangler-toml",
       "relation": "contains",
       "evidence": "packages/webflow-automation/worker/wrangler.toml is present in the repo scan."
+    },
+    {
+      "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-worker-packages-webflow-dashboard-workers-sla-notifications-wrangler-toml",
+      "source": "substrate:create-something:root",
+      "target": "substrate:create-something:worker:packages-webflow-dashboard-workers-sla-notifications-wrangler-toml",
+      "relation": "contains",
+      "evidence": "packages/webflow-dashboard/workers/sla-notifications/wrangler.toml is present in the repo scan."
     },
     {
       "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-worker-packages-webflow-dashboard-wrangler-jsonc",
@@ -16057,6 +16153,13 @@
       "target": "substrate:create-something:worker:packages-webflow-dashboard-wrangler-jsonc",
       "relation": "runs",
       "evidence": "wrangler.jsonc configures runtime for packages/webflow-dashboard."
+    },
+    {
+      "id": "substrate:create-something:edge:substrate-create-something-package-create-something-webflow-sla-notifications-packages-webflow-dashboard-workers-sla-notifications-runs-substrate-create-something-worker-packages-webflow-dashboard-workers-sla-notifications-wrangler-toml",
+      "source": "substrate:create-something:package:create-something-webflow-sla-notifications-packages-webflow-dashboard-workers-sla-notifications",
+      "target": "substrate:create-something:worker:packages-webflow-dashboard-workers-sla-notifications-wrangler-toml",
+      "relation": "runs",
+      "evidence": "wrangler.toml configures runtime for packages/webflow-dashboard/workers/sla-notifications."
     },
     {
       "id": "substrate:create-something:edge:substrate-create-something-package-create-something-webflow-marketplace-sync-packages-webflow-marketplace-sync-runs-substrate-create-something-worker-packages-webflow-marketplace-sync-wrangler-toml",
