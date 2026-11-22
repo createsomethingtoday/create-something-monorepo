@@ -1,6 +1,6 @@
 {
   "id": "substrate:create-something:operating-slice-review:internal",
-  "generatedAt": "2026-11-16T21:22:33.813Z",
+  "generatedAt": "2026-11-22T16:47:41.660Z",
   "topologyId": "substrate:create-something:topology:internal",
   "atlasCanvasId": "create-something-internal-operating-topology",
   "sourceCoverageId": "substrate:create-something:atlas-coverage:internal",
@@ -147,6 +147,8 @@
         "substrate:create-something:worker:packages-webflow-apps-admin-workers-audit-agent-wrangler-toml",
         "substrate:create-something:package:webflow-onboarding-sync-worker-packages-webflow-automation-worker",
         "substrate:create-something:worker:packages-webflow-automation-worker-wrangler-toml",
+        "substrate:create-something:package:create-something-webflow-sla-notifications-packages-webflow-dashboard-workers-sla-notifications",
+        "substrate:create-something:worker:packages-webflow-dashboard-workers-sla-notifications-wrangler-toml",
         "substrate:create-something:worker:packages-webflow-dashboard-wrangler-jsonc",
         "substrate:create-something:package:create-something-webflow-marketplace-sync-packages-webflow-marketplace-sync",
         "substrate:create-something:worker:packages-webflow-marketplace-sync-wrangler-toml",
@@ -172,7 +174,7 @@
       "owner": "CREATE SOMETHING",
       "tier": "Automation",
       "surface": "worker",
-      "nodeCount": 155,
+      "nodeCount": 157,
       "evidence": [
         "apps/agency-meta-maintenance/wrangler.jsonc",
         "apps/bettermode-marketplace-creator-agent/wrangler.jsonc",
@@ -517,6 +519,7 @@
         "substrate:create-something:atlas-coverage-group:automation-surface-automation-agent"
       ],
       "recordIds": [
+        "substrate:create-something:package:window-take-scripts-agents-skills-window-take-scripts",
         "substrate:create-something:agent-config:config-dify-agents-aaron-hub-json",
         "substrate:create-something:agent-config:config-dify-agents-abundance-hub-json",
         "substrate:create-something:agent-config:config-dify-agents-bettermode-marketplace-creator-agent-json",
@@ -552,8 +555,9 @@
       "owner": "CREATE SOMETHING",
       "tier": "Automation",
       "surface": "agent",
-      "nodeCount": 31,
+      "nodeCount": 32,
       "evidence": [
+        ".agents/skills/window-take/scripts",
         "config/dify-agents/aaron-hub.json",
         "config/dify-agents/abundance-hub.json",
         "config/dify-agents/bettermode-marketplace-creator-agent.json",
@@ -564,8 +568,7 @@
         "config/dify-agents/mariana-hub.json",
         "config/dify-agents/morgan-hub.json",
         "config/dify-agents/natalia-hub.json",
-        "config/dify-agents/pablo-hub.json",
-        "config/dify-agents/shea-hub.json"
+        "config/dify-agents/pablo-hub.json"
       ],
       "validationCommands": [
         "pnpm --filter @create-something/database-layer agent-configs:generate",
@@ -1065,6 +1068,7 @@
       "recordIds": [
         "substrate:create-something:app:create-something-atlas-studio-desktop-apps-atlas-studio-desktop",
         "substrate:create-something:app:create-something-client-workspace-desktop-apps-client-workspace-desktop",
+        "substrate:create-something:app:create-something-draw-landing-webflow-apps-draw-landing-webflow",
         "substrate:create-something:app:create-something-draw-native-apps-draw-native",
         "substrate:create-something:app:create-something-gigi-desktop-apps-gigi-desktop",
         "substrate:create-something:app:princess-pet-palace-apps-princess-pet-palace",
@@ -1074,10 +1078,11 @@
       "owner": "CREATE SOMETHING",
       "tier": "Mixed",
       "surface": "app",
-      "nodeCount": 7,
+      "nodeCount": 8,
       "evidence": [
         "apps/atlas-studio-desktop",
         "apps/client-workspace-desktop",
+        "apps/draw-landing-webflow",
         "apps/draw-native",
         "apps/gigi-desktop",
         "apps/princess-pet-palace",

@@ -1,6 +1,6 @@
 {
   "id": "substrate:create-something:operating-slice-readiness:internal",
-  "generatedAt": "2026-11-16T21:22:33.881Z",
+  "generatedAt": "2026-11-22T16:47:41.711Z",
   "topologyId": "substrate:create-something:topology:internal",
   "atlasCanvasId": "create-something-internal-operating-topology",
   "sourceReviewId": "substrate:create-something:operating-slice-review:internal",
@@ -13,20 +13,20 @@
       "tier": "Automation",
       "surface": "worker",
       "owner": "CREATE SOMETHING",
-      "recordCount": 155,
-      "mappedRecordCount": 155,
+      "recordCount": 157,
+      "mappedRecordCount": 157,
       "missingRecordIds": [],
       "gates": [
         {
           "id": "topology_records_exist",
           "status": "pass",
-          "summary": "155/155 slice records exist in the internal topology.",
+          "summary": "157/157 slice records exist in the internal topology.",
           "evidence": "packages/database-layer/data/create-something-internal-topology.json"
         },
         {
           "id": "topology_records_mapped",
           "status": "pass",
-          "summary": "155/155 slice records are mapped.",
+          "summary": "157/157 slice records are mapped.",
           "evidence": "packages/database-layer/data/create-something-internal-topology.json"
         },
         {
@@ -50,7 +50,7 @@
         {
           "id": "cloudflare_runtime_configs_joined",
           "status": "pass",
-          "summary": "124/124 Wrangler config node(s) join to runtime binding coverage.",
+          "summary": "125/125 Wrangler config node(s) join to runtime binding coverage.",
           "evidence": "packages/database-layer/data/create-something-runtime-binding-coverage.json"
         },
         {
@@ -69,9 +69,9 @@
       "nextAction": "Review runtime ownership and bind approved worker slices to production workflow checks before Cloudflare mutation.",
       "workerRuntime": {
         "runtime": "cloudflare",
-        "runtimeConfigRecords": 124,
-        "workerPackageRecords": 31,
-        "bindingRefs": 673,
+        "runtimeConfigRecords": 125,
+        "workerPackageRecords": 32,
+        "bindingRefs": 674,
         "routeRefs": 26,
         "bindingKinds": {
           "assets": 10,
@@ -81,7 +81,7 @@
           "queue": 16,
           "r2": 24,
           "route": 26,
-          "var": 407,
+          "var": 408,
           "vectorize": 2
         },
         "workersWithD1": 83,
@@ -252,20 +252,20 @@
       "tier": "Automation",
       "surface": "agent",
       "owner": "CREATE SOMETHING",
-      "recordCount": 31,
-      "mappedRecordCount": 31,
+      "recordCount": 32,
+      "mappedRecordCount": 32,
       "missingRecordIds": [],
       "gates": [
         {
           "id": "topology_records_exist",
           "status": "pass",
-          "summary": "31/31 slice records exist in the internal topology.",
+          "summary": "32/32 slice records exist in the internal topology.",
           "evidence": "packages/database-layer/data/create-something-internal-topology.json"
         },
         {
           "id": "topology_records_mapped",
           "status": "pass",
-          "summary": "31/31 slice records are mapped.",
+          "summary": "32/32 slice records are mapped.",
           "evidence": "packages/database-layer/data/create-something-internal-topology.json"
         },
         {
@@ -884,20 +884,20 @@
       "tier": "Mixed",
       "surface": "app",
       "owner": "CREATE SOMETHING",
-      "recordCount": 7,
-      "mappedRecordCount": 7,
+      "recordCount": 8,
+      "mappedRecordCount": 8,
       "missingRecordIds": [],
       "gates": [
         {
           "id": "topology_records_exist",
           "status": "pass",
-          "summary": "7/7 slice records exist in the internal topology.",
+          "summary": "8/8 slice records exist in the internal topology.",
           "evidence": "packages/database-layer/data/create-something-internal-topology.json"
         },
         {
           "id": "topology_records_mapped",
           "status": "pass",
-          "summary": "7/7 slice records are mapped.",
+          "summary": "8/8 slice records are mapped.",
           "evidence": "packages/database-layer/data/create-something-internal-topology.json"
         },
         {
@@ -909,7 +909,7 @@
         {
           "id": "evidence_paths_declared",
           "status": "pass",
-          "summary": "7 evidence path(s) are attached to the slice.",
+          "summary": "8 evidence path(s) are attached to the slice.",
           "evidence": "packages/database-layer/data/create-something-operating-slice-review.json"
         },
         {

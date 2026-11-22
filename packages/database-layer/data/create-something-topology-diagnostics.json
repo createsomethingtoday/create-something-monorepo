@@ -2,22 +2,22 @@
   "id": "substrate:create-something:topology-diagnostics:internal",
   "topologyId": "substrate:create-something:topology:internal",
   "atlasCanvasId": "create-something-internal-operating-topology",
-  "generatedAt": "2026-11-16T21:22:33.530Z",
+  "generatedAt": "2026-11-22T16:47:41.405Z",
   "summary": {
     "valueState": "connected_map_with_review_signals",
-    "nodes": 578,
-    "edges": 1207,
-    "mapped": 578,
+    "nodes": 582,
+    "edges": 1212,
+    "mapped": 582,
     "hardGapCount": 0,
     "reviewSignalCount": 6,
     "exactDuplicatePathCount": 0,
     "isolatedNodeCount": 0,
     "surfaceCounts": {
       "repo": 1,
+      "agent": 37,
       "package": 73,
-      "app": 15,
-      "agent": 36,
-      "worker": 186,
+      "app": 16,
+      "worker": 188,
       "mcp": 77,
       "client": 8,
       "doc": 6,
@@ -26,9 +26,9 @@
       "config": 24
     },
     "tierCounts": {
-      "Mixed": 145,
+      "Mixed": 146,
+      "Automation": 298,
       "Judgment": 109,
-      "Automation": 295,
       "Database": 29
     }
   },
@@ -60,11 +60,11 @@
       "classification": "review_signal",
       "severity": "review",
       "title": "Automation and Database balance",
-      "summary": "Automation has 295 record(s); Database has 29 record(s). This is a business-shape review signal, not a hard gap.",
+      "summary": "Automation has 298 record(s); Database has 29 record(s). This is a business-shape review signal, not a hard gap.",
       "evidence": [
-        "Automation=295",
+        "Automation=298",
         "Database=29",
-        "Total nodes=578"
+        "Total nodes=582"
       ],
       "nodeIds": [],
       "paths": [],
@@ -75,7 +75,7 @@
       "classification": "review_signal",
       "severity": "review",
       "title": "Worker surface concentration",
-      "summary": "186 worker record(s) carry runtime delivery context. This is where Substrate receipts and Cloudflare proof matter most.",
+      "summary": "188 worker record(s) carry runtime delivery context. This is where Substrate receipts and Cloudflare proof matter most.",
       "evidence": [
         "worker: packages/a2a",
         "worker: packages/agency",
@@ -145,7 +145,7 @@
       "classification": "review_signal",
       "severity": "review",
       "title": "worker surface review",
-      "summary": "186 record(s) are classified as worker.",
+      "summary": "188 record(s) are classified as worker.",
       "evidence": [
         "@create-something/a2a: packages/a2a",
         "@create-something/agency: packages/agency",

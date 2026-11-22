@@ -1,6 +1,6 @@
 {
   "id": "substrate:create-something:management-surface:internal",
-  "generatedAt": "2026-11-16T21:22:35.027Z",
+  "generatedAt": "2026-11-22T16:47:42.581Z",
   "topologyId": "substrate:create-something:topology:internal",
   "atlasCanvasId": "create-something-internal-operating-topology",
   "sourceReadinessId": "substrate:create-something:operating-slice-readiness:internal",
@@ -286,6 +286,20 @@
       "policy": "Read-only management resource; safe for API, MCP, and agent inspection."
     },
     {
+      "id": "substrate:create-something:management-resource:topology_record:substrate-create-something-package-window-take-scripts-agents-skills-window-take-scripts",
+      "kind": "topology_record",
+      "title": "window-take-scripts",
+      "recordId": "substrate:create-something:package:window-take-scripts-agents-skills-window-take-scripts",
+      "sourcePath": "packages/database-layer/data/create-something-internal-topology.json",
+      "apiPath": "/api/substrate/topology/internal/records/substrate-create-something-package-window-take-scripts-agents-skills-window-take-scripts",
+      "mcpUri": "substrate://topology/internal/records/substrate-create-something-package-window-take-scripts-agents-skills-window-take-scripts",
+      "agentCommand": "databaseLayer.topology.records.get",
+      "access": [
+        "read"
+      ],
+      "policy": "Read-only management resource; safe for API, MCP, and agent inspection."
+    },
+    {
       "id": "substrate:create-something:management-resource:topology_record:substrate-create-something-package-create-something-components-archive-components-deprecated",
       "kind": "topology_record",
       "title": "@create-something/components",
@@ -377,6 +391,20 @@
       "sourcePath": "packages/database-layer/data/create-something-internal-topology.json",
       "apiPath": "/api/substrate/topology/internal/records/substrate-create-something-app-create-something-create-something-scheduler-apps-create-something-scheduler",
       "mcpUri": "substrate://topology/internal/records/substrate-create-something-app-create-something-create-something-scheduler-apps-create-something-scheduler",
+      "agentCommand": "databaseLayer.topology.records.get",
+      "access": [
+        "read"
+      ],
+      "policy": "Read-only management resource; safe for API, MCP, and agent inspection."
+    },
+    {
+      "id": "substrate:create-something:management-resource:topology_record:substrate-create-something-app-create-something-draw-landing-webflow-apps-draw-landing-webflow",
+      "kind": "topology_record",
+      "title": "@create-something/draw-landing-webflow",
+      "recordId": "substrate:create-something:app:create-something-draw-landing-webflow-apps-draw-landing-webflow",
+      "sourcePath": "packages/database-layer/data/create-something-internal-topology.json",
+      "apiPath": "/api/substrate/topology/internal/records/substrate-create-something-app-create-something-draw-landing-webflow-apps-draw-landing-webflow",
+      "mcpUri": "substrate://topology/internal/records/substrate-create-something-app-create-something-draw-landing-webflow-apps-draw-landing-webflow",
       "agentCommand": "databaseLayer.topology.records.get",
       "access": [
         "read"
@@ -3324,6 +3352,20 @@
       "policy": "Read-only management resource; safe for API, MCP, and agent inspection."
     },
     {
+      "id": "substrate:create-something:management-resource:topology_record:substrate-create-something-package-create-something-webflow-sla-notifications-packages-webflow-dashboard-workers-sla-notifications",
+      "kind": "topology_record",
+      "title": "@create-something/webflow-sla-notifications",
+      "recordId": "substrate:create-something:package:create-something-webflow-sla-notifications-packages-webflow-dashboard-workers-sla-notifications",
+      "sourcePath": "packages/database-layer/data/create-something-internal-topology.json",
+      "apiPath": "/api/substrate/topology/internal/records/substrate-create-something-package-create-something-webflow-sla-notifications-packages-webflow-dashboard-workers-sla-notifications",
+      "mcpUri": "substrate://topology/internal/records/substrate-create-something-package-create-something-webflow-sla-notifications-packages-webflow-dashboard-workers-sla-notifications",
+      "agentCommand": "databaseLayer.topology.records.get",
+      "access": [
+        "read"
+      ],
+      "policy": "Read-only management resource; safe for API, MCP, and agent inspection."
+    },
+    {
       "id": "substrate:create-something:management-resource:topology_record:substrate-create-something-package-create-something-webflow-guidelines-registry-packages-webflow-guidelines-registry",
       "kind": "topology_record",
       "title": "@create-something/webflow-guidelines-registry",
@@ -5333,6 +5375,20 @@
       "sourcePath": "packages/database-layer/data/create-something-internal-topology.json",
       "apiPath": "/api/substrate/topology/internal/records/substrate-create-something-worker-packages-webflow-automation-worker-wrangler-toml",
       "mcpUri": "substrate://topology/internal/records/substrate-create-something-worker-packages-webflow-automation-worker-wrangler-toml",
+      "agentCommand": "databaseLayer.topology.records.get",
+      "access": [
+        "read"
+      ],
+      "policy": "Read-only management resource; safe for API, MCP, and agent inspection."
+    },
+    {
+      "id": "substrate:create-something:management-resource:topology_record:substrate-create-something-worker-packages-webflow-dashboard-workers-sla-notifications-wrangler-toml",
+      "kind": "topology_record",
+      "title": "packages/webflow-dashboard/workers/sla-notifications/wrangler.toml",
+      "recordId": "substrate:create-something:worker:packages-webflow-dashboard-workers-sla-notifications-wrangler-toml",
+      "sourcePath": "packages/database-layer/data/create-something-internal-topology.json",
+      "apiPath": "/api/substrate/topology/internal/records/substrate-create-something-worker-packages-webflow-dashboard-workers-sla-notifications-wrangler-toml",
+      "mcpUri": "substrate://topology/internal/records/substrate-create-something-worker-packages-webflow-dashboard-workers-sla-notifications-wrangler-toml",
       "agentCommand": "databaseLayer.topology.records.get",
       "access": [
         "read"
