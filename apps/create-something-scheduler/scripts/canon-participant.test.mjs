@@ -357,7 +357,7 @@ test('launcher accepts tagged verified Half Dozen occurrence and rejects incompl
     assert.throws(() => planParticipant({ ...selected, ...change }, halfConfig, {}, now));
 });
 
-test('Zoom selection explicitly requires intentional manual host-admitted join', () => {
+test('Zoom cannot reuse a Google Meet meeting URL', () => {
   assert.throws(
     () =>
       planParticipant(
@@ -366,6 +366,6 @@ test('Zoom selection explicitly requires intentional manual host-admitted join',
         {},
         now
       ),
-    /intentional manual browser Join/
+    /Exact selected Zoom invitation required/
   );
 });

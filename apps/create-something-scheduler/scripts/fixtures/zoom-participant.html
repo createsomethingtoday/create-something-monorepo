@@ -1,0 +1,56 @@
+<!doctype html>
+<html>
+  <head>
+    <title>Synthetic Zoom guard validation</title>
+    <style>
+      body {
+        font: 18px system-ui;
+        background: #17191d;
+        color: white;
+        padding: 48px;
+      }
+      button,
+      input {
+        font: inherit;
+        padding: 12px;
+        margin: 10px;
+      }
+      main {
+        max-width: 800px;
+        margin: auto;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Zoom synthetic prejoin</h1>
+      <label>Your Name <input aria-label="Your Name" /></label>
+      <div>
+        <button onclick="this.textContent = 'Unmute'">Mute</button
+        ><button onclick="this.textContent = 'Start Video'">Stop Video</button
+        ><button onclick="wait()">Join</button>
+      </div>
+    </main>
+    <script>
+      function wait() {
+        document.querySelector('main').innerHTML =
+          '<h1>Please wait, the meeting host will let you in soon</h1>';
+        setTimeout(
+          () =>
+            (document.querySelector('main').innerHTML =
+              '<h1>Meeting</h1><button>Leave</button><button>Start Video</button><button onclick="audio()">Join Audio</button>'),
+          100
+        );
+      }
+      function audio() {
+        document.querySelector('main').innerHTML =
+          '<h1>Computer audio</h1><button>Leave</button><button>Start Video</button><label><input type="checkbox">Mute my microphone when joining</label><button onclick="connected()">Join with Computer Audio</button>';
+      }
+      function connected() {
+        if (!document.querySelector('input').checked) throw Error('not muted');
+        document.querySelector('main').innerHTML =
+          '<h1>Meeting connected</h1><button>Leave</button><button>Start Video</button><button>Unmute</button><p>Canon Meeting Notes</p>';
+      }
+    </script>
+  </body>
+</html>

@@ -38,3 +38,50 @@ Before launch, cancellation prevents opening. **After launch, local stop does no
 Offline tests: `node --test apps/create-something-scheduler/scripts/canon-participant.test.mjs`. Fixtures exercise scheduling, fresh one-event Google verification, expiry and reschedule/cancellation handling, profile alias rejection, bounded prejoin retries, dedupe, positive account/media-guarded Join and negative paths. They do not launch Chrome, access Google, change meetings or use paid services. Live Google markup, installed Chrome/profile behavior, account sign-in, admission, media state and end-to-end participant visibility remain unverified. Independent transcription is not supplied by this presence-only launcher; a strictly first-party transcription path requires a separate verified implementation.
 
 Puppeteer interaction reference: https://pptr.dev/guides/page-interactions
+
+### Zoom browser participant (no capture)
+
+`runParticipant` now accepts verified `halfdozen-guest-occurrence` Zoom selections.
+It opens the exact selected meeting in visible Chrome at occurrence start, fills
+`Canon Meeting Notes`, positively checks camera and microphone off before Join,
+waits up to two minutes for host admission, and connects computer audio only
+when the UI provides a verified join-muted setting. It reports admission/audio
+only after positive `Leave`, `Start Video`, and `Unmute` readback. Missing or
+ambiguous controls, authentication, passcode entry, CAPTCHA and recording-consent
+challenges pause for the operator; the ordinary browser stays open. Invitation
+is never recording consent. This path does not capture or start recording.
+
+Passcodes are separate from the saved selection: supply `CANON_ZOOM_INVITATION_URL`
+in the launching process's private environment (or `config.zoom_invitation_url`
+for the imported runner). It must match the selected canonical Zoom origin and
+meeting ID exactly and permits only `pwd`. Never put this value in CLI arguments,
+logs, selection JSON or ledger. The plan and ledger retain only the canonical
+secret-free `/j/<id>` URL. The browser receives the private `/wc/join/<id>?pwd=...`
+URL in memory. Browser profile/history are private credential material; the
+existing dedicated `canon-meet-pilot` profile requirement still applies.
+
+Validation uses offline synthetic accessible UI states; these establish guard
+behavior, not compatibility with a current live Zoom deployment or actual host
+admission. A host-supervised live acceptance remains separate.
+
+Scheduled runner adapter: `node scripts/canon-zoom-join.mjs` reads
+`CANON_OCCURRENCE_SELECTION` and `CANON_OCCURRENCE_CONFIG`. Configure
+`participant: {profile_dir, identity_email, identity_name}` and optionally
+`zoomInvitationFile` with the private 0600 temporary invitation URL file. The
+adapter removes that file when the launch settles; use a disposable copy, never
+a canonical credential source. It journals beside the selection with a lock,
+returns exit 2 for a human blocker, and leaves capture disabled. Runner timeout
+must exceed the two-minute admission wait plus browser launch (180 seconds).
+
+Rendered offline validation (2026-11-22): served
+`fixtures/zoom-participant.html` on loopback and ran `guardedZoomJoin` against
+actual Chromium accessibility snapshots and visible DOM controls. The sequence
+reached `Meeting connected`, with Canon Meeting Notes, Leave, Start Video and
+Unmute visibly present; the final screenshot was directly reviewed. This
+validates the browser adapter's state transitions against the fixture, not
+Zoom's current proprietary UI. Installed Puppeteer's generated launch arguments
+were also inspected: visible mode, extensions enabled, no disable-extensions,
+no fake-media flags, and unsafe extension debugging excluded. No Google Chrome
+process was present during the process inventory, so an active dedicated-profile
+lock could not be exercised. Never bypass a Chrome profile lock or kill an
+operator's running browser to make a scheduled launch succeed.

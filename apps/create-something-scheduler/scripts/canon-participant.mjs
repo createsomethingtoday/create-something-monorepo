@@ -15,6 +15,7 @@ import { dirname, resolve, basename } from 'node:path';
 import { homedir } from 'node:os';
 import { pathToFileURL } from 'node:url';
 import { runPilot } from './canon-pilot.mjs';
+import { zoomBrowserUrl, guardedZoomJoin } from './canon-zoom-participant.mjs';
 const assert = (ok, message) => {
   if (!ok) throw new Error(message);
 };
@@ -33,13 +34,16 @@ export function validateProfile(profile) {
   return normalized;
 }
 export function planParticipant(selection, config, state = {}, now = Date.now()) {
-  assert(
-    selection.platform !== 'zoom' && selection.selection_scope !== 'halfdozen-guest-occurrence',
-    'Zoom requires intentional manual browser Join using the dedicated Canon account and host admission; this launcher supports Google Meet only. Invitation is not recording consent.'
-  );
+  const zoom = selection.platform === 'zoom';
   const profile = validateProfile(config.profile_dir);
   assert(
     (selection.internal_test === true ||
+      (zoom &&
+        selection.selection_scope === 'halfdozen-guest-occurrence' &&
+        selection.canon_rsvp === 'accepted' &&
+        selection.identity_email === 'canon@createsomething.io' &&
+        /^[^@\s]+@halfdozen\.co$/.test(selection.organizer_email ?? '') &&
+        selection.calendar_id) ||
       (selection.selection_scope === 'halfdozen-occurrence' &&
         selection.host_permission_verified === true &&
         selection.identity_email === 'canon@createsomething.io' &&
@@ -70,10 +74,12 @@ export function planParticipant(selection, config, state = {}, now = Date.now())
   const age = now - Date.parse(selection.verified_at);
   assert(age >= 0 && age <= 15 * 60_000, 'Fresh invitation readback within 15 minutes required');
   assert(selection.status === 'confirmed', 'Only confirmed events allowed');
-  assert(
-    /^https:\/\/meet\.google\.com\/[a-z]{3}-[a-z]{4}-[a-z]{3}$/.test(selection.meeting_url),
-    'Exact Google Meet URL required'
-  );
+  if (zoom) zoomBrowserUrl(selection.meeting_url, config.zoom_invitation_url);
+  else
+    assert(
+      /^https:\/\/meet\.google\.com\/[a-z]{3}-[a-z]{4}-[a-z]{3}$/.test(selection.meeting_url),
+      'Exact Google Meet URL required'
+    );
   const start = Date.parse(selection.starts_at);
   assert(Number.isFinite(start), 'Valid start required');
   assert(!state.cancelled, 'Cancelled pilot cannot be relaunched with this ledger');
@@ -88,6 +94,7 @@ export function planParticipant(selection, config, state = {}, now = Date.now())
   assert(start >= now - 5 * 60_000, 'Selected event is too old');
   return {
     action: start > now ? 'scheduled' : 'open-prejoin',
+    platform: zoom ? 'zoom' : 'meet',
     starts_at: new Date(start).toISOString(),
     profile_dir: profile,
     meeting_url: selection.meeting_url,
@@ -235,9 +242,14 @@ export async function runParticipant({
       ? 'microphone and camera off verified immediately before Join; current state requires readback'
       : plan.media_state,
     join_result: join_result ?? { admitted: false, human_required: true },
-    next_step: join_result?.join_submitted
-      ? 'Normal Join submitted with verified account/media guards. Host must verify visible participant and actual admission in Meet.'
-      : 'Human handling required: confirm account, media off, sign-in/challenges and normal Join. No admission verified.'
+    next_step:
+      plan.platform === 'zoom'
+        ? join_result?.audio_connected
+          ? 'Host-admitted Zoom participant with muted computer audio verified; capture remains disabled.'
+          : 'Check the visible Zoom window for the reported admission, challenge or audio blocker; capture remains disabled.'
+        : join_result?.join_submitted
+          ? 'Normal Join submitted with verified account/media guards. Host must verify visible participant and actual admission in Meet.'
+          : 'Human handling required: confirm account, media off, sign-in/challenges and normal Join. No admission verified.'
   };
 }
 export async function guardedJoin(ui, identity) {
@@ -324,7 +336,16 @@ export async function launchChrome(plan, config) {
   const browser = await puppeteer.launch(chromeLaunchOptions(plan.profile_dir));
   try {
     const page = (await browser.pages())[0] ?? (await browser.newPage());
-    await page.goto(plan.meeting_url, { waitUntil: 'domcontentloaded', timeout: 30_000 });
+    try {
+      await page.goto(
+        plan.platform === 'zoom'
+          ? zoomBrowserUrl(plan.meeting_url, config.zoom_invitation_url)
+          : plan.meeting_url,
+        { waitUntil: 'domcontentloaded', timeout: 30_000 }
+      );
+    } catch {
+      throw Error('Meeting browser navigation failed; inspect the private visible window');
+    }
     await page.bringToFront();
     const cdp = await page.createCDPSession();
     const ui = {
@@ -335,8 +356,28 @@ export async function launchChrome(plan, config) {
           .map((n) => ({
             role: n.role?.value,
             name: n.name?.value ?? '',
+            value: n.value?.value,
+            checked: n.properties?.find((p) => p.name === 'checked')?.value.value === 'true',
             disabled: n.properties?.some((p) => p.name === 'disabled' && p.value.value === true)
           }));
+      },
+      fill: async (name, value) => {
+        const matches = await page.$$(`::-p-aria([name=${JSON.stringify(name)}][role="textbox"])`);
+        assert(
+          matches.length === 1 && (await matches[0].isVisible()),
+          'Textbox not uniquely visible'
+        );
+        await matches[0].click({ clickCount: 3 });
+        await matches[0].press('Backspace');
+        await matches[0].type(value);
+      },
+      setChecked: async (name, checked) => {
+        const matches = await page.$$(`::-p-aria([name=${JSON.stringify(name)}][role="checkbox"])`);
+        assert(
+          matches.length === 1 && (await matches[0].isVisible()),
+          'Checkbox not uniquely visible'
+        );
+        await matches[0].click();
       },
       click: async (name) => {
         const matches = await page.$$(`::-p-aria([name=${JSON.stringify(name)}][role="button"])`);
@@ -345,6 +386,7 @@ export async function launchChrome(plan, config) {
         await matches[0].click();
       }
     };
+    if (plan.platform === 'zoom') return await guardedZoomJoin(ui);
     if (!(await waitForPrejoin(ui)))
       return {
         join_submitted: false,
@@ -362,7 +404,8 @@ async function main() {
   const config = {
     profile_dir: process.env.CANON_CHROME_PROFILE_DIR,
     identity_email: process.env.CANON_PARTICIPANT_EMAIL,
-    identity_name: process.env.CANON_PARTICIPANT_NAME
+    identity_name: process.env.CANON_PARTICIPANT_NAME,
+    zoom_invitation_url: process.env.CANON_ZOOM_INVITATION_URL
   };
   if (args.length === 1 && args[0] === '--initialize-profile') {
     await initializeProfile(config.profile_dir);
