@@ -198,9 +198,9 @@ export function verifyGuestOccurrence(event, options) {
       'Exact Half Dozen guest occurrence, signed-in guest and explicit guest-addition permission required'
     );
   const canon = event.attendees.filter((a) => a.email?.toLowerCase() === options.canonEmail);
-  if (canon.length !== 1 || canon[0].responseStatus === 'declined')
+  if (canon.length !== 1 || canon[0].responseStatus !== 'accepted')
     throw Error(
-      'Exact existing Canon invitation required; this guest verification cannot invite or capture'
+      'Exact accepted Canon invitation required; this guest verification cannot invite or capture'
     );
   const sources = [
     ...(event.conferenceData?.entryPoints ?? [])
@@ -241,6 +241,7 @@ export function verifyGuestOccurrence(event, options) {
       organizer_email: options.organizerEmail,
       signed_in_guest_email: options.guestEmail,
       invitation_verified: true,
+      canon_rsvp: canon[0].responseStatus,
       guest_addition_permission_verified: true,
       invited_emails: event.attendees.map((a) => a.email),
       starts_at: event.start.dateTime,

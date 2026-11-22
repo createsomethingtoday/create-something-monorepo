@@ -140,3 +140,23 @@ test('verified selection permits postcall after join blocker; missing selection 
     rmSync(dir, { recursive: true, force: true });
   }
 });
+test('subminute join and postcall advance to the next launchd minute across midnight', () => {
+  const trigger = (stage) =>
+    launchdPlist({
+      configPath: '/a',
+      runnerPath: '/b',
+      nodePath: '/c',
+      stage,
+      config: {
+        occurrenceId: 'test',
+        starts_at: new Date(2026, 10, 24, 23, 59, 30).toISOString(),
+        ends_at: new Date(2026, 10, 25, 0, 2, 0, 1).toISOString(),
+        postcallDelayMinutes: 10
+      }
+    });
+  assert.match(
+    trigger('join'),
+    /<key>Day<\/key><integer>25<\/integer><key>Hour<\/key><integer>0<\/integer><key>Minute<\/key><integer>0<\/integer>/
+  );
+  assert.match(trigger('postcall'), /<key>Minute<\/key><integer>13<\/integer>/);
+});

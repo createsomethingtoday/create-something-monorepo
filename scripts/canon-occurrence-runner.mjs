@@ -112,11 +112,12 @@ export function launchdPlist({ configPath, runnerPath, nodePath, stage, config }
   if (![configPath, runnerPath, nodePath].every((x) => typeof x === 'string' && x.startsWith('/')))
     throw new Error('Absolute paths required');
   if (!['join', 'postcall'].includes(stage)) throw new Error('Invalid stage');
-  const date = new Date(
+  const scheduled =
     stage === 'join'
-      ? config.starts_at
-      : Date.parse(config.ends_at) + (config.postcallDelayMinutes ?? 10) * 60000
-  );
+      ? Date.parse(config.starts_at)
+      : Date.parse(config.ends_at) + (config.postcallDelayMinutes ?? 10) * 60000;
+  // launchd schedules whole minutes. Use the first minute at or after the stage.
+  const date = new Date(Math.ceil(scheduled / 60000) * 60000);
   if (!Number.isFinite(date.getTime())) throw new Error('Invalid schedule');
   const label = `com.createsomething.canon.${config.occurrenceId}.${stage}`;
   const args = [nodePath, runnerPath, 'run', configPath, stage];

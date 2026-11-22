@@ -351,7 +351,10 @@ test('Zoom guest verification is read-only, strips passcodes, distinguishes invi
     ...halfFixture(),
     organizer: { email: guestOptions.organizerEmail },
     guestsCanInviteOthers: true,
-    attendees: [{ email: guestOptions.guestEmail, self: true }, { email: halfOptions.canonEmail }],
+    attendees: [
+      { email: guestOptions.guestEmail, self: true },
+      { email: halfOptions.canonEmail, responseStatus: 'accepted' }
+    ],
     hangoutLink: undefined,
     description: 'Zoom https://us02web.zoom.us/j/12345678901?pwd=PRIVATE',
     conferenceData: {
@@ -374,6 +377,15 @@ test('Zoom guest verification is read-only, strips passcodes, distinguishes invi
       }
     });
   const result = await invoke();
+  assert.equal(result.participantSelection.canon_rsvp, 'accepted');
+  for (const responseStatus of [undefined, 'declined', 'needsAction', 'tentative']) {
+    await assert.rejects(
+      invoke(guestOptions, {
+        ...event,
+        attendees: [event.attendees[0], { ...event.attendees[1], responseStatus }]
+      })
+    );
+  }
   assert.equal(result.participantSelection.meeting_url, 'https://us02web.zoom.us/j/12345678901');
   assert.ok(!JSON.stringify(result).includes('PRIVATE'));
   assert.equal(result.captureAuthorized, false);
