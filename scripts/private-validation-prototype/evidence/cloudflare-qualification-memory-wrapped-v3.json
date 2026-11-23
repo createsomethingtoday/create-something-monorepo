@@ -1,0 +1,68 @@
+{
+  "startedAt": "2026-09-24T04:59:36.268Z",
+  "expectedImage": "sha256:45b17e18e6149a0a16ba087daaf2127ccae2328c0861cad139f002993b8e86db",
+  "workerVersion": "85047d4e-5f87-4bcd-8bac-e17b99d86bd5",
+  "providerLimits": {
+    "memoryMiB": 256,
+    "vcpu": 0.0625
+  },
+  "runs": [
+    {
+      "id": "run-qualification-8",
+      "mode": "memory",
+      "startedAt": 1790225976607,
+      "deadline": 1790226021607,
+      "status": "cleaned",
+      "cleanupAttempts": 0,
+      "dispatchPending": false,
+      "error": "Failed to execute command 'sh -c 'timeout --signal=KILL 18s sh /opt/private-isolate.sh memory; status=$?; dmesg | tail -40; exit $status'' in session 'sandbox-private-validation-v3-run-qualification-8': Command timeout after 22000ms",
+      "cleanupReason": "normal",
+      "beforeDestroy": {
+        "status": "healthy",
+        "lastChange": 1790225978696
+      },
+      "stoppedState": {
+        "status": "stopped",
+        "lastChange": 1790226020116
+      },
+      "endedAt": 1790226020276,
+      "elapsedMs": 43669
+    },
+    {
+      "id": "run-qualification-9",
+      "mode": "isolated",
+      "startedAt": 1790226021024,
+      "deadline": 1790226066024,
+      "status": "cleaned",
+      "cleanupAttempts": 0,
+      "dispatchPending": false,
+      "execution": {
+        "exitCode": 0,
+        "output": "{\"uid\":65534,\"node\":\"24.21.0\",\"arch\":\"x64\",\"limits\":{\"memoryMax\":null,\"pidsMax\":null,\"cpuMax\":null,\"process\":\"Limit                     Soft Limit           Hard Limit           Units     \\nMax cpu time              5                    5                    seconds   \\nMax file size             16777216             16777216             bytes     \\nMax data size             unlimited            unlimited            bytes     \\nMax stack size            8388608              unlimited            bytes     \\nMax core file size        0                    unlimited            bytes     \\nMax resident set          unlimited            unlimited            bytes     \\nMax processes             32                   32                   processes \\nMax open files            64                   64                   files     \\nMax locked memory         8388608              8388608              bytes     \\nMax address space         unlimited            unlimited            bytes     \\nMax file locks            unlimited            unlimited            locks     \\nMax pending signals       1841                 1841                 signals   \\nMax msgqueue size         819200               819200               bytes     \\nMax nice priority         0                    0                    \\nMax realtime priority     0                    0                    \\nMax realtime timeout      unlimited            unlimited            us\"},\"probes\":[{\"name\":\"owned-canary\",\"status\":1,\"signal\":null,\"result\":\"\"},{\"name\":\"public-tcp\",\"status\":0,\"signal\":null,\"result\":\"ENETUNREACH\"},{\"name\":\"dns\",\"status\":0,\"signal\":null,\"result\":\"EAI_AGAIN\"},{\"name\":\"local-management\",\"status\":0,\"signal\":null,\"result\":\"ENETUNREACH\"},{\"name\":\"local-root-execution\",\"status\":0,\"signal\":null,\"result\":\"ENETUNREACH\"}],\"unprivilegedNetworkNamespace\":{\"status\":1,\"stderr\":\"unshare: unshare failed: Operation not permitted\\n\"},\"rootWriteError\":\"EROFS\",\"scratchError\":\"ENOSPC\",\"processBound\":{\"attempted\":40,\"started\":25,\"errors\":[\"EAGAIN\",\"EAGAIN\",\"EAGAIN\",\"EAGAIN\",\"EAGAIN\",\"EAGAIN\",\"EAGAIN\",\"EAGAIN\",\"EAGAIN\",\"EAGAIN\",\"EAGAIN\",\"EAGAIN\",\"EAGAIN\",\"EAGAIN\",\"EAGAIN\"]},\"sharedMemoryWriteError\":\"ENOENT\",\"securityStatus\":[\"CapInh:\\t0000000000000000\",\"CapPrm:\\t0000000000000000\",\"CapEff:\\t0000000000000000\",\"CapBnd:\\t0000000000000000\",\"CapAmb:\\t0000000000000000\",\"NoNewPrivs:\\t1\",\"Seccomp:\\t0\",\"Seccomp_filters:\\t0\"]}",
+        "stderr": ""
+      },
+      "cleanupReason": "normal",
+      "beforeDestroy": {
+        "status": "healthy",
+        "lastChange": 1790226031054
+      },
+      "stoppedState": {
+        "status": "stopped",
+        "lastChange": 1790226032053
+      },
+      "endedAt": 1790226032092,
+      "elapsedMs": 11068
+    }
+  ],
+  "authority": "owned-fixture-only",
+  "sourceSha256": {
+    "worker.mjs": "4c6ccd1307ecf75189474d5dcdf1dfb2da0564c5753525b1786b8ab56bdc1c80",
+    "policy.mjs": "34e7669052ca3651c2576b3becb2cd2d30229cd36aa1668cde25555e65ce5eee",
+    "qualify.mjs": "71789cf8736a86ddcc712210547e0c9f946659e8aa1c85e0e8a21c2792225216",
+    "Dockerfile": "fecb17b96f79857ce64a85cfa5d27798212e42682de7a1a97cc40b1f140d3504",
+    "isolate.sh": "6bdb81ac7f1f68dfbe3f92769262e1c2ac453f25db53240d8ee6016f24b8f606",
+    "memory.mjs": "fb0df143ce3131b5e64b7da050316cb799b2c7708a2523aa5702f4ca68b6765c"
+  },
+  "completed": true,
+  "endedAt": "2026-09-24T05:00:32.570Z"
+}

@@ -1,0 +1,31 @@
+{
+  "schema": "private-owned-agent-evidence/v1",
+  "authority": "prototype-only",
+  "policy": {
+    "model": "gpt-5-mini-2025-08-07",
+    "reasoning": "minimal",
+    "calls": 4,
+    "maxOutputTokens": 1024,
+    "maxRequestBytes": 8192,
+    "timeoutMs": 30000,
+    "inputUsdPerMillion": 0.25,
+    "outputUsdPerMillion": 2,
+    "priceSource": "https://developers.openai.com/api/docs/pricing",
+    "priceChecked": "2026-09-23"
+  },
+  "startedAt": "2026-09-24T03:15:28.397Z",
+  "receipts": [],
+  "attemptsReserved": 1,
+  "provider": "OpenAI Responses API",
+  "executor": "owned deterministic Node workflow",
+  "codexInvocationTested": false,
+  "cloudflareTested": false,
+  "skillSha256": "083188b4b61e19307ce4189a553eddabff297cbf5c8a51f3a622c3e80311e820",
+  "sourceSha256": {
+    "model-run.mjs": "8994e5da957a9e04beaaa943bc1b6a363607d2f619c15ff136c8ac78c7725120",
+    "model-policy.mjs": "84338beb5210ee640b50f895d120cf3039c2f983ccc890dc13665642f5ba3db0"
+  },
+  "passed": false,
+  "error": "Provider HTTP 429: credit_balance_exhausted",
+  "endedAt": "2026-09-24T03:15:30.566Z"
+}

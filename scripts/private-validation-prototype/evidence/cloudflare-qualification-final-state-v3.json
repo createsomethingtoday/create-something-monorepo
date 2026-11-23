@@ -1,0 +1,418 @@
+{
+  "checkedAt": "2026-09-24T05:01:49.117Z",
+  "application": {
+    "id": "a03a0de4-bc04-4f6b-a183-32287814648f",
+    "image": "registry.cloudflare.com/9645bd52e640b8a4f40a3a55ff1dd75a/private-validation-preview-validationsandbox@sha256:45b17e18e6149a0a16ba087daaf2127ccae2328c0861cad139f002993b8e86db",
+    "memoryMiB": 256,
+    "vcpu": 0.0625
+  },
+  "deployments": {
+    "deployments": [
+      {
+        "id": "618ba510-2860-4e2e-bcc2-2e99d955d896",
+        "source": "wrangler",
+        "strategy": "percentage",
+        "annotations": {
+          "workers/message": "Automatic deployment on upload.",
+          "workers/triggered_by": "upload"
+        },
+        "versions": [
+          {
+            "version_id": "85047d4e-5f87-4bcd-8bac-e17b99d86bd5",
+            "percentage": 100
+          }
+        ],
+        "created_on": "2026-09-24T04:58:17.091409Z"
+      },
+      {
+        "id": "5b475884-adfe-4750-a82e-c242edd4d437",
+        "source": "wrangler",
+        "strategy": "percentage",
+        "annotations": {
+          "workers/message": "Automatic deployment on upload.",
+          "workers/triggered_by": "upload"
+        },
+        "versions": [
+          {
+            "version_id": "465d0305-daf4-4a37-8baf-f3dacd8d24f6",
+            "percentage": 100
+          }
+        ],
+        "created_on": "2026-09-24T04:54:19.552131Z"
+      },
+      {
+        "id": "6a8b935e-2291-45cf-97e3-e8b8eb0dc09e",
+        "source": "wrangler",
+        "strategy": "percentage",
+        "annotations": {
+          "workers/message": "Automatic deployment on upload.",
+          "workers/triggered_by": "upload"
+        },
+        "versions": [
+          {
+            "version_id": "bb82bce8-6242-46ab-acc5-db96f735eb2d",
+            "percentage": 100
+          }
+        ],
+        "created_on": "2026-09-24T04:49:53.55509Z"
+      },
+      {
+        "id": "5877a5f6-c969-4e2a-b3ce-ac95052937e6",
+        "source": "wrangler",
+        "strategy": "percentage",
+        "annotations": {
+          "workers/message": "Automatic deployment on upload.",
+          "workers/triggered_by": "upload"
+        },
+        "versions": [
+          {
+            "version_id": "1b9922ef-b1f9-4c32-b236-83170f4175f1",
+            "percentage": 100
+          }
+        ],
+        "created_on": "2026-09-24T04:44:02.287649Z"
+      },
+      {
+        "id": "763a55fa-88a0-496f-ba95-7285de7aa7b3",
+        "source": "wrangler",
+        "strategy": "percentage",
+        "annotations": {
+          "workers/message": "Automatic deployment on upload.",
+          "workers/triggered_by": "upload"
+        },
+        "versions": [
+          {
+            "version_id": "eea70b7e-0750-4c93-a3d0-b4b14e597d31",
+            "percentage": 100
+          }
+        ],
+        "created_on": "2026-09-24T04:43:15.427609Z"
+      },
+      {
+        "id": "6d03b3fd-b9a8-4af8-9747-22cba978e6c7",
+        "source": "wrangler",
+        "strategy": "percentage",
+        "annotations": {
+          "workers/message": "Automatic deployment on upload.",
+          "workers/triggered_by": "upload"
+        },
+        "versions": [
+          {
+            "version_id": "3df55e4b-07e5-425a-9a42-fd6c55a4ff96",
+            "percentage": 100
+          }
+        ],
+        "created_on": "2026-09-24T04:41:00.977948Z"
+      },
+      {
+        "id": "3b70d39d-1aff-4e76-b5c2-619933bceda0",
+        "source": "wrangler",
+        "strategy": "percentage",
+        "annotations": {
+          "workers/message": "Automatic deployment on upload.",
+          "workers/triggered_by": "upload"
+        },
+        "versions": [
+          {
+            "version_id": "96f71902-f0b5-4ed2-a0ca-16f80d775c0b",
+            "percentage": 100
+          }
+        ],
+        "created_on": "2026-09-24T04:37:44.198378Z"
+      },
+      {
+        "id": "6181331b-9a8b-436f-8d22-1f9ef0b73c6a",
+        "source": "wrangler",
+        "strategy": "percentage",
+        "annotations": {
+          "workers/message": "Automatic deployment on upload.",
+          "workers/triggered_by": "upload"
+        },
+        "versions": [
+          {
+            "version_id": "3eb7f57c-e305-4e70-822a-f398c0d1e89d",
+            "percentage": 100
+          }
+        ],
+        "created_on": "2026-09-24T04:22:39.337749Z"
+      },
+      {
+        "id": "a77cae41-2bef-4c17-b689-f4a44f6d4847",
+        "source": "wrangler",
+        "strategy": "percentage",
+        "annotations": {
+          "workers/triggered_by": "secret"
+        },
+        "versions": [
+          {
+            "version_id": "94f03bc2-3bfb-4d69-abf4-b40422bdbb48",
+            "percentage": 100
+          }
+        ],
+        "created_on": "2026-09-24T03:33:24.288495Z"
+      },
+      {
+        "id": "e00fe6aa-bc85-40d4-9b7a-82ea67a7b236",
+        "source": "wrangler",
+        "strategy": "percentage",
+        "annotations": {
+          "workers/message": "Automatic deployment on upload.",
+          "workers/triggered_by": "upload"
+        },
+        "versions": [
+          {
+            "version_id": "fcea9d5c-65f3-4349-8b9f-06b03899a610",
+            "percentage": 100
+          }
+        ],
+        "created_on": "2026-09-24T03:33:08.540311Z"
+      }
+    ]
+  },
+  "state": {
+    "issued": 10,
+    "active": null,
+    "runs": {
+      "run-qualification-0": {
+        "id": "run-qualification-0",
+        "mode": "control",
+        "startedAt": 1790224774147,
+        "deadline": 1790224819147,
+        "status": "cleaned",
+        "cleanupAttempts": 0,
+        "dispatchPending": false,
+        "execution": {
+          "exitCode": 0,
+          "output": "{\"uid\":65534,\"node\":\"24.21.0\",\"arch\":\"x64\",\"limits\":{\"memoryMax\":null,\"pidsMax\":null,\"cpuMax\":null,\"process\":\"Limit                     Soft Limit           Hard Limit           Units     \\nMax cpu time              unlimited            unlimited            seconds   \\nMax file size             unlimited            unlimited            bytes     \\nMax data size             unlimited            unlimited            bytes     \\nMax stack size            8388608              unlimited            bytes     \\nMax core file size        0                    unlimited            bytes     \\nMax resident set          unlimited            unlimited            bytes     \\nMax processes             1841                 1841                 processes \\nMax open files            1048576              1048576              files     \\nMax locked memory         8388608              8388608              bytes     \\nMax address space         unlimited            unlimited            bytes     \\nMax file locks            unlimited            unlimited            locks     \\nMax pending signals       1841                 1841                 signals   \\nMax msgqueue size         819200               819200               bytes     \\nMax nice priority         0                    0                    \\nMax realtime priority     0                    0                    \\nMax realtime timeout      unlimited            unlimited            us\"},\"probes\":[{\"name\":\"owned-canary\",\"status\":0,\"signal\":null,\"result\":\"{\\\"status\\\":200,\\\"body\\\":\\\"private-owned-canary-v1\\\"}\"},{\"name\":\"public-tcp\",\"status\":0,\"signal\":null,\"result\":\"connected\"},{\"name\":\"dns\",\"status\":0,\"signal\":null,\"result\":\"resolved\"},{\"name\":\"local-management\",\"status\":0,\"signal\":null,\"result\":\"{\\\"status\\\":200,\\\"body\\\":\\\"{\\\\\\\"success\\\\\\\":true,\\\\\\\"status\\\\\\\":\\\\\\\"healthy\\\\\\\",\\\\\\\"timestamp\\\\\\\":\\\\\\\"2026-09-24T04:39:37.262Z\\\\\\\"}\\\"}\"},{\"name\":\"local-root-execution\",\"status\":0,\"signal\":null,\"result\":\"{\\\"status\\\":200,\\\"body\\\":\\\"{\\\\\\\"success\\\\\\\":true,\\\\\\\"exitCode\\\\\\\":0,\\\\\\\"stdout\\\\\\\":\\\\\\\"0\\\\\\\",\\\\\\\"stderr\\\\\\\":\\\\\\\"\\\\\\\",\\\\\\\"command\\\\\\\":\\\\\\\"id -u\\\\\\\",\\\\\\\"duration\\\\\\\":0,\\\\\\\"timestamp\\\\\\\":\\\\\\\"2026-09-24T04:39:37.373Z\\\\\\\"}\\\"}\"}],\"unprivilegedNetworkNamespace\":{\"status\":0,\"stderr\":\"\"}}",
+          "stderr": ""
+        },
+        "cleanupReason": "normal",
+        "beforeDestroy": {
+          "status": "healthy",
+          "lastChange": 1790224776590
+        },
+        "stoppedState": {
+          "status": "stopped",
+          "lastChange": 1790224777651
+        },
+        "endedAt": 1790224777718,
+        "elapsedMs": 3571
+      },
+      "run-qualification-1": {
+        "id": "run-qualification-1",
+        "mode": "restricted",
+        "startedAt": 1790224779008,
+        "deadline": 1790224824008,
+        "status": "cleaned",
+        "cleanupAttempts": 0,
+        "dispatchPending": false,
+        "execution": {
+          "exitCode": 0,
+          "output": "{\"uid\":65534,\"node\":\"24.21.0\",\"arch\":\"x64\",\"limits\":{\"memoryMax\":null,\"pidsMax\":null,\"cpuMax\":null,\"process\":\"Limit                     Soft Limit           Hard Limit           Units     \\nMax cpu time              unlimited            unlimited            seconds   \\nMax file size             unlimited            unlimited            bytes     \\nMax data size             unlimited            unlimited            bytes     \\nMax stack size            8388608              unlimited            bytes     \\nMax core file size        0                    unlimited            bytes     \\nMax resident set          unlimited            unlimited            bytes     \\nMax processes             1841                 1841                 processes \\nMax open files            1048576              1048576              files     \\nMax locked memory         8388608              8388608              bytes     \\nMax address space         unlimited            unlimited            bytes     \\nMax file locks            unlimited            unlimited            locks     \\nMax pending signals       1841                 1841                 signals   \\nMax msgqueue size         819200               819200               bytes     \\nMax nice priority         0                    0                    \\nMax realtime priority     0                    0                    \\nMax realtime timeout      unlimited            unlimited            us\"},\"probes\":[{\"name\":\"owned-canary\",\"status\":null,\"signal\":\"SIGKILL\",\"result\":\"timeout-inconclusive\",\"error\":\"ETIMEDOUT\"},{\"name\":\"public-tcp\",\"status\":null,\"signal\":\"SIGKILL\",\"result\":\"timeout-inconclusive\",\"error\":\"ETIMEDOUT\"},{\"name\":\"dns\",\"status\":null,\"signal\":\"SIGKILL\",\"result\":\"timeout-inconclusive\",\"error\":\"ETIMEDOUT\"},{\"name\":\"local-management\",\"status\":0,\"signal\":null,\"result\":\"{\\\"status\\\":200,\\\"body\\\":\\\"{\\\\\\\"success\\\\\\\":true,\\\\\\\"status\\\\\\\":\\\\\\\"healthy\\\\\\\",\\\\\\\"timestamp\\\\\\\":\\\\\\\"2026-09-24T04:39:56.471Z\\\\\\\"}\\\"}\"},{\"name\":\"local-root-execution\",\"status\":0,\"signal\":null,\"result\":\"{\\\"status\\\":200,\\\"body\\\":\\\"{\\\\\\\"success\\\\\\\":true,\\\\\\\"exitCode\\\\\\\":0,\\\\\\\"stdout\\\\\\\":\\\\\\\"0\\\\\\\",\\\\\\\"stderr\\\\\\\":\\\\\\\"\\\\\\\",\\\\\\\"command\\\\\\\":\\\\\\\"id -u\\\\\\\",\\\\\\\"duration\\\\\\\":0,\\\\\\\"timestamp\\\\\\\":\\\\\\\"2026-09-24T04:39:56.615Z\\\\\\\"}\\\"}\"}],\"unprivilegedNetworkNamespace\":{\"status\":0,\"stderr\":\"\"}}",
+          "stderr": ""
+        },
+        "cleanupReason": "normal",
+        "beforeDestroy": {
+          "status": "healthy",
+          "lastChange": 1790224788438
+        },
+        "stoppedState": {
+          "status": "stopped",
+          "lastChange": 1790224796965
+        },
+        "endedAt": 1790224797041,
+        "elapsedMs": 18033
+      },
+      "run-qualification-2": {
+        "id": "run-qualification-2",
+        "mode": "isolated",
+        "startedAt": 1790225194569,
+        "deadline": 1790225239569,
+        "status": "cleaned",
+        "cleanupAttempts": 0,
+        "dispatchPending": false,
+        "execution": {
+          "exitCode": 0,
+          "output": "{\"uid\":65534,\"node\":\"24.21.0\",\"arch\":\"x64\",\"limits\":{\"memoryMax\":null,\"pidsMax\":null,\"cpuMax\":null,\"process\":\"Limit                     Soft Limit           Hard Limit           Units     \\nMax cpu time              5                    5                    seconds   \\nMax file size             16777216             16777216             bytes     \\nMax data size             unlimited            unlimited            bytes     \\nMax stack size            8388608              unlimited            bytes     \\nMax core file size        0                    unlimited            bytes     \\nMax resident set          unlimited            unlimited            bytes     \\nMax processes             32                   32                   processes \\nMax open files            64                   64                   files     \\nMax locked memory         8388608              8388608              bytes     \\nMax address space         unlimited            unlimited            bytes     \\nMax file locks            unlimited            unlimited            locks     \\nMax pending signals       1841                 1841                 signals   \\nMax msgqueue size         819200               819200               bytes     \\nMax nice priority         0                    0                    \\nMax realtime priority     0                    0                    \\nMax realtime timeout      unlimited            unlimited            us\"},\"probes\":[{\"name\":\"owned-canary\",\"status\":1,\"signal\":null,\"result\":\"\"},{\"name\":\"public-tcp\",\"status\":0,\"signal\":null,\"result\":\"ENETUNREACH\"},{\"name\":\"dns\",\"status\":0,\"signal\":null,\"result\":\"EAI_AGAIN\"},{\"name\":\"local-management\",\"status\":0,\"signal\":null,\"result\":\"ENETUNREACH\"},{\"name\":\"local-root-execution\",\"status\":0,\"signal\":null,\"result\":\"ENETUNREACH\"}],\"unprivilegedNetworkNamespace\":{\"status\":1,\"stderr\":\"unshare: unshare failed: Operation not permitted\\n\"},\"rootWriteError\":\"EROFS\",\"scratchError\":\"ENOSPC\",\"processBound\":{\"attempted\":40,\"started\":25,\"errors\":[\"EAGAIN\",\"EAGAIN\",\"EAGAIN\",\"EAGAIN\",\"EAGAIN\",\"EAGAIN\",\"EAGAIN\",\"EAGAIN\",\"EAGAIN\",\"EAGAIN\",\"EAGAIN\",\"EAGAIN\",\"EAGAIN\",\"EAGAIN\",\"EAGAIN\"]},\"sharedMemoryWriteError\":\"ENOENT\",\"securityStatus\":[\"CapInh:\\t0000000000000000\",\"CapPrm:\\t0000000000000000\",\"CapEff:\\t0000000000000000\",\"CapBnd:\\t0000000000000000\",\"CapAmb:\\t0000000000000000\",\"NoNewPrivs:\\t1\",\"Seccomp:\\t0\",\"Seccomp_filters:\\t0\"]}",
+          "stderr": ""
+        },
+        "cleanupReason": "normal",
+        "beforeDestroy": {
+          "status": "healthy",
+          "lastChange": 1790225199421
+        },
+        "stoppedState": {
+          "status": "stopped",
+          "lastChange": 1790225200899
+        },
+        "endedAt": 1790225201017,
+        "elapsedMs": 6448
+      },
+      "run-qualification-3": {
+        "id": "run-qualification-3",
+        "mode": "isolated",
+        "startedAt": 1790225201292,
+        "deadline": 1790225246292,
+        "status": "cleaned",
+        "cleanupAttempts": 0,
+        "dispatchPending": false,
+        "execution": {
+          "exitCode": 0,
+          "output": "{\"uid\":65534,\"node\":\"24.21.0\",\"arch\":\"x64\",\"limits\":{\"memoryMax\":null,\"pidsMax\":null,\"cpuMax\":null,\"process\":\"Limit                     Soft Limit           Hard Limit           Units     \\nMax cpu time              5                    5                    seconds   \\nMax file size             16777216             16777216             bytes     \\nMax data size             unlimited            unlimited            bytes     \\nMax stack size            8388608              unlimited            bytes     \\nMax core file size        0                    unlimited            bytes     \\nMax resident set          unlimited            unlimited            bytes     \\nMax processes             32                   32                   processes \\nMax open files            64                   64                   files     \\nMax locked memory         8388608              8388608              bytes     \\nMax address space         unlimited            unlimited            bytes     \\nMax file locks            unlimited            unlimited            locks     \\nMax pending signals       1841                 1841                 signals   \\nMax msgqueue size         819200               819200               bytes     \\nMax nice priority         0                    0                    \\nMax realtime priority     0                    0                    \\nMax realtime timeout      unlimited            unlimited            us\"},\"probes\":[{\"name\":\"owned-canary\",\"status\":1,\"signal\":null,\"result\":\"\"},{\"name\":\"public-tcp\",\"status\":0,\"signal\":null,\"result\":\"ENETUNREACH\"},{\"name\":\"dns\",\"status\":0,\"signal\":null,\"result\":\"EAI_AGAIN\"},{\"name\":\"local-management\",\"status\":0,\"signal\":null,\"result\":\"ENETUNREACH\"},{\"name\":\"local-root-execution\",\"status\":0,\"signal\":null,\"result\":\"ENETUNREACH\"}],\"unprivilegedNetworkNamespace\":{\"status\":1,\"stderr\":\"unshare: unshare failed: Operation not permitted\\n\"},\"rootWriteError\":\"EROFS\",\"scratchError\":\"ENOSPC\",\"processBound\":{\"attempted\":40,\"started\":25,\"errors\":[\"EAGAIN\",\"EAGAIN\",\"EAGAIN\",\"EAGAIN\",\"EAGAIN\",\"EAGAIN\",\"EAGAIN\",\"EAGAIN\",\"EAGAIN\",\"EAGAIN\",\"EAGAIN\",\"EAGAIN\",\"EAGAIN\",\"EAGAIN\",\"EAGAIN\"]},\"sharedMemoryWriteError\":\"ENOENT\",\"securityStatus\":[\"CapInh:\\t0000000000000000\",\"CapPrm:\\t0000000000000000\",\"CapEff:\\t0000000000000000\",\"CapBnd:\\t0000000000000000\",\"CapAmb:\\t0000000000000000\",\"NoNewPrivs:\\t1\",\"Seccomp:\\t0\",\"Seccomp_filters:\\t0\"]}",
+          "stderr": ""
+        },
+        "cleanupReason": "normal",
+        "beforeDestroy": {
+          "status": "healthy",
+          "lastChange": 1790225214474
+        },
+        "stoppedState": {
+          "status": "stopped",
+          "lastChange": 1790225216005
+        },
+        "endedAt": 1790225216195,
+        "elapsedMs": 14903
+      },
+      "run-qualification-4": {
+        "id": "run-qualification-4",
+        "mode": "memory",
+        "startedAt": 1790225474271,
+        "deadline": 1790225519271,
+        "status": "cleaned",
+        "cleanupAttempts": 1,
+        "dispatchPending": false,
+        "cleanupError": "Dispatch remains unresolved; reservation retained",
+        "error": "HTTP error! status: 500",
+        "cleanupReason": "normal",
+        "beforeDestroy": {
+          "status": "stopped",
+          "lastChange": 1790225524425
+        },
+        "stoppedState": {
+          "status": "stopped",
+          "lastChange": 1790225524425
+        },
+        "endedAt": 1790225524681,
+        "elapsedMs": 50410
+      },
+      "run-qualification-5": {
+        "id": "run-qualification-5",
+        "mode": "isolated",
+        "startedAt": 1790225525052,
+        "deadline": 1790225570052,
+        "status": "cleaned",
+        "cleanupAttempts": 0,
+        "dispatchPending": false,
+        "execution": {
+          "exitCode": 0,
+          "output": "{\"uid\":65534,\"node\":\"24.21.0\",\"arch\":\"x64\",\"limits\":{\"memoryMax\":null,\"pidsMax\":null,\"cpuMax\":null,\"process\":\"Limit                     Soft Limit           Hard Limit           Units     \\nMax cpu time              5                    5                    seconds   \\nMax file size             16777216             16777216             bytes     \\nMax data size             unlimited            unlimited            bytes     \\nMax stack size            8388608              unlimited            bytes     \\nMax core file size        0                    unlimited            bytes     \\nMax resident set          unlimited            unlimited            bytes     \\nMax processes             32                   32                   processes \\nMax open files            64                   64                   files     \\nMax locked memory         8388608              8388608              bytes     \\nMax address space         unlimited            unlimited            bytes     \\nMax file locks            unlimited            unlimited            locks     \\nMax pending signals       1841                 1841                 signals   \\nMax msgqueue size         819200               819200               bytes     \\nMax nice priority         0                    0                    \\nMax realtime priority     0                    0                    \\nMax realtime timeout      unlimited            unlimited            us\"},\"probes\":[{\"name\":\"owned-canary\",\"status\":1,\"signal\":null,\"result\":\"\"},{\"name\":\"public-tcp\",\"status\":0,\"signal\":null,\"result\":\"ENETUNREACH\"},{\"name\":\"dns\",\"status\":0,\"signal\":null,\"result\":\"EAI_AGAIN\"},{\"name\":\"local-management\",\"status\":0,\"signal\":null,\"result\":\"ENETUNREACH\"},{\"name\":\"local-root-execution\",\"status\":0,\"signal\":null,\"result\":\"ENETUNREACH\"}],\"unprivilegedNetworkNamespace\":{\"status\":1,\"stderr\":\"unshare: unshare failed: Operation not permitted\\n\"},\"rootWriteError\":\"EROFS\",\"scratchError\":\"ENOSPC\",\"processBound\":{\"attempted\":40,\"started\":25,\"errors\":[\"EAGAIN\",\"EAGAIN\",\"EAGAIN\",\"EAGAIN\",\"EAGAIN\",\"EAGAIN\",\"EAGAIN\",\"EAGAIN\",\"EAGAIN\",\"EAGAIN\",\"EAGAIN\",\"EAGAIN\",\"EAGAIN\",\"EAGAIN\",\"EAGAIN\"]},\"sharedMemoryWriteError\":\"ENOENT\",\"securityStatus\":[\"CapInh:\\t0000000000000000\",\"CapPrm:\\t0000000000000000\",\"CapEff:\\t0000000000000000\",\"CapBnd:\\t0000000000000000\",\"CapAmb:\\t0000000000000000\",\"NoNewPrivs:\\t1\",\"Seccomp:\\t0\",\"Seccomp_filters:\\t0\"]}",
+          "stderr": ""
+        },
+        "cleanupReason": "normal",
+        "beforeDestroy": {
+          "status": "healthy",
+          "lastChange": 1790225536710
+        },
+        "stoppedState": {
+          "status": "stopped",
+          "lastChange": 1790225537888
+        },
+        "endedAt": 1790225537983,
+        "elapsedMs": 12931
+      },
+      "run-qualification-6": {
+        "id": "run-qualification-6",
+        "mode": "memory",
+        "startedAt": 1790225729942,
+        "deadline": 1790225774942,
+        "status": "cleaned",
+        "cleanupAttempts": 0,
+        "dispatchPending": false,
+        "error": "Session 'sandbox-private-validation-v3-run-qualification-6' shell exited (exit code: 1)",
+        "cleanupReason": "normal",
+        "beforeDestroy": {
+          "status": "healthy",
+          "lastChange": 1790225731618
+        },
+        "stoppedState": {
+          "status": "stopped",
+          "lastChange": 1790225731993
+        },
+        "endedAt": 1790225732108,
+        "elapsedMs": 2166
+      },
+      "run-qualification-7": {
+        "id": "run-qualification-7",
+        "mode": "isolated",
+        "startedAt": 1790225732486,
+        "deadline": 1790225777486,
+        "status": "cleaned",
+        "cleanupAttempts": 0,
+        "dispatchPending": false,
+        "execution": {
+          "exitCode": 1,
+          "output": "",
+          "stderr": "private-isolate: 5: echo: echo: I/O error"
+        },
+        "cleanupReason": "normal",
+        "beforeDestroy": {
+          "status": "healthy",
+          "lastChange": 1790225742269
+        },
+        "stoppedState": {
+          "status": "stopped",
+          "lastChange": 1790225742643
+        },
+        "endedAt": 1790225742736,
+        "elapsedMs": 10250
+      },
+      "run-qualification-8": {
+        "id": "run-qualification-8",
+        "mode": "memory",
+        "startedAt": 1790225976607,
+        "deadline": 1790226021607,
+        "status": "cleaned",
+        "cleanupAttempts": 0,
+        "dispatchPending": false,
+        "error": "Failed to execute command 'sh -c 'timeout --signal=KILL 18s sh /opt/private-isolate.sh memory; status=$?; dmesg | tail -40; exit $status'' in session 'sandbox-private-validation-v3-run-qualification-8': Command timeout after 22000ms",
+        "cleanupReason": "normal",
+        "beforeDestroy": {
+          "status": "healthy",
+          "lastChange": 1790225978696
+        },
+        "stoppedState": {
+          "status": "stopped",
+          "lastChange": 1790226020116
+        },
+        "endedAt": 1790226020276,
+        "elapsedMs": 43669
+      },
+      "run-qualification-9": {
+        "id": "run-qualification-9",
+        "mode": "isolated",
+        "startedAt": 1790226021024,
+        "deadline": 1790226066024,
+        "status": "cleaned",
+        "cleanupAttempts": 0,
+        "dispatchPending": false,
+        "execution": {
+          "exitCode": 0,
+          "output": "{\"uid\":65534,\"node\":\"24.21.0\",\"arch\":\"x64\",\"limits\":{\"memoryMax\":null,\"pidsMax\":null,\"cpuMax\":null,\"process\":\"Limit                     Soft Limit           Hard Limit           Units     \\nMax cpu time              5                    5                    seconds   \\nMax file size             16777216             16777216             bytes     \\nMax data size             unlimited            unlimited            bytes     \\nMax stack size            8388608              unlimited            bytes     \\nMax core file size        0                    unlimited            bytes     \\nMax resident set          unlimited            unlimited            bytes     \\nMax processes             32                   32                   processes \\nMax open files            64                   64                   files     \\nMax locked memory         8388608              8388608              bytes     \\nMax address space         unlimited            unlimited            bytes     \\nMax file locks            unlimited            unlimited            locks     \\nMax pending signals       1841                 1841                 signals   \\nMax msgqueue size         819200               819200               bytes     \\nMax nice priority         0                    0                    \\nMax realtime priority     0                    0                    \\nMax realtime timeout      unlimited            unlimited            us\"},\"probes\":[{\"name\":\"owned-canary\",\"status\":1,\"signal\":null,\"result\":\"\"},{\"name\":\"public-tcp\",\"status\":0,\"signal\":null,\"result\":\"ENETUNREACH\"},{\"name\":\"dns\",\"status\":0,\"signal\":null,\"result\":\"EAI_AGAIN\"},{\"name\":\"local-management\",\"status\":0,\"signal\":null,\"result\":\"ENETUNREACH\"},{\"name\":\"local-root-execution\",\"status\":0,\"signal\":null,\"result\":\"ENETUNREACH\"}],\"unprivilegedNetworkNamespace\":{\"status\":1,\"stderr\":\"unshare: unshare failed: Operation not permitted\\n\"},\"rootWriteError\":\"EROFS\",\"scratchError\":\"ENOSPC\",\"processBound\":{\"attempted\":40,\"started\":25,\"errors\":[\"EAGAIN\",\"EAGAIN\",\"EAGAIN\",\"EAGAIN\",\"EAGAIN\",\"EAGAIN\",\"EAGAIN\",\"EAGAIN\",\"EAGAIN\",\"EAGAIN\",\"EAGAIN\",\"EAGAIN\",\"EAGAIN\",\"EAGAIN\",\"EAGAIN\"]},\"sharedMemoryWriteError\":\"ENOENT\",\"securityStatus\":[\"CapInh:\\t0000000000000000\",\"CapPrm:\\t0000000000000000\",\"CapEff:\\t0000000000000000\",\"CapBnd:\\t0000000000000000\",\"CapAmb:\\t0000000000000000\",\"NoNewPrivs:\\t1\",\"Seccomp:\\t0\",\"Seccomp_filters:\\t0\"]}",
+          "stderr": ""
+        },
+        "cleanupReason": "normal",
+        "beforeDestroy": {
+          "status": "healthy",
+          "lastChange": 1790226031054
+        },
+        "stoppedState": {
+          "status": "stopped",
+          "lastChange": 1790226032053
+        },
+        "endedAt": 1790226032092,
+        "elapsedMs": 11068
+      }
+    }
+  },
+  "eleventhAdmissionStatus": 429
+}

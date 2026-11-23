@@ -1,0 +1,15 @@
+{
+  "checkedAt": "2026-09-24T04:23:50.065Z",
+  "status": 200,
+  "success": true,
+  "id": "a03a0de4-bc04-4f6b-a183-32287814648f",
+  "name": "private-validation-preview-validationsandbox",
+  "image": "registry.cloudflare.com/9645bd52e640b8a4f40a3a55ff1dd75a/private-validation-preview-validationsandbox@sha256:cb0c08d50483d46c57fb433bc378b2afdfa43dea3c7fc8afc882bd825a89b8f7",
+  "network": {
+    "assign_ipv6": "none",
+    "assign_ipv4": "none",
+    "mode": "private"
+  },
+  "maxInstances": 1,
+  "instances": 1
+}

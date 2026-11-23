@@ -1,0 +1,101 @@
+{
+  "checkedAt": "2026-09-24T03:37:37.451Z",
+  "status": 200,
+  "state": {
+    "issued": 4,
+    "active": null,
+    "runs": {
+      "run-acceptance-0": {
+        "id": "run-acceptance-0",
+        "mode": "normal",
+        "startedAt": 1790220815126,
+        "deadline": 1790220860126,
+        "status": "cleaned",
+        "cleanupAttempts": 0,
+        "execution": {
+          "exitCode": 137,
+          "output": "{\"node\":\"24.21.0\",\"platform\":\"linux\",\"arch\":\"x64\",\"uid\":65534,\"fresh\":true,\"probes\":[{\"kind\":\"tcp\",\"host\":\"1.1.1.1\",\"port\":443,\"result\":\"timeout-inconclusive\"},{\"kind\":\"tcp\",\"host\":\"1.1.1.1\",\"port\":53,\"result\":\"timeout-inconclusive\"},{\"kind\":\"tcp\",\"host\":\"169.254.169.254\",\"port\":80,\"result\":\"timeout-inconclusive\"},{\"kind\":\"tcp\",\"host\":\"10.0.0.1\",\"port\":80,\"result\":\"ECONNREFUSED\"},{\"kind\":\"https\",\"result\":\"TimeoutError\"},{\"kind\":\"dns\",\"result\":\"timeout-inconclusive\"}]}\n",
+          "stderr": ""
+        },
+        "cleanupReason": "normal",
+        "beforeDestroy": {
+          "status": "healthy",
+          "lastChange": 1790220826152
+        },
+        "stoppedState": {
+          "status": "stopped",
+          "lastChange": 1790220849886
+        },
+        "endedAt": 1790220850188,
+        "elapsedMs": 35062
+      },
+      "run-acceptance-1": {
+        "id": "run-acceptance-1",
+        "mode": "abandon",
+        "startedAt": 1790220899139,
+        "deadline": 1790220944139,
+        "status": "cleaned",
+        "cleanupAttempts": 0,
+        "cleanupReason": "deadline-reaper",
+        "beforeDestroy": {
+          "status": "healthy",
+          "lastChange": 1790220902421
+        },
+        "stoppedState": {
+          "status": "stopped",
+          "lastChange": 1790220944262
+        },
+        "endedAt": 1790220944396,
+        "elapsedMs": 45257
+      },
+      "run-acceptance-2": {
+        "id": "run-acceptance-2",
+        "mode": "cleanup-fault",
+        "startedAt": 1790220945702,
+        "deadline": 1790220990702,
+        "status": "cleaned",
+        "cleanupAttempts": 0,
+        "execution": {
+          "exitCode": 137,
+          "output": "{\"node\":\"24.21.0\",\"platform\":\"linux\",\"arch\":\"x64\",\"uid\":65534,\"fresh\":true,\"probes\":[{\"kind\":\"tcp\",\"host\":\"1.1.1.1\",\"port\":443,\"result\":\"timeout-inconclusive\"},{\"kind\":\"tcp\",\"host\":\"1.1.1.1\",\"port\":53,\"result\":\"timeout-inconclusive\"},{\"kind\":\"tcp\",\"host\":\"169.254.169.254\",\"port\":80,\"result\":\"timeout-inconclusive\"},{\"kind\":\"tcp\",\"host\":\"10.0.0.1\",\"port\":80,\"result\":\"ECONNREFUSED\"},{\"kind\":\"https\",\"result\":\"TimeoutError\"},{\"kind\":\"dns\",\"result\":\"timeout-inconclusive\"}]}\n",
+          "stderr": ""
+        },
+        "cleanupReason": "deadline-reaper",
+        "beforeDestroy": {
+          "status": "healthy",
+          "lastChange": 1790220951752
+        },
+        "stoppedState": {
+          "status": "stopped",
+          "lastChange": 1790220990870
+        },
+        "endedAt": 1790220990961,
+        "elapsedMs": 45259
+      },
+      "run-acceptance-3": {
+        "id": "run-acceptance-3",
+        "mode": "normal",
+        "startedAt": 1790220992409,
+        "deadline": 1790221037409,
+        "status": "cleaned",
+        "cleanupAttempts": 0,
+        "execution": {
+          "exitCode": 137,
+          "output": "{\"node\":\"24.21.0\",\"platform\":\"linux\",\"arch\":\"x64\",\"uid\":65534,\"fresh\":true,\"probes\":[{\"kind\":\"tcp\",\"host\":\"1.1.1.1\",\"port\":443,\"result\":\"timeout-inconclusive\"},{\"kind\":\"tcp\",\"host\":\"1.1.1.1\",\"port\":53,\"result\":\"timeout-inconclusive\"},{\"kind\":\"tcp\",\"host\":\"169.254.169.254\",\"port\":80,\"result\":\"timeout-inconclusive\"},{\"kind\":\"tcp\",\"host\":\"10.0.0.1\",\"port\":80,\"result\":\"ECONNREFUSED\"},{\"kind\":\"https\",\"result\":\"TimeoutError\"},{\"kind\":\"dns\",\"result\":\"timeout-inconclusive\"}]}\n",
+          "stderr": ""
+        },
+        "cleanupReason": "normal",
+        "beforeDestroy": {
+          "status": "healthy",
+          "lastChange": 1790221003385
+        },
+        "stoppedState": {
+          "status": "stopped",
+          "lastChange": 1790221026702
+        },
+        "endedAt": 1790221026853,
+        "elapsedMs": 34444
+      }
+    }
+  }
+}

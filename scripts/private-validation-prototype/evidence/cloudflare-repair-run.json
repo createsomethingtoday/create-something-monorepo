@@ -1,0 +1,273 @@
+{
+  "schema": "private-cloudflare-acceptance/v1",
+  "url": "https://private-validation-preview.createsomething.workers.dev",
+  "startedAt": "2026-09-24T04:23:24.464Z",
+  "checks": [
+    {
+      "name": "anonymous denied",
+      "actual": 401,
+      "expected": 401,
+      "passed": true
+    },
+    {
+      "name": "unknown caller authority denied",
+      "actual": 400,
+      "expected": 400,
+      "passed": true
+    },
+    {
+      "name": "admit 0",
+      "actual": true,
+      "expected": true,
+      "passed": true
+    },
+    {
+      "name": "duplicate 0",
+      "actual": true,
+      "expected": true,
+      "passed": true
+    },
+    {
+      "name": "conflicting duplicate 0",
+      "actual": 409,
+      "expected": 409,
+      "passed": true
+    },
+    {
+      "name": "cleanup 0",
+      "actual": "cleaned",
+      "expected": "cleaned",
+      "passed": true
+    },
+    {
+      "name": "no active reservation 0",
+      "actual": null,
+      "expected": null,
+      "passed": true
+    },
+    {
+      "name": "probe exit 0",
+      "expected": 0,
+      "passed": false
+    },
+    {
+      "name": "admit 1",
+      "actual": true,
+      "expected": true,
+      "passed": true
+    },
+    {
+      "name": "duplicate 1",
+      "actual": true,
+      "expected": true,
+      "passed": true
+    },
+    {
+      "name": "conflicting duplicate 1",
+      "actual": 409,
+      "expected": 409,
+      "passed": true
+    },
+    {
+      "name": "cleanup 1",
+      "actual": "cleaned",
+      "expected": "cleaned",
+      "passed": true
+    },
+    {
+      "name": "no active reservation 1",
+      "actual": null,
+      "expected": null,
+      "passed": true
+    },
+    {
+      "name": "independent reaper 1",
+      "actual": "deadline-reaper",
+      "expected": "deadline-reaper",
+      "passed": true
+    },
+    {
+      "name": "admit 2",
+      "actual": true,
+      "expected": true,
+      "passed": true
+    },
+    {
+      "name": "duplicate 2",
+      "actual": true,
+      "expected": true,
+      "passed": true
+    },
+    {
+      "name": "conflicting duplicate 2",
+      "actual": 409,
+      "expected": 409,
+      "passed": true
+    },
+    {
+      "name": "cleanup 2",
+      "actual": "cleaned",
+      "expected": "cleaned",
+      "passed": true
+    },
+    {
+      "name": "no active reservation 2",
+      "actual": null,
+      "expected": null,
+      "passed": true
+    },
+    {
+      "name": "independent reaper 2",
+      "actual": "deadline-reaper",
+      "expected": "deadline-reaper",
+      "passed": true
+    },
+    {
+      "name": "admit 3",
+      "actual": true,
+      "expected": true,
+      "passed": true
+    },
+    {
+      "name": "duplicate 3",
+      "actual": true,
+      "expected": true,
+      "passed": true
+    },
+    {
+      "name": "conflicting duplicate 3",
+      "actual": 409,
+      "expected": 409,
+      "passed": true
+    },
+    {
+      "name": "cleanup 3",
+      "actual": "cleaned",
+      "expected": "cleaned",
+      "passed": true
+    },
+    {
+      "name": "no active reservation 3",
+      "actual": null,
+      "expected": null,
+      "passed": true
+    },
+    {
+      "name": "probe exit 3",
+      "actual": 0,
+      "expected": 0,
+      "passed": true
+    },
+    {
+      "name": "non-renewing experiment budget",
+      "actual": 429,
+      "expected": 429,
+      "passed": true
+    }
+  ],
+  "observed": [
+    {
+      "id": "run-acceptance-0",
+      "mode": "normal",
+      "startedAt": 1790223805835,
+      "deadline": 1790223850835,
+      "status": "cleaned",
+      "cleanupAttempts": 0,
+      "dispatchPending": false,
+      "error": "HTTP error! status: 500",
+      "cleanupReason": "normal",
+      "beforeDestroy": {
+        "status": "healthy",
+        "lastChange": 1790223808661
+      },
+      "stoppedState": {
+        "status": "stopped",
+        "lastChange": 1790223822222
+      },
+      "endedAt": 1790223822257,
+      "elapsedMs": 16422
+    },
+    {
+      "id": "run-acceptance-1",
+      "mode": "abandon",
+      "startedAt": 1790223823210,
+      "deadline": 1790223868210,
+      "status": "cleaned",
+      "cleanupAttempts": 0,
+      "dispatchPending": false,
+      "cleanupReason": "deadline-reaper",
+      "beforeDestroy": {
+        "status": "healthy",
+        "lastChange": 1790223825331
+      },
+      "stoppedState": {
+        "status": "stopped",
+        "lastChange": 1790223868374
+      },
+      "endedAt": 1790223868414,
+      "elapsedMs": 45204
+    },
+    {
+      "id": "run-acceptance-2",
+      "mode": "cleanup-fault",
+      "startedAt": 1790223870129,
+      "deadline": 1790223915129,
+      "status": "cleaned",
+      "cleanupAttempts": 0,
+      "dispatchPending": false,
+      "execution": {
+        "exitCode": 0,
+        "output": "{\"node\":\"24.21.0\",\"platform\":\"linux\",\"arch\":\"x64\",\"uid\":65534,\"fresh\":true,\"probes\":[{\"kind\":\"tcp\",\"host\":\"1.1.1.1\",\"port\":443,\"result\":\"timeout-inconclusive\",\"childSignal\":\"SIGKILL\",\"childStatus\":null},{\"kind\":\"tcp\",\"host\":\"1.1.1.1\",\"port\":53,\"result\":\"timeout-inconclusive\",\"childSignal\":\"SIGKILL\",\"childStatus\":null},{\"kind\":\"tcp\",\"host\":\"169.254.169.254\",\"port\":80,\"result\":\"timeout-inconclusive\",\"childSignal\":\"SIGKILL\",\"childStatus\":null},{\"kind\":\"tcp\",\"host\":\"10.0.0.1\",\"port\":80,\"result\":\"ECONNREFUSED\",\"childSignal\":null,\"childStatus\":0},{\"kind\":\"https\",\"result\":\"timeout-inconclusive\",\"childSignal\":\"SIGKILL\",\"childStatus\":null},{\"kind\":\"dns\",\"result\":\"timeout-inconclusive\",\"childSignal\":\"SIGKILL\",\"childStatus\":null}]}\n",
+        "stderr": ""
+      },
+      "cleanupReason": "deadline-reaper",
+      "beforeDestroy": {
+        "status": "healthy",
+        "lastChange": 1790223875985
+      },
+      "stoppedState": {
+        "status": "stopped",
+        "lastChange": 1790223915354
+      },
+      "endedAt": 1790223917282,
+      "elapsedMs": 47153
+    },
+    {
+      "id": "run-acceptance-3",
+      "mode": "normal",
+      "startedAt": 1790223919264,
+      "deadline": 1790223964264,
+      "status": "cleaned",
+      "cleanupAttempts": 0,
+      "dispatchPending": false,
+      "execution": {
+        "exitCode": 0,
+        "output": "{\"node\":\"24.21.0\",\"platform\":\"linux\",\"arch\":\"x64\",\"uid\":65534,\"fresh\":true,\"probes\":[{\"kind\":\"tcp\",\"host\":\"1.1.1.1\",\"port\":443,\"result\":\"timeout-inconclusive\",\"childSignal\":\"SIGKILL\",\"childStatus\":null},{\"kind\":\"tcp\",\"host\":\"1.1.1.1\",\"port\":53,\"result\":\"timeout-inconclusive\",\"childSignal\":\"SIGKILL\",\"childStatus\":null},{\"kind\":\"tcp\",\"host\":\"169.254.169.254\",\"port\":80,\"result\":\"timeout-inconclusive\",\"childSignal\":\"SIGKILL\",\"childStatus\":null},{\"kind\":\"tcp\",\"host\":\"10.0.0.1\",\"port\":80,\"result\":\"ECONNREFUSED\",\"childSignal\":null,\"childStatus\":0},{\"kind\":\"https\",\"result\":\"timeout-inconclusive\",\"childSignal\":\"SIGKILL\",\"childStatus\":null},{\"kind\":\"dns\",\"result\":\"timeout-inconclusive\",\"childSignal\":\"SIGKILL\",\"childStatus\":null}]}\n",
+        "stderr": ""
+      },
+      "cleanupReason": "normal",
+      "beforeDestroy": {
+        "status": "healthy",
+        "lastChange": 1790223925862
+      },
+      "stoppedState": {
+        "status": "stopped",
+        "lastChange": 1790223929620
+      },
+      "endedAt": 1790223929688,
+      "elapsedMs": 10424
+    }
+  ],
+  "cloudflareBillingVerified": false,
+  "customerPackagesAccepted": false,
+  "sourceSha256": {
+    "worker.mjs": "4857482b62b131739dd5076b6c96998badb9c9a87ad5af5cf93f4900ccc99ea6",
+    "policy.mjs": "c9bdac95ed25c28cd61d9ab8761a274a746b72f5c4ddb998b532c074c2851e7b",
+    "probe.mjs": "e5124c1a81a6adf1f83af08906c3969e3b9c45b2d1daf8cebf916e89b97e30a8",
+    "wrangler.jsonc": "abb2dc9190460cfc1e527a776446efbf108de0b6d54f26f71e80fcc234abd09f",
+    "Dockerfile": "c183f1cd40c4f768b53598bf54f48f637f49c8709d9f4c0c56a41dc3b0566e8c"
+  },
+  "controlChecksPassed": false,
+  "networkQualification": "requires-review-of-recorded-probes",
+  "endedAt": "2026-09-24T04:25:30.312Z"
+}
