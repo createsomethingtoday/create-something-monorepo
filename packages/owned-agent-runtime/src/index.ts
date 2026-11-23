@@ -42,6 +42,10 @@ export type {
 export { createOwnedAgentWorker } from './worker.js';
 export { createControlRunService, MemoryControlRunRepository } from './control.js';
 export { createControlRunWorker } from './control-worker.js';
+export { createControlGraphExplanationReader, createD1ControlGraphExplanationReader } from './control-graph-explanation.js';
+export type { ControlGraphExplanation, ControlGraphExplanationReader, ControlGraphExplanationDependencies, ControlGraphSources, ControlGraphLinearObservation, ControlGraphSubstrateObservation } from './control-graph-explanation.js';
+export { RegisteredControlGraphBindings } from './control-graph-bindings.js';
+export type { ControlGraphBinding, ControlGraphBindingAuthority, ControlGraphBindingRequest } from './control-graph-bindings.js';
 export { D1WorkflowRuntimeCheckpointStore } from './workflow-runtime-store.js';
 export { D1WorkflowRuntimeProofReader } from './workflow-runtime-proof-projection.js';
 export {

@@ -32,6 +32,10 @@ baseline evidence and its owning release path.
 
 ## Contract
 
+The [read-only graph explanation candidate](docs/control-graph.md) connects scoped
+Control proof to explicit Linear/Substrate bindings. Its real-run acceptance is
+held pending an existing authorized recorded run and source adapter configuration.
+
 - `GET /health`
 - `GET /v1/agents`
 - `POST /v1/agents/:agentId/messages` with `{ "query": "...", "conversation_id": "optional" }`

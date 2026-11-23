@@ -1,4 +1,5 @@
 import type { WorkflowRuntimeHandoffProofReader } from './workflow-runtime-handoff-proof.js';
+import type { ControlGraphExplanationReader } from './control-graph-explanation.js';
 import { z } from 'zod';
 
 import {
@@ -19,6 +20,7 @@ type ControlRunService = ReturnType<typeof createControlRunService>;
 export const CONTROL_RUN_API_OPERATIONS = Object.freeze([
   'get',
   'proof',
+  'explain',
   'start',
   'approve',
   'reject',
@@ -174,8 +176,12 @@ function rpcControlError(id: string | number | null | undefined, error: unknown)
   if (error instanceof ControlRunPolicyError) return rpcError(id, -32003, error.code);
   if (error instanceof ControlRunValidationError) return rpcError(id, -32602, error.code);
   if (error instanceof ControlRunConflictError) return rpcError(id, -32009, error.code);
+  if (error instanceof ControlExplanationUnavailableError)
+    return rpcError(id, -32603, 'control_explanation_unavailable', 503);
   return rpcError(id, -32603, 'control_state_unavailable');
 }
+
+class ControlExplanationUnavailableError extends Error {}
 
 function toolResult(run: unknown) {
   return {
@@ -283,6 +289,23 @@ function toolDefinitions() {
       }
     },
     {
+      name: 'control_run_explain',
+      description:
+        'Explain a run blocker, next owner, and required evidence inside the authenticated Control scope.',
+      annotations: {
+        readOnlyHint: true,
+        destructiveHint: false,
+        idempotentHint: true,
+        openWorldHint: false
+      },
+      inputSchema: {
+        type: 'object',
+        properties: { run_id: { type: 'string', minLength: 1, maxLength: 240 } },
+        required: ['run_id'],
+        additionalProperties: false
+      }
+    },
+    {
       name: 'control_run_start',
       description: 'Queue a run against an active frozen Control activation.',
       inputSchema: {
@@ -312,6 +335,7 @@ export function createControlRunWorker(dependencies: {
   service: ControlRunService;
   admission?: ControlRunAdmission;
   proofs?: WorkflowRuntimeHandoffProofReader;
+  explanations?: ControlGraphExplanationReader;
 }) {
   async function proof(context: ControlRequestContext, runId: string) {
     await dependencies.service.get(
@@ -324,6 +348,25 @@ export function createControlRunWorker(dependencies: {
     const result = await dependencies.proofs.find({ scope: context.scope, runId });
     if (!result || result.runtime.run.id !== runId) throw new Error('control_proof_unavailable');
     return result;
+  }
+
+  async function explanation(context: ControlRequestContext, runId: string) {
+    // Authorization precedes optional configuration checks and all graph reads.
+    await dependencies.service.get(
+      context.scope,
+      context.actor,
+      runId,
+      context.schedulerActivationId
+    );
+    if (!dependencies.explanations) throw new ControlExplanationUnavailableError();
+    let result;
+    try {
+      result = await dependencies.explanations.find({ scope: context.scope, runId });
+    } catch {
+      throw new ControlExplanationUnavailableError();
+    }
+    if (!result || result.run?.id !== runId) throw new ControlExplanationUnavailableError();
+    return { ...result, scopeProvenance: 'identity_and_scoped_control_reader' as const };
   }
 
   async function context(request: Request, operation: string) {
@@ -361,6 +404,7 @@ export function createControlRunWorker(dependencies: {
     if (!url.pathname.startsWith('/v1/control/')) return undefined;
     const runRoute = url.pathname.match(/^\/v1\/control\/runs\/([^/]+)$/);
     const proofRoute = url.pathname.match(/^\/v1\/control\/runs\/([^/]+)\/proof$/);
+    const explanationRoute = url.pathname.match(/^\/v1\/control\/runs\/([^/]+)\/explanation$/);
     const actionRoute = url.pathname.match(/^\/v1\/control\/runs\/([^/]+)\/actions$/);
     const processRoute = url.pathname.match(/^\/v1\/control\/runs\/([^/]+)\/process$/);
     const operation =
@@ -372,7 +416,9 @@ export function createControlRunWorker(dependencies: {
             ? 'action'
             : proofRoute
               ? 'proof'
-              : 'get';
+              : explanationRoute
+                ? 'explain'
+                : 'get';
     const access = await context(request, operation);
     if ('denied' in access) {
       if (access.retryAfter) access.denied.headers.set('retry-after', '60');
@@ -380,6 +426,12 @@ export function createControlRunWorker(dependencies: {
     }
     const { scope, actor } = access.resolved;
 
+    if (request.method === 'GET' && explanationRoute) {
+      if (url.search) return response({ error: 'invalid_request' }, 400);
+      const parsed = z.string().trim().min(1).max(240).safeParse(decodeURIComponent(explanationRoute[1]));
+      if (!parsed.success) return response({ error: 'invalid_request' }, 400);
+      return response({ explanation: await explanation(access.resolved, parsed.data) });
+    }
     if (request.method === 'GET' && proofRoute) {
       return response({ proof: await proof(access.resolved, decodeURIComponent(proofRoute[1])) });
     }
@@ -467,6 +519,15 @@ export function createControlRunWorker(dependencies: {
         return rpcError(message.id, -32602, 'Invalid tool arguments');
       }
       const values = args as Record<string, unknown>;
+      if (name === 'control_run_explain') {
+        const parsed = z.object({ run_id: z.string().trim().min(1).max(240) }).strict().safeParse(values);
+        if (!parsed.success) return rpcError(message.id, -32602, 'Invalid tool arguments');
+        const result = { explanation: await explanation(access.resolved, parsed.data.run_id) };
+        return rpc(message.id, {
+          content: [{ type: 'text', text: JSON.stringify(result) }],
+          structuredContent: result
+        });
+      }
       if (name === 'control_run_proof') {
         const parsed = z
           .object({ run_id: z.string().trim().min(1).max(240) })
@@ -531,6 +592,8 @@ export function createControlRunWorker(dependencies: {
         if (error instanceof ControlRunPolicyError) return response({ error: error.code }, 403);
         if (error instanceof ControlRunValidationError) return response({ error: error.code }, 400);
         if (error instanceof ControlRunConflictError) return response({ error: error.code }, 409);
+        if (error instanceof ControlExplanationUnavailableError)
+          return response({ error: 'control_explanation_unavailable' }, 503);
         return response({ error: 'control_state_unavailable' }, 503);
       }
     }
