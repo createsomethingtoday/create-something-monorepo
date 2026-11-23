@@ -1,1 +1,4 @@
 Local Substrate ontology capability, CRE-2549. Discover types in a source directory, edit their names and definitions in plain language, and reconcile the vocabulary as sources change. Keep evidence, stable identifiers, and operator edits. Test replay, correction, withdrawal, and unattended growth using local fixtures. Deliver a working CLI and independent review in this worktree. No paid services or deployment.
+
+## Duplicate review pilot (CRE-2550)
+Compare finite-choice suggestions from Jev and OpenAI Decisions on identical labeled synthetic records. Report incorrect merge suggestions and missed duplicates separately. Keep evidence bounded, expose the exact proposed inputs for local inspection, and preserve vocabulary state. Measure elapsed provider time; human time requires a human study. No deployment.

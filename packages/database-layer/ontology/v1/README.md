@@ -154,3 +154,24 @@ survive subsequent extraction. Types without remaining evidence disappear unless
 curated, in which case an empty evidence list records their status. Use the ID to
 disambiguate names. Learned terms are descriptive candidates separate from the
 versioned topology contract. Promotion into that contract uses its existing review process.
+
+### Review potential duplicate types
+
+From this monorepo checkout, select one discovered type and the IDs of up to eight
+plausible matches. Preview the evidence locally first:
+
+```sh
+node scripts/ontology.mjs vocabulary review ./vocabulary.json type:implementation-partner type:delivery-partner type:software-vendor
+```
+
+Append `--provider jev` to send the displayed packet (IDs, names, descriptions
+and short source excerpts) to Jev using `TYPESAFE_API_KEY`. OpenAI Decisions is
+available with `--provider openai` and `OPENAI_API_KEY`. Use data permitted
+for the selected provider. The command returns a candidate ID or `no_match`.
+The hash binds the selection to the displayed evidence. Concurrent edits to
+the selected evidence invalidate the response. No vocabulary edits are made.
+Watch and sync keep their local behavior.
+
+Run `node scripts/evaluate-vocabulary-shadow.mjs` for the synthetic exact-name
+baseline. Append `--live jev` or `--live openai` to evaluate identical cases
+against one provider. Review time requires a separate operator study.

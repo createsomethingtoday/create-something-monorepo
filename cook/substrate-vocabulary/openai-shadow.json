@@ -1,0 +1,324 @@
+{
+  "schemaVersion": 1,
+  "dataset": "synthetic-vocabulary-v1",
+  "live": true,
+  "provider": "openai",
+  "operatorTime": {
+    "measured": false,
+    "value": null
+  },
+  "limitations": [
+    "Small synthetic fixture, not a production accuracy estimate.",
+    "Elapsed time measures script/ranker wall time, not operator effort.",
+    "A wrong candidate for a true duplicate counts as both an incorrect merge and a missed duplicate.",
+    "Provider errors are reported separately and excluded from decision counts."
+  ],
+  "baseline": {
+    "elapsedMs": 0.22,
+    "totalCases": 12,
+    "scoredCases": 12,
+    "correct": 5,
+    "incorrectMerges": 3,
+    "missedDuplicates": 6,
+    "providerErrors": 0,
+    "results": [
+      {
+        "id": "v01",
+        "expected": "c01",
+        "choice": "c01",
+        "model": "exact-normalized-name",
+        "correct": true,
+        "incorrectMerge": false,
+        "missedDuplicate": false,
+        "elapsedMs": 0.12,
+        "providerError": null
+      },
+      {
+        "id": "v02",
+        "expected": "c03",
+        "choice": "c03",
+        "model": "exact-normalized-name",
+        "correct": true,
+        "incorrectMerge": false,
+        "missedDuplicate": false,
+        "elapsedMs": 0.01,
+        "providerError": null
+      },
+      {
+        "id": "v03",
+        "expected": "c05",
+        "choice": "no_match",
+        "model": "exact-normalized-name",
+        "correct": false,
+        "incorrectMerge": false,
+        "missedDuplicate": true,
+        "elapsedMs": 0.02,
+        "providerError": null
+      },
+      {
+        "id": "v04",
+        "expected": "c07",
+        "choice": "no_match",
+        "model": "exact-normalized-name",
+        "correct": false,
+        "incorrectMerge": false,
+        "missedDuplicate": true,
+        "elapsedMs": 0.01,
+        "providerError": null
+      },
+      {
+        "id": "v05",
+        "expected": "c10",
+        "choice": "c09",
+        "model": "exact-normalized-name",
+        "correct": false,
+        "incorrectMerge": true,
+        "missedDuplicate": true,
+        "elapsedMs": 0.01,
+        "providerError": null
+      },
+      {
+        "id": "v06",
+        "expected": "c11",
+        "choice": "no_match",
+        "model": "exact-normalized-name",
+        "correct": false,
+        "incorrectMerge": false,
+        "missedDuplicate": true,
+        "elapsedMs": 0.01,
+        "providerError": null
+      },
+      {
+        "id": "v07",
+        "expected": "no_match",
+        "choice": "no_match",
+        "model": "exact-normalized-name",
+        "correct": true,
+        "incorrectMerge": false,
+        "missedDuplicate": false,
+        "elapsedMs": 0.01,
+        "providerError": null
+      },
+      {
+        "id": "v08",
+        "expected": "no_match",
+        "choice": "no_match",
+        "model": "exact-normalized-name",
+        "correct": true,
+        "incorrectMerge": false,
+        "missedDuplicate": false,
+        "elapsedMs": 0.01,
+        "providerError": null
+      },
+      {
+        "id": "v09",
+        "expected": "c17",
+        "choice": "no_match",
+        "model": "exact-normalized-name",
+        "correct": false,
+        "incorrectMerge": false,
+        "missedDuplicate": true,
+        "elapsedMs": 0.01,
+        "providerError": null
+      },
+      {
+        "id": "v10",
+        "expected": "c20",
+        "choice": "c19",
+        "model": "exact-normalized-name",
+        "correct": false,
+        "incorrectMerge": true,
+        "missedDuplicate": true,
+        "elapsedMs": 0.01,
+        "providerError": null
+      },
+      {
+        "id": "v11",
+        "expected": "no_match",
+        "choice": "no_match",
+        "model": "exact-normalized-name",
+        "correct": true,
+        "incorrectMerge": false,
+        "missedDuplicate": false,
+        "elapsedMs": 0,
+        "providerError": null
+      },
+      {
+        "id": "v12",
+        "expected": "no_match",
+        "choice": "c21",
+        "model": "exact-normalized-name",
+        "correct": false,
+        "incorrectMerge": true,
+        "missedDuplicate": false,
+        "elapsedMs": 0,
+        "providerError": null
+      }
+    ]
+  },
+  "shadow": {
+    "elapsedMs": 3149.5,
+    "totalCases": 12,
+    "scoredCases": 1,
+    "correct": 1,
+    "incorrectMerges": 0,
+    "missedDuplicates": 0,
+    "providerErrors": 11,
+    "results": [
+      {
+        "id": "v01",
+        "expected": "c01",
+        "choice": null,
+        "correct": false,
+        "incorrectMerge": false,
+        "missedDuplicate": false,
+        "elapsedMs": 1358.39,
+        "providerError": {
+          "name": "DecisionTransportError",
+          "message": "Decision provider http failure"
+        }
+      },
+      {
+        "id": "v02",
+        "expected": "c03",
+        "choice": null,
+        "correct": false,
+        "incorrectMerge": false,
+        "missedDuplicate": false,
+        "elapsedMs": 146.3,
+        "providerError": {
+          "name": "DecisionTransportError",
+          "message": "Decision provider http failure"
+        }
+      },
+      {
+        "id": "v03",
+        "expected": "c05",
+        "choice": null,
+        "correct": false,
+        "incorrectMerge": false,
+        "missedDuplicate": false,
+        "elapsedMs": 162.49,
+        "providerError": {
+          "name": "DecisionTransportError",
+          "message": "Decision provider http failure"
+        }
+      },
+      {
+        "id": "v04",
+        "expected": "c07",
+        "choice": null,
+        "correct": false,
+        "incorrectMerge": false,
+        "missedDuplicate": false,
+        "elapsedMs": 523.51,
+        "providerError": {
+          "name": "DecisionTransportError",
+          "message": "Decision provider http failure"
+        }
+      },
+      {
+        "id": "v05",
+        "expected": "c10",
+        "choice": null,
+        "correct": false,
+        "incorrectMerge": false,
+        "missedDuplicate": false,
+        "elapsedMs": 138.39,
+        "providerError": {
+          "name": "DecisionTransportError",
+          "message": "Decision provider http failure"
+        }
+      },
+      {
+        "id": "v06",
+        "expected": "c11",
+        "choice": null,
+        "correct": false,
+        "incorrectMerge": false,
+        "missedDuplicate": false,
+        "elapsedMs": 131.11,
+        "providerError": {
+          "name": "DecisionTransportError",
+          "message": "Decision provider http failure"
+        }
+      },
+      {
+        "id": "v07",
+        "expected": "no_match",
+        "choice": null,
+        "correct": false,
+        "incorrectMerge": false,
+        "missedDuplicate": false,
+        "elapsedMs": 129.23,
+        "providerError": {
+          "name": "DecisionTransportError",
+          "message": "Decision provider http failure"
+        }
+      },
+      {
+        "id": "v08",
+        "expected": "no_match",
+        "choice": null,
+        "correct": false,
+        "incorrectMerge": false,
+        "missedDuplicate": false,
+        "elapsedMs": 134.79,
+        "providerError": {
+          "name": "DecisionTransportError",
+          "message": "Decision provider http failure"
+        }
+      },
+      {
+        "id": "v09",
+        "expected": "c17",
+        "choice": null,
+        "correct": false,
+        "incorrectMerge": false,
+        "missedDuplicate": false,
+        "elapsedMs": 166.09,
+        "providerError": {
+          "name": "DecisionTransportError",
+          "message": "Decision provider http failure"
+        }
+      },
+      {
+        "id": "v10",
+        "expected": "c20",
+        "choice": null,
+        "correct": false,
+        "incorrectMerge": false,
+        "missedDuplicate": false,
+        "elapsedMs": 130.88,
+        "providerError": {
+          "name": "DecisionTransportError",
+          "message": "Decision provider http failure"
+        }
+      },
+      {
+        "id": "v11",
+        "expected": "no_match",
+        "choice": "no_match",
+        "model": "empty-shortlist-local",
+        "correct": true,
+        "incorrectMerge": false,
+        "missedDuplicate": false,
+        "elapsedMs": 0.02,
+        "providerError": null
+      },
+      {
+        "id": "v12",
+        "expected": "no_match",
+        "choice": null,
+        "correct": false,
+        "incorrectMerge": false,
+        "missedDuplicate": false,
+        "elapsedMs": 128.08,
+        "providerError": {
+          "name": "DecisionTransportError",
+          "message": "Decision provider http failure"
+        }
+      }
+    ]
+  }
+}
