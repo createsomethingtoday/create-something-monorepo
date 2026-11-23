@@ -7,6 +7,7 @@ export default defineConfig({
     emptyOutDir: true,
     rollupOptions: {
       input: {
+        privacy: resolve(import.meta.dirname, 'web/privacy.html'),
         terms: resolve(import.meta.dirname, 'web/terms.html'),
         security: resolve(import.meta.dirname, 'web/security.html'),
         landing: resolve(import.meta.dirname, 'web/index.html'),

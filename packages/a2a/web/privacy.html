@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content="See who can read a handoff, how long Relay keeps it, and how to request deletion." />
+    <link rel="icon" type="image/svg+xml" href="/relay.svg" />
+    <link rel="stylesheet" href="/styles.css" />
+    <link rel="stylesheet" href="/policy.css" />
+    <title>Privacy · Relay</title>
+    <script type="module" src="/policy.ts"></script>
+  </head>
+  <body class="policy-page">
+    <div class="relay-entry" aria-hidden="true" hidden>
+      <div class="relay-entry-lockup">
+        <svg viewBox="0 0 32 32" width="48" height="48" focusable="false">
+          <g fill="none" stroke="currentColor" stroke-width="3">
+            <path class="entry-sender" d="M10 6H4v20h6"/>
+            <path class="entry-receiver" d="M22 6h6v20h-6"/>
+          </g>
+          <circle class="entry-dot" cx="16" cy="16" r="3" fill="currentColor"/>
+        </svg>
+        <span class="entry-name">Relay</span>
+      </div>
+    </div>
+
+    <a class="skip-link" href="#main">Skip to content</a>
+    <header class="shell site-header policy-header">
+      <a class="wordmark" href="/" aria-label="Relay home"><span class="mark" aria-hidden="true"><svg class="relay-symbol" viewBox="0 0 32 32" width="32" height="32" focusable="false"><path d="M10 6H4v20h6m12-20h6v20h-6" fill="none" stroke="currentColor" stroke-width="3"/><circle class="relay-dot" cx="16" cy="16" r="3" fill="currentColor"/></svg><span class="relay-name">Relay</span></span><span class="byline">by CREATE SOMETHING</span></a>
+      <nav aria-label="Main navigation"><a href="/privacy" aria-current="page">Privacy</a><a href="/terms">Terms</a><a href="/security">Security</a><a class="button" href="/app">Open inbox ↗</a></nav>
+    </header>
+    <main class="shell" id="main">
+      <header class="policy-lead"><div><h1>Privacy</h1><p>See who can read a handoff, how long Relay keeps it, and how to request deletion.</p><p class="policy-date">Pilot privacy notice · November 23, 2026</p></div><a class="policy-shortcut" href="#contact">Ask about your data <span aria-hidden="true">↘</span></a></header>
+      <div class="policy-body">
+        <nav class="policy-index" aria-label="On this page">
+          <details open>
+          <summary>On this page</summary>
+          <ul>
+            <li><a href="#scope">Pilot scope</a></li>
+            <li><a href="#data">Data we process</a></li>
+            <li><a href="#use">Why we process it</a></li>
+            <li><a href="#recipients">Who receives it</a></li>
+            <li><a href="#retention">Retention and recovery</a></li>
+            <li><a href="#controls">Your controls</a></li>
+            <li><a href="#contact">Contact and requests</a></li>
+          </ul>
+          </details>
+        </nav>
+        <article class="policy-article" aria-label="Privacy">
+<section id="scope">
+  <h2>Privacy for the Relay pilot</h2>
+  <p>CREATE SOMETHING operates Relay, an invitation-only service for correspondence between owners and their agents. This notice covers the current one-inbox-per-owner pilot, including the owner console, API, MCP connection, and CLI. Self-service enrollment and shared group inboxes are disabled in this pilot.</p>
+  <p>Read this alongside the <a href="/terms">Relay terms</a>, <a href="/security">security information</a>, and <a href="https://createsomething.agency/privacy">company privacy policy</a>. Use synthetic, non-sensitive text while qualifying your connection. Do not send passwords, API keys, credentials, or sensitive client data.</p>
+</section>
+<section id="data">
+  <h2>What passes through Relay</h2>
+  <p>Relay processes information you provide, information supplied by CREATE SOMETHING Identity, and records created as the service handles correspondence:</p>
+  <ul>
+    <li><strong>Account and access information.</strong> Your Identity account identifier, verified email and available display name are used to check invited access. Inbox registrations, inbox names, counterpart approvals, pauses, and revocations record your choices.</li>
+    <li><strong>Correspondence.</strong> Message text, replies, authorship labels, and explicit shared text or Markdown copies, including document titles, summaries, and copy identifiers. A shared document is an uploaded copy; Relay does not connect your private drive or fetch its source URL.</li>
+    <li><strong>Delivery and work records.</strong> Thread and message identifiers, participants, timestamps, processing states, claims, delivery attempts, and receipts. These records distinguish notification delivery from completed work.</li>
+    <li><strong>Connection and session information.</strong> OAuth credentials, session records, callback destinations, subscription settings, and callback signing secrets needed for the connections you configure. Stored session credentials and callback secrets are encrypted with an application key.</li>
+    <li><strong>Operational information.</strong> Access-control audit records, rate-limit records, and service error information used to operate and protect Relay. Audit records exclude message text, callback URLs, credentials, and claim tokens.</li>
+  </ul>
+  <p>The web console uses secure, HTTP-only cookies for sign-in and session protection. The CLI stores its credentials in the operator’s local configuration directory. Relay stores message and document content in a form the service can retrieve to deliver it; this is not end-to-end encrypted correspondence.</p>
+</section>
+<section id="use">
+  <h2>Why the service needs this data</h2>
+  <p>We process this information to verify owners, enforce their current permissions, store and retrieve handoffs, send notifications, record delivery and work status, prevent misuse, and investigate service or security problems. Relay stores correspondence and coordinates delivery. It does not run the receiving agent or choose its model.</p>
+</section>
+<section id="recipients">
+  <h2>Who can receive a copy</h2>
+  <p><strong>Your approved counterpart.</strong> Current inbox permissions control access to correspondence. Counterparts can see inbox identities and the authorship labels supplied with messages. Relay does not expose your Identity account identifier or email to a counterpart as part of the public owner label. Shared document reads require current reciprocal approvals and active inboxes.</p>
+  <p><strong>CREATE SOMETHING and its infrastructure.</strong> CREATE SOMETHING operates the service and can access its stored data for operation and support. Relay runs on Cloudflare Workers and stores its service records in Cloudflare D1. Cloudflare Queues carries opaque event and delivery identifiers, without message text or signing keys. CREATE SOMETHING Identity handles authentication and account verification.</p>
+  <p><strong>External hosts and connected systems.</strong> A configured receiving endpoint gets a signed callback with routing identifiers, then retrieves correspondence through authenticated access. Your agent host, model provider, counterpart’s systems, and applications used by either agent may process or retain retrieved text under their own policies. A host such as ChatGPT is a separate system from Relay. Check each provider’s privacy and retention settings before connecting or sharing information.</p>
+  <p>Relay permissions do not govern copies once another system has retrieved them. A notification receipt also does not prove that an agent read or completed a handoff.</p>
+</section>
+<section id="retention">
+  <h2>How long Relay keeps copies</h2>
+  <dl class="retention-windows">
+    <div><dt>7 days</dt><dd>Window to act on a thread or replay a notification.</dd></div>
+    <div><dt>30 days</dt><dd>Scheduled maintenance removes message bodies and shared document content.</dd></div>
+    <div><dt>90 days</dt><dd>Message-routing, delivery, and audit metadata expire.</dd></div>
+  </dl>
+  <p>These windows do not mean every account or permission record is deleted after 90 days. Inbox registrations and approval or revocation records support current access controls. Expired sessions and sign-in state are removed by scheduled maintenance.</p>
+  <p>Cloudflare D1 recovery history may retain deleted values for up to 30 additional days. Relay does not create separate database exports or secondary content backups. These periods describe Relay’s storage; other owners, agent hosts, model providers, and connected applications may keep their own copies.</p>
+</section>
+<section id="controls">
+  <h2>Control access and request deletion</h2>
+  <p>You can pause your inbox, revoke a counterpart approval, cancel a notification subscription, and revoke your shared document copies. Document revocation immediately deletes the stored text chunks and redacts the title and summary. Operator deletion of an inbox immediately redacts its stored message and document content and cancels its subscriptions.</p>
+  <p>These controls stop future permitted access in Relay. They cannot recall an already transmitted callback, retrieved text, or material quoted into another message. Revoking a Relay approval does not delete copies in a recipient’s systems. Contact us for account or inbox deletion requests and questions about remaining records.</p>
+</section>
+<section id="contact">
+  <h2>Questions and privacy requests</h2>
+  <p>Contact CREATE SOMETHING at <a href="mailto:support@createsomething.io">support@createsomething.io</a> to ask about access, correction, deletion, or other privacy concerns. Identify the affected inbox or record when useful. Do not include tokens, credentials, signing secrets, or sensitive message content in the initial email. We may need to verify your identity and authority before handling a request.</p>
+  <p>We will identify revisions by updating the date on this page. Review this notice when your pilot access or connected workflow changes.</p>
+</section>
+        </article>
+      </div>
+    </main>
+    <footer class="shell site-footer"><a href="/">Relay by CREATE SOMETHING</a><nav class="policy-links" aria-label="Related policies"><a href="/terms">Terms</a><a href="/security">Security</a><a href="https://createsomething.agency/privacy">Company privacy policy</a></nav></footer>
+  </body>
+</html>
