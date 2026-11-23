@@ -120,6 +120,18 @@ function assertFeedbackStoredAsSent(
   );
 }
 
+function assertFeedbackUnchangedAfterStatus(field: 'review_feedback' | 'rejection_feedback', sent: string | undefined, stored: string | undefined): void {
+  if (sent === undefined || stored === undefined) return;
+  const change = findFeedbackTextChange(sent, stored);
+  if (change === null) return;
+  throw new AirtableClientError(
+    'FEEDBACK_REPLACED_DURING_DECISION',
+    `Another save replaced the ${field} text while this decision was written, near "${change.stored}". The review status WAS changed, so the creator may get the other text. Read the review thread now and send a correction if it is wrong.`,
+    409,
+    { field, ...change, status_changed: true },
+  );
+}
+
 // A published Webflow site legitimately serves assets under two cdn.prod.website-files.com
 // prefixes: the site ID (Designer/Assets-panel uploads) and the CMS database ID (uploads
 // made through CMS image fields). Reviewer sessions that crawl the HTML and group image
@@ -2436,7 +2448,15 @@ export class AirtableClient {
       const stored = mapVersion(updated);
       assertFeedbackStoredAsSent('review_feedback', input.review_feedback, stored.reviewFeedback, hasOther);
       assertFeedbackStoredAsSent('rejection_feedback', input.rejection_feedback, stored.rejectionFeedback, hasOther);
-      if (hasOther) updated = await this.updateRecord(TABLE_IDS.assetVersions, versionId, otherFields);
+      if (hasOther) {
+        updated = await this.updateRecord(TABLE_IDS.assetVersions, versionId, otherFields);
+        // Two requests leave a short window in which another save can replace the feedback
+        // (a draft saved from a second session). It cannot be closed from here, so it is reported:
+        // the second answer must still hold the text that was compared.
+        const after = mapVersion(updated);
+        assertFeedbackUnchangedAfterStatus('review_feedback', input.review_feedback, after.reviewFeedback);
+        assertFeedbackUnchangedAfterStatus('rejection_feedback', input.rejection_feedback, after.rejectionFeedback);
+      }
     }
     if (shouldReassertReviewOwner && requestedReviewOwner !== undefined) {
       return this.reassertVersionReviewOwner(versionId, requestedReviewOwner);

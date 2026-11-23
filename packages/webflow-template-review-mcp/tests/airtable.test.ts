@@ -2300,3 +2300,35 @@ test('updateVersionReview writes the feedback first and the status second when t
   ]);
   assert.equal(version.reviewStatus, '📤Changes Requested');
 });
+
+test('updateVersionReview reports feedback that another save replaced between the two writes', async () => {
+  let calls = 0;
+  const client = new AirtableClient({
+    apiKey: 'test',
+    fetchFn: async () => {
+      calls += 1;
+      return jsonResponse({
+        id: 'rec_version_text_replaced',
+        createdTime: '2026-11-23T00:00:00.000Z',
+        fields: {
+          [CONFIRMED_VERSION_FIELDS.assetRecordId]: 'rec_asset_current',
+          [CONFIRMED_VERSION_FIELDS.reviewFeedback]: calls === 1 ? '1. Fix the link.\n' : 'An unfinished draft.\n',
+        },
+      });
+    },
+  });
+
+  await assert.rejects(
+    client.updateVersionReview('rec_version_text_replaced', {
+      review_status: '📤Changes Requested',
+      review_feedback: '1. Fix the link.',
+    }),
+    (error: unknown) => {
+      assert.ok(error instanceof AirtableClientError);
+      assert.equal(error.code, 'FEEDBACK_REPLACED_DURING_DECISION');
+      assert.deepEqual((error.details as { status_changed: boolean }).status_changed, true);
+      return true;
+    },
+  );
+  assert.equal(calls, 2);
+});
