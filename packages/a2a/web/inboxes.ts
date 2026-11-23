@@ -4,6 +4,7 @@ import { groupMessages, isAuthorlessNotice } from './message-groups';
 import { messageParts, messagePreview, messageResultExcerpt } from './message-content';
 import './styles.css';
 import './inboxes.css';
+import './console-editorial.css';
 import type {
   SharedAgent,
   SharedInbox,

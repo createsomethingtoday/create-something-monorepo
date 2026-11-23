@@ -1,0 +1,130 @@
+/* Editorial desk: the Agency's serif hierarchy, paper and ruled reading surfaces.
+   Scoped to the owner consoles; permissions and interaction states remain native. */
+.console {
+  --desk-heading: var(--font-performance-editorial);
+  background: var(--color-performance-panel);
+}
+.console .shell { width: min(calc(100% - 5rem), 1320px); }
+.console .site-header { min-height: 96px; }
+.console .console-main { max-width: 1320px; padding-top: 2.75rem; }
+.console .console-heading { margin-bottom: 2rem; gap: 1.5rem; }
+.console .console-heading h1 {
+  font-family: var(--desk-heading);
+  font-size: clamp(2.25rem, 3.4vw, 3.5rem);
+  font-weight: 400;
+  letter-spacing: -.045em;
+  line-height: 1.12;
+}
+.console .console-heading p.small { margin-top: .75rem; font-size: .85rem; }
+.console .session-screen {
+  max-width: 960px;
+  margin: 1rem auto 5rem;
+  padding: clamp(2rem, 6vw, 5.5rem) clamp(1.5rem, 5vw, 5rem);
+  background: var(--color-performance-paper);
+  border: 0;
+  border-top: 1px solid var(--color-performance-line-strong);
+  border-bottom: 1px solid var(--color-performance-line-strong);
+}
+.console .session-screen h1 {
+  max-width: 15ch;
+  font-family: var(--desk-heading);
+  font-size: clamp(2.6rem, 5vw, 4.75rem);
+  font-weight: 400;
+  letter-spacing: -.045em;
+  line-height: 1.08;
+}
+.console .session-screen > p:not(.eyebrow) { max-width: 50ch; line-height: 1.7; }
+.console .session-screen .eyebrow { margin-bottom: 1.5rem; }
+.console .session-screen .button { margin-top: 1.75rem; }
+.console .console-layout,
+.console.shared-console .shared-layout {
+  border-inline: 0;
+  border-color: var(--color-performance-line-strong);
+  background: transparent;
+}
+.console .console-sidebar,
+.console .inbox-rail { background: var(--color-performance-paper); padding: 1.5rem 1.25rem; }
+.console .workspace-pane,
+.console.shared-console .shared-workspace { padding: 1.75rem 2rem; }
+.console .pane-heading h2,
+.console.shared-console .workspace-title {
+  font-family: var(--desk-heading);
+  font-size: clamp(1.9rem, 2.5vw, 2.6rem);
+  line-height: 1.12;
+  letter-spacing: -.035em;
+  font-weight: 400;
+}
+.console .pane-heading p { max-width: 58ch; line-height: 1.6; }
+.console .sidebar-nav button,
+.console .inbox-option { border-radius: 0; }
+.console .sidebar-nav button[aria-current='page'],
+.console .inbox-option[aria-current='page'] { background: var(--color-performance-panel); }
+.console .message-workspace { border-inline: 0; }
+.console .conversation-search { background: var(--color-performance-paper); }
+.console .thread-button { padding-block: 1.3rem; }
+.console .thread-button .thread-preview { font-weight: 400; font-size: .93rem; }
+.console .conversation-heading { padding-bottom: 1.25rem; }
+.console .message-text,
+.console .message-excerpt { line-height: 1.75; }
+.console .console-footer { padding-block: 1.75rem; }
+.console .empty-state h3,
+.console .muted-empty h3 { font-family: var(--desk-heading); font-size: 1.8rem; font-weight: 400; letter-spacing: -.025em; }
+.console .account-area a,
+.console .account-menu > summary { min-height: 44px; align-content: center; }
+.console .account-area { flex-wrap: wrap; justify-content: flex-end; }
+.console .button { border-radius: 0; }
+@media (max-width: 1024px) {
+  .console .shell { width: calc(100% - 3rem); }
+  .console .workspace-pane,
+  .console.shared-console .shared-workspace { padding: 1.5rem; }
+}
+@media (max-width: 767px) {
+  .console .shell { width: calc(100% - 2rem); }
+  .console .site-header { min-height: 80px; gap: 1rem; }
+  .console .console-main { padding-top: 1.5rem; }
+  .console .console-heading { margin-bottom: 1.25rem; align-items: center; }
+  .console .console-heading h1 { font-size: 2rem; }
+  .console .console-heading > div { min-width: 0; }
+  .console .session-screen { margin-top: 0; padding: 2rem 1.25rem; }
+  .console .session-screen h1 { font-size: clamp(2.4rem, 10vw, 3.5rem); }
+  .console .session-screen > .button { max-width: 100%; white-space: normal; }
+  .console .workspace-pane,
+  .console.shared-console .shared-workspace { padding: 1.25rem .85rem; }
+  .console .console-sidebar { padding: 1rem .85rem; }
+  .console.shared-console .inbox-rail { padding: 0; }
+  .console .pane-heading h2,
+  .console.shared-console .workspace-title { font-size: 1.9rem; }
+  .console .account-area { gap: .35rem .65rem; max-width: 210px; }
+  .console .account-area .quiet-button { font-size: .68rem; }
+  .console .thread-button { padding-block: 1rem; }
+}
+@media (max-width: 390px) {
+  .console .shell { width: calc(100% - 1.5rem); }
+  .console .console-heading h1 { font-size: 1.8rem; }
+  .console .site-header .account-area { max-width: 180px; }
+}
+
+/* Fixed Agency paper rather than Canon's dark root palette. */
+body.console {
+  color-scheme: light;
+  --color-performance-paper: #faf8f5;
+  --color-performance-panel: #f0eeea;
+  --color-performance-court: #eae7e2;
+  --color-performance-ink: #262626;
+  --color-performance-ink-soft: #45413c;
+  --color-performance-muted: #706b65;
+  --color-performance-line: #d9d5ce;
+  --color-performance-line-strong: #b6b0a6;
+  --color-performance-signal: #383631;
+  --color-performance-signal-soft: #e5e1d9;
+  --color-performance-ready: #38533e;
+  --color-performance-ready-soft: #e4ebe2;
+  --color-performance-review: #6a4d20;
+  --color-performance-review-soft: #f2e9d7;
+  --color-performance-stop: #8b3632;
+  --color-performance-stop-soft: #f4e3df;
+  background: var(--color-performance-panel);
+  color: var(--color-performance-ink);
+}
+.console :is(input, select, textarea) { color: var(--color-performance-ink); }
+.console :is(input, textarea)::placeholder { color: var(--color-performance-muted); opacity: 1; }
