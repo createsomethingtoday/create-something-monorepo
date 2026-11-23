@@ -131,3 +131,43 @@ html:not(.js) #session-loading{display:none}
   .relay-name { font-size: 1.65rem; }
   .relay-symbol { width: 1.55rem; height: 1.55rem; }
 }
+
+/* A document entrance is separate from the live request indicator in the header. */
+@media screen and (scripting: enabled) and (prefers-reduced-motion: no-preference) {
+  .relay-entry[hidden]:not([data-dismissed]) {
+    position: fixed;
+    inset: 0;
+    z-index: 1000;
+    display: grid !important;
+    place-items: center;
+    pointer-events: none;
+    background: var(--color-performance-paper, #faf9f6);
+    color: var(--color-performance-ink, #252524);
+    animation: relay-entry-out 1.45s ease-out both;
+  }
+  .relay-entry-lockup {
+    display: flex;
+    align-items: center;
+    gap: .7rem;
+    font: 560 clamp(2.6rem, 5vw, 3.75rem)/1 var(--font-performance-sans);
+    letter-spacing: -.06em;
+  }
+  .relay-entry-lockup svg { width: 1em; height: 1em; }
+  .entry-sender { animation: relay-sender-in .32s ease-out both; }
+  .entry-receiver { animation: relay-receiver-in .32s ease-out both; }
+  .entry-dot { animation: relay-entry-pass 1s cubic-bezier(.42,0,.25,1) both; }
+  .entry-name { animation: relay-name-in .42s .19s ease-out both; }
+}
+@keyframes relay-sender-in { from { opacity: 0; transform: translateX(-4px); } }
+@keyframes relay-receiver-in { from { opacity: 0; transform: translateX(4px); } }
+@keyframes relay-entry-pass {
+  0% { opacity: 0; transform: translateX(-7px); }
+  18%, 26% { opacity: 1; transform: translateX(-7px); }
+  60%, 68% { transform: translateX(7px); }
+  100% { transform: translateX(0); }
+}
+@keyframes relay-name-in { from { opacity: 0; transform: translateY(.12em); } }
+@keyframes relay-entry-out {
+  0%, 74% { opacity: 1; visibility: visible; }
+  100% { opacity: 0; visibility: hidden; }
+}

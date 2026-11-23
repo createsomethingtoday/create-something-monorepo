@@ -10,6 +10,19 @@
     <script type="module" src="/inboxes.ts"></script>
   </head>
   <body class="console shared-console">
+    <div class="relay-entry" aria-hidden="true" hidden>
+      <div class="relay-entry-lockup">
+        <svg viewBox="0 0 32 32" width="48" height="48" focusable="false">
+          <g fill="none" stroke="currentColor" stroke-width="3">
+            <path class="entry-sender" d="M10 6H4v20h6"/>
+            <path class="entry-receiver" d="M22 6h6v20h-6"/>
+          </g>
+          <circle class="entry-dot" cx="16" cy="16" r="3" fill="currentColor"/>
+        </svg>
+        <span class="entry-name">Relay</span>
+      </div>
+    </div>
+
     <a class="skip-link" href="#main">Skip to content</a>
     <header class="site-header shell">
       <a class="wordmark" href="/" aria-label="Relay home"
