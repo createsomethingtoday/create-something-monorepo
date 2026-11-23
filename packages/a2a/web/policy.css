@@ -48,3 +48,7 @@
 .retention-windows div { display: grid; grid-template-columns: 6rem 1fr; gap: 1rem; align-items: baseline; padding: .8rem 0; border-bottom: 1px solid var(--rule); }
 .retention-windows dt { font: 1.5rem/1.15 var(--font-performance-editorial); }
 .retention-windows dd { margin: 0; line-height: 1.6; }
+.policy-lead { display: flex; align-items: end; justify-content: space-between; gap: 1rem 2rem; flex-wrap: wrap; }
+.policy-shortcut { padding-block: .6rem; font-size: .92rem; text-decoration: underline; text-underline-offset: .23em; }
+.policy-shortcut span { display: inline-block; margin-left: .25rem; }
+@media print { .policy-shortcut { display: none; } }
