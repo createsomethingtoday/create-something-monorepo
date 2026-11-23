@@ -1,3 +1,49 @@
+/** Small pointer-follow response; translation is independent of reveal transforms.
+ * Event delegation also covers controls rendered after inbox data arrives. */
+export function startDirectionalControls() {
+  const events = new AbortController();
+  const { signal } = events;
+  const preference = window.matchMedia('(prefers-reduced-motion: reduce)');
+  const fine = window.matchMedia('(hover: hover) and (pointer: fine)');
+  let target: HTMLElement | null = null;
+  let frame = 0;
+  let x = 0, y = 0;
+  const reset = () => {
+    cancelAnimationFrame(frame); frame = 0;
+    target?.style.removeProperty('--pointer-x');
+    target?.style.removeProperty('--pointer-y');
+    target = null;
+  };
+  const update = () => {
+    frame = 0;
+    if (!target?.isConnected || document.hidden || preference.matches) { reset(); return; }
+    const bounds = target.getBoundingClientRect();
+    // Two pixels keeps the target stable while indicating the approach direction.
+    target.style.setProperty('--pointer-x', `${Math.max(-2, Math.min(2, (x - bounds.left - bounds.width / 2) / Math.max(1, bounds.width / 2) * 2))}px`);
+    target.style.setProperty('--pointer-y', `${Math.max(-1.5, Math.min(1.5, (y - bounds.top - bounds.height / 2) / Math.max(1, bounds.height / 2) * 1.5))}px`);
+  };
+  document.addEventListener('pointermove', event => {
+    if (event.pointerType !== 'mouse' || !fine.matches || preference.matches) return;
+    const next = event.target instanceof Element
+      ? event.target.closest<HTMLElement>('.console :is(.button, .sidebar-nav button, .account-nav button, .inbox-option, .shared-tabs button)') : null;
+    if (next?.matches(':disabled,[aria-disabled="true"]')) { reset(); return; }
+    if (next !== target) { reset(); target = next; }
+    if (!target) return;
+    x = event.clientX; y = event.clientY;
+    if (!frame) frame = requestAnimationFrame(update);
+  }, { signal, passive: true });
+  document.addEventListener('pointerout', event => {
+    if (target && (!(event.relatedTarget instanceof Node) || !target.contains(event.relatedTarget))) reset();
+  }, { signal });
+  document.addEventListener('pointerdown', reset, { signal });
+  document.addEventListener('visibilitychange', reset, { signal });
+  window.addEventListener('blur', reset, { signal });
+  window.addEventListener('scroll', reset, { signal, capture: true, passive: true });
+  preference.addEventListener('change', reset, { signal });
+  fine.addEventListener('change', reset, { signal });
+  return () => { events.abort(); reset(); };
+}
+
 /** Progressive enhancement only. Native controls and readable content never await GSAP. */
 export function startSharedMotion() {
   let disposed = false;
@@ -28,7 +74,8 @@ export function startSharedMotion() {
       .then(({ gsap }) => {
         if (disposed || run !== generation) return;
         const media = gsap.matchMedia();
-        dispose = () => media.revert();
+        const stopDirectionalControls = startDirectionalControls();
+        dispose = () => { stopDirectionalControls(); media.revert(); };
         let failed = false;
         media.add('(prefers-reduced-motion: no-preference)', (context) => {
           const events = new AbortController();

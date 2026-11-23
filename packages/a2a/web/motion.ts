@@ -1,3 +1,4 @@
+import { startDirectionalControls } from './shared-motion';
 /** Optional progressive enhancement. Native actions, focus and scrolling never wait for GSAP. */
 type Engine = (typeof import('gsap'))['gsap'];
 let engine: Engine | undefined;
@@ -13,6 +14,7 @@ let rail: HTMLElement;
 let frame = 0;
 let observer: IntersectionObserver | undefined;
 let pressed: HTMLElement | null = null;
+let stopDirectionalControls: (() => void) | undefined;
 const visible = (element: HTMLElement) => !!element.getClientRects().length && !element.closest('[hidden]');
 const moving = () => !!engine && !preference.matches && !suspended && !document.hidden;
 
@@ -76,6 +78,7 @@ function release(event: Event) {
 }
 export function startMotion() {
   if (started) return; started = true;
+  stopDirectionalControls = startDirectionalControls();
   const began = performance.now(), initialScroll = window.scrollY;
   rail = document.createElement('div');rail.className='motion-progress';rail.setAttribute('aria-hidden','true');document.body.append(rail);
   document.addEventListener('pointerdown',event=>{pressed=event.target instanceof Element?event.target.closest<HTMLElement>(controls):null;feedback(event);},true);
@@ -103,8 +106,8 @@ export function startMotion() {
   window.addEventListener('resize',scheduleProgress,{passive:true});
   preference.addEventListener('change',()=>{settle();progress();});
   document.addEventListener('visibilitychange',()=>{if(document.hidden){settle();cancelAnimationFrame(frame);frame=0;}else scheduleProgress();});
-  window.addEventListener('pagehide',()=>{suspended=true;settle();cancelAnimationFrame(frame);frame=0;observer?.disconnect();});
-  window.addEventListener('pageshow',()=>{suspended=false;observeSections();scheduleProgress();});
+  window.addEventListener('pagehide',()=>{stopDirectionalControls?.();stopDirectionalControls=undefined;suspended=true;settle();cancelAnimationFrame(frame);frame=0;observer?.disconnect();});
+  window.addEventListener('pageshow',()=>{stopDirectionalControls??=startDirectionalControls();suspended=false;observeSections();scheduleProgress();});
   function observeSections() {
     observer?.disconnect();
     if(!('IntersectionObserver' in window))return;

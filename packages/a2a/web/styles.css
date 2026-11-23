@@ -85,3 +85,18 @@ html:not(.js) #session-loading{display:none}
 .motion-progress{position:fixed;z-index:30;inset:0 0 auto;height:2px;background:var(--color-performance-ink);transform:scaleX(0);transform-origin:left;pointer-events:none}
 :is(#thread-list,#conversation,.context-content)[data-scroll-edge]{--nested-progress:0;border-image:linear-gradient(to right,var(--color-performance-ink) calc(var(--nested-progress)*100%),var(--color-performance-line) 0) 1;border-bottom-width:2px;border-bottom-style:solid}
 :is(#thread-list,#conversation,.context-content)[data-scroll-edge=none]{border-image:none}
+
+/* Native scrolling retains wheel, touch and keyboard ownership in reading panes. */
+#thread-list, #conversation, .context-content, .shared-console dialog {
+  scroll-behavior: smooth;
+  scroll-padding-block: 1rem;
+}
+@media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
+  .console :is(.button, .sidebar-nav button, .account-nav button, .inbox-option, .shared-tabs button) {
+    translate: var(--pointer-x, 0px) var(--pointer-y, 0px);
+    transition: translate var(--duration-performance-micro) var(--ease-performance-standard), background var(--duration-performance-micro) var(--ease-performance-standard), color var(--duration-performance-micro) var(--ease-performance-standard);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  #thread-list, #conversation, .context-content, .shared-console dialog { scroll-behavior: auto; }
+}
