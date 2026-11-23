@@ -1,0 +1,51 @@
+{
+  "schema": "goldin-production-proposal/v1",
+  "status": "proposed",
+  "productionEnabled": false,
+  "approval": null,
+  "intake": {
+    "mode": "staff-reviewed",
+    "nativePixiesetTransportVerified": false
+  },
+  "capacity": {
+    "resource": "named-eligible-photographer",
+    "bufferBeforeMinutes": 0,
+    "bufferAfterMinutes": 15,
+    "crossLocationTravel": "explicit-operator-review",
+    "holdMinutes": 15
+  },
+  "payments": {
+    "payer": "one-organizer",
+    "reconcileBeforeConfirm": true,
+    "reconcileBeforeReleaseReview": true,
+    "refundOrDisputeBlocksRelease": true,
+    "automaticCharges": false
+  },
+  "production": {
+    "rawTransferReceiptIsCompletion": false,
+    "manifestAndCountsRequired": true,
+    "duplicateNamesPreserved": true,
+    "humanDiscrepancyReview": true,
+    "irreversibleMediaDeletion": false
+  },
+  "delivery": {
+    "mode": "reviewed-no-send",
+    "reviewer": "unassigned",
+    "exceptionApprover": "unassigned",
+    "automaticRelease": false
+  },
+  "unresolved": [
+    "current-package-market-season-price-catalog",
+    "Solo30-deposit",
+    "Squad-partial-collection-off",
+    "service-fee-scope-rounding-refunds",
+    "tax-treatment",
+    "group-size-duration-tiers",
+    "cancellation-reschedule-refund-terms",
+    "operational-Notion-property-IDs-and-permissions",
+    "operator-subjects-and-review-ownership",
+    "supported-production-invocation-route",
+    "credential-and-permission-approval"
+  ],
+  "decisions": {}
+}
