@@ -4,7 +4,7 @@ import test from 'node:test';
 import {
   buildFacilityCoverageBrief,
   buildSelectedRoleIntakeMessage
-} from '../src/lib/site/public-intake-context.ts';
+} from '../src/lib/site/public-intake-context';
 
 test('selected public roles become the first bounded candidate intake context', () => {
   const message = buildSelectedRoleIntakeMessage({
