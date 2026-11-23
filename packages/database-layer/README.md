@@ -39,6 +39,8 @@ composition, deterministic RDF/OWL and SHACL export, and protected dependency
 change planning. Run `pnpm --filter @create-something/database-layer ontology:check`.
 This validates local structure; it does not establish live health or grant action authority.
 
+The same CLI can learn and maintain a local entity vocabulary from changing documents. See [discovery, plain-language edits and watch mode](./ontology/v1/README.md#learned-entity-vocabulary).
+
 ## Agent Commercial Contract v1
 
 `contracts/agent-commercial/v1/` is the commercial policy layer over

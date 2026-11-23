@@ -1,0 +1,32 @@
+import assert from 'node:assert/strict';
+import test from 'node:test';
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
+import { editVocabulary, syncVocabulary } from '../scripts/lib/vocabulary-store.mjs';
+
+test('reconciles a changing directory, preserving edits and the last good snapshot', t => {
+  const temp = fs.mkdtempSync(path.join(os.tmpdir(), 'substrate-vocabulary-'));
+  t.after(() => fs.rmSync(temp, {recursive: true, force: true}));
+  const dir = path.join(temp, 'notes');
+  fs.mkdirSync(dir);
+  const state = path.join(temp, 'vocabulary.json');
+  const source = path.join(dir, 'business.json');
+  const sync = () => syncVocabulary(dir, state);
+  fs.writeFileSync(source, '{"suppliers":[{"name":"Example"}]}');
+  const [supplier] = sync().types;
+  assert.equal(supplier.name, 'supplier');
+  editVocabulary(state, 'Rename supplier to Delivery Partner');
+  fs.writeFileSync(path.join(dir, 'note.md'), 'Alpha is a customer. Beta is a distributor.');
+  const report = sync();
+  assert.deepEqual(report.types.map(type => type.name), ['customer', 'distributor', 'Delivery Partner']);
+  assert.deepEqual(sync(), report);
+  fs.writeFileSync(source, '{');
+  assert.throws(sync, /Invalid JSON/);
+  assert.deepEqual(JSON.parse(fs.readFileSync(state)), report);
+  fs.unlinkSync(source);
+  fs.unlinkSync(path.join(dir, 'note.md'));
+  const [retained] = sync().types;
+  assert.deepEqual(retained, {...supplier, name: 'Delivery Partner', curated: true, evidence: []});
+  assert.throws(() => syncVocabulary(dir, path.join(dir, 'state.json')), /outside/);
+});
