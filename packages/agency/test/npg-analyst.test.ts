@@ -364,6 +364,9 @@ test('owner isolation, server IDs, complete sourcing CSV and source snapshot sur
     const v = await executeCommand(store, 'alice', message(c), () => f.p);
     assert.equal(v.status, 'idle');
     assert.equal(v.sources.length, 1);
+    assert.equal(v.sources[0].assistantMessageIndex, 1);
+    assert.deepEqual(await store.progress('alice', c.id), {version: v.version, status: 'idle', registrySources: 1});
+    await assert.rejects(store.progress('bob', c.id), { status: 404 });
     const s = v.sources[0].data as any;
     assert.equal(s.total, 231);
     assert.equal(s.unresolved_count, 17);

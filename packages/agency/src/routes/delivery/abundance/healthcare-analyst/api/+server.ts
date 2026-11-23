@@ -3,6 +3,7 @@ import type { RequestHandler } from './$types';
 import { requireNpgUser, requireChat, requireSameOrigin } from '$lib/server/npg/access';
 import { NpgError, NpgStore } from '$lib/server/npg/store';
 import { executeCommand, parseCommand } from '$lib/server/npg/runner';
+import { readMarketActivity } from '$lib/server/npg/market';
 import { createProviders } from '$lib/server/npg/providers';
 const headers = {
   'Cache-Control': 'private, no-store',
@@ -14,8 +15,12 @@ export const GET: RequestHandler = async ({ locals, platform, url }) => {
     env = requireChat(platform),
     store = new NpgStore(env.DB);
   try {
+    if (url.searchParams.get('view') === 'progress')
+      return json(await store.progress(owner, url.searchParams.get('id') ?? ''), { headers });
     return json(
-      url.searchParams.has('id')
+      url.searchParams.get('view') === 'market'
+        ? await readMarketActivity(env.DB, owner)
+        : url.searchParams.has('id')
         ? await store.view(owner, url.searchParams.get('id')!)
         : { conversations: await store.list(owner) },
       { headers }

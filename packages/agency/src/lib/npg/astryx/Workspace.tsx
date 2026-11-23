@@ -30,6 +30,7 @@ import { Icon } from '@astryxdesign/core/Icon';
 import {
   Plus,
   MessagesSquare,
+  ChartColumn,
   LockKeyhole,
   UserRound,
   ArrowUp,
@@ -69,6 +70,8 @@ import {
   isLegacyEnrichmentMessage
 } from './presentation';
 import type { HistoryItem, NpgBootstrap } from './types';
+import { sourcesForMessage } from './turn-sources';
+import { MarketActivity } from './MarketActivity';
 import npgLogo from './assets/npg-logo.png';
 
 const endpoint = '/delivery/abundance/healthcare-analyst/api';
@@ -361,6 +364,30 @@ function Fields({
         </MetadataListItem>
       ))}
     </MetadataList>
+  );
+}
+function AnswerSource({ source }: { source: NpgView['sources'][number] }) {
+  const artifact = sourceArtifact(source.data);
+  const groups = evidenceGroups(artifact.fields);
+  const unresolved = artifact.fields.find(field => /unresolved/i.test(field.label));
+  const incomplete = artifact.fields.some(field => field.value === 'incomplete_geocoding');
+  const limits = artifact.fields.filter(field =>
+    /completeness|unresolved|limits|limitation|taxonomy|scope|fetched|published|snapshot/i.test(field.label));
+  return (
+    <VStack gap={2} className="npg-answer-source mt-3 rounded-lg bg-workspace-tint p-3" as="section" aria-label="Source for this answer">
+      <Text weight="semibold">Registry evidence · this answer</Text>
+      <Text>{artifact.total === null ? 'Total not supplied' : artifact.total.toLocaleString() + ' source records'}
+        {' · '}{artifact.shown === null ? 'Preview count not supplied' : artifact.shown.toLocaleString() + (artifact.shown === 1 ? ' preview record' : ' preview records')}</Text>
+      {(unresolved || incomplete) && <Text weight="medium">{unresolved ? unresolved.value + ' unresolved locations. ' : ''}{incomplete ? 'Location coverage incomplete. ' : ''}Unresolved locations cannot be classified inside or outside the search area.</Text>}
+      {groups.warnings.map((warning, index) => <Text key={index}>{warning}</Text>)}
+      {artifact.links.map(href => <VStack key={href} gap={1}>
+        <Button href={href} target="_blank" variant="secondary" label={href.includes('sourcing.csv') || href.startsWith('/delivery/') ? 'Download complete CSV' : 'Open source'} icon={<Icon icon={Download} />} />
+        {(href.includes('sourcing.csv') || href.startsWith('/delivery/')) && <Text type="supporting" color="secondary">NPG sign-in required. Complete source export; preview count is separate.</Text>}
+      </VStack>)}
+      <Collapsible trigger="View registry evidence" defaultIsOpen={false}>
+        <Fields fields={limits} evidence />
+      </Collapsible>
+    </VStack>
   );
 }
 function Evidence({
@@ -808,8 +835,12 @@ export function Workspace({ bootstrap }: { bootstrap: NpgBootstrap }) {
   const running = useRef(false);
   const [operation, setOperation] = useState('');
   const [notice, setNotice] = useState('');
+  const [historyNotice, setHistoryNotice] = useState('');
+  const [exampleReplacement, setExampleReplacement] = useState<string | null>(null);
+  const [previousDraft, setPreviousDraft] = useState<string | null>(null);
   const [needsRefresh, setNeedsRefresh] = useState(false);
   const [submitted, setSubmitted] = useState('');
+  const [marketsOpen, setMarketsOpen] = useState(false);
   const [navOpen, setNavOpen] = useState(false);
   const [resultsOpen, setResultsOpen] = useState(false);
   const resultsPreference = useRef<boolean | null>(
@@ -909,7 +940,9 @@ export function Workspace({ bootstrap }: { bootstrap: NpgBootstrap }) {
     return () => context.revert();
   }, [conversation?.id]);
   function setView(view: NpgView | null) {
-    if (conversationRef.current?.id !== view?.id) rememberPosition();
+    if (conversationRef.current?.id !== view?.id) {
+      rememberPosition(); setExampleReplacement(null); setPreviousDraft(null);
+    }
     conversationRef.current = view;
     setConversation(view);
   }
@@ -919,6 +952,16 @@ export function Workspace({ bootstrap }: { bootstrap: NpgBootstrap }) {
     setDraft(next);
     drafts.current[conversationRef.current?.id ?? 'new'] = next;
     writeStorage(storageKey, JSON.stringify(drafts.current), true);
+  }
+  function chooseExample(value: string) {
+    if (draftRef.current.trim()) { setExampleReplacement(value); return; }
+    setPreviousDraft(draftRef.current);
+    changeDraft(value);
+    input.current?.focus();
+  }
+  async function refreshAcceptedHistory() {
+    try { await refreshList(); setHistoryNotice(''); }
+    catch { setHistoryNotice('Your answer is saved. Conversation list could not refresh.'); }
   }
   function begin(label: string) {
     if (running.current) return false;
@@ -988,18 +1031,18 @@ export function Workspace({ bootstrap }: { bootstrap: NpgBootstrap }) {
       finish();
     }
   }
-  async function create() {
+  async function create(initialDraft = '') {
     if (!begin('Creating conversation')) return;
     try {
       const view = await api<NpgView>({ type: 'create' });
       setView(view);
-      changeDraft(drafts.current[view.id] ?? '');
+      changeDraft(initialDraft || (drafts.current[view.id] ?? ''));
       setNeedsRefresh(false);
       setResultsOpen(false);
       setNavOpen(false);
       rememberCurrent(view.id);
-      await refreshList();
       focusAfterNavigation();
+      try { await refreshList(); } catch { setHistoryNotice('Conversation created. The history list could not refresh.'); }
     } catch (error) {
       setNotice((error as Error).message);
       setNeedsRefresh(true);
@@ -1031,6 +1074,8 @@ export function Workspace({ bootstrap }: { bootstrap: NpgBootstrap }) {
     navigation.current = 'latest';
     setReveal((n) => n + 1);
     changeDraft('');
+    const progress = new AbortController();
+    let progressTimer: ReturnType<typeof setTimeout> | undefined;
     try {
       let view = conversationRef.current;
       if (!view) {
@@ -1043,6 +1088,23 @@ export function Workspace({ bootstrap }: { bootstrap: NpgBootstrap }) {
         rememberCurrent(view.id);
         setNavOpen(false);
       }
+      const initialRegistryCount = view.sources.filter(source => source.tool === 'search_registry_sourcing').length;
+      const progressUrl = endpoint + '?view=progress&id=' + encodeURIComponent(view.id);
+      const expectedVersion = view.version + 1;
+      async function checkProgress() {
+        try {
+          const response = await fetch(progressUrl, { signal: progress.signal, headers: { Accept: 'application/json' } });
+          if (!response.ok || progress.signal.aborted) return;
+          const saved = await response.json();
+          if (progress.signal.aborted) return;
+          if (saved.version === expectedVersion && saved.status === 'running' && saved.registrySources > initialRegistryCount) {
+            setOperation('Registry results received');
+            return;
+          }
+          progressTimer = setTimeout(checkProgress, 5000);
+        } catch { /* Progress is optional; the original command owns its outcome. */ }
+      }
+      progressTimer = setTimeout(checkProgress, 5000);
       const result = await api<NpgView>({
         type: 'message',
         id: view.id,
@@ -1063,12 +1125,14 @@ export function Workspace({ bootstrap }: { bootstrap: NpgBootstrap }) {
         navigation.current = followReply ? 'latest' : 'restore';
         setReveal((n) => n + 1);
       }
-      await refreshList();
+      await refreshAcceptedHistory();
     } catch (error) {
       if (!draftRef.current) changeDraft(value);
       setNotice((error as Error).message);
       setNeedsRefresh(true);
     } finally {
+      progress.abort();
+      clearTimeout(progressTimer);
       setSubmitted('');
       finish();
     }
@@ -1094,7 +1158,7 @@ export function Workspace({ bootstrap }: { bootstrap: NpgBootstrap }) {
         setResultsOpen(
           (resultsPreference.current ?? !result.pending) && Boolean(result.sources.length)
         );
-      await refreshList();
+      await refreshAcceptedHistory();
       if (result.pending) focusAfterNavigation(true);
       else {
         navigation.current = 'latest';
@@ -1418,10 +1482,10 @@ export function Workspace({ bootstrap }: { bootstrap: NpgBootstrap }) {
             <Text weight="semibold">{completeReview ? 'Complete profile' : summary?.title}</Text>
             <Text className={completeReview ? 'rounded-md bg-workspace-tint px-2' : undefined}>
               <Text type="supporting" color="secondary">
-                {completeReview && 'New charge · '}
-                {summary?.priceLabel === 'Maximum' ? 'Max' : summary?.priceLabel}{' '}
+                {completeReview ? 'One paid profile request · ' : 'One paid lookup · '}
+                {summary?.price === 'Unknown' ? 'Cost unknown' : summary?.priceLabel + ' '}
               </Text>
-              <Text weight="semibold">{summary?.price}</Text>
+              {summary?.price !== 'Unknown' && <Text weight="semibold">{summary?.price}</Text>}
             </Text>
           </HStack>
           {summary?.title === 'Complete profile · three providers' && <Text type='supporting'>PDL · Exa · Skip Trace</Text>}
@@ -1451,17 +1515,17 @@ export function Workspace({ bootstrap }: { bootstrap: NpgBootstrap }) {
             </Text>
           </HStack>
         </VStack>
-        <HStack gap={2} wrap="wrap">
+        <HStack gap={1} wrap="wrap" className="[&>button]:!px-2">
           <Button
             variant={expired ? 'secondary' : 'primary'}
             icon={narrow ? undefined : <Icon icon={ClipboardCheck} />}
-            label="Approve this action"
+            label="Approve paid lookup"
             className="min-h-control"
             aria-describedby="npg-decision-context"
             isDisabled={busy || needsRefresh || expired}
             onClick={() => void decide('approve')}
           >
-            Approve
+            Approve paid lookup
           </Button>
           <Button
             label="Reject action"
@@ -1479,7 +1543,7 @@ export function Workspace({ bootstrap }: { bootstrap: NpgBootstrap }) {
             className="min-h-control"
             onClick={() => focusAfterNavigation(true)}
           >
-            Read terms
+            Terms
           </Button>
         </HStack>
       </VStack>
@@ -1492,6 +1556,23 @@ export function Workspace({ bootstrap }: { bootstrap: NpgBootstrap }) {
     >
       <VStack gap={1}>
         {empty && <Text weight="medium">Your question</Text>}
+        {exampleReplacement !== null && (
+          <VStack gap={2} role="group" aria-label="Replace draft with example">
+            <Text>Your draft has text. Replace it with this example?</Text>
+            <HStack gap={2} wrap="wrap">
+              <Button label="Replace draft" variant="secondary" onClick={() => {
+                setPreviousDraft(draftRef.current); changeDraft(exampleReplacement);
+                setExampleReplacement(null); input.current?.focus();
+              }} />
+              <Button label="Keep draft" variant="secondary" onClick={() => setExampleReplacement(null)} />
+            </HStack>
+          </VStack>
+        )}
+        {previousDraft !== null && (
+          <Button label="Undo example replacement" variant="secondary" onClick={() => {
+            changeDraft(previousDraft); setPreviousDraft(null); input.current?.focus();
+          }} />
+        )}
         {canRefreshSkipTrace(conversation) && !recovery && (
           <Button
             label="Refresh Skip Trace"
@@ -1643,6 +1724,9 @@ export function Workspace({ bootstrap }: { bootstrap: NpgBootstrap }) {
           width="100%"
         >
           <Prose text={message.text} assistant={message.role === 'assistant'} />
+          {message.role === 'assistant' && sourcesForMessage(conversation.messages, conversation.sources, index)
+            .filter(source => source.tool === 'search_registry_sourcing' || source.tool === 'get_healthcare_coverage')
+            .map((source, sourceIndex) => <AnswerSource key={sourceIndex} source={source} />)}
         </ChatMessageBubble>
       </ChatMessage>
     )
@@ -1698,12 +1782,27 @@ export function Workspace({ bootstrap }: { bootstrap: NpgBootstrap }) {
             />
           }
           topContent={
-            <Button
-              icon={<Icon icon={Plus} />}
-              label="New chat"
-              isDisabled={busy}
-              onClick={() => void create()}
-            />
+            <VStack gap={1} align="start">
+              <Button
+                icon={<Icon icon={Plus} />}
+                label="New chat"
+                isDisabled={busy}
+                onClick={() => { setMarketsOpen(false); void create(); }}
+              />
+              <Button
+                icon={<Icon icon={ChartColumn} />}
+                label="Market activity"
+                variant="ghost"
+                aria-current={marketsOpen ? 'page' : undefined}
+                isDisabled={busy}
+                onClick={() => {
+                  const drawer = document.querySelector('dialog[open]');
+                  if (drawer) drawer.addEventListener('close', () => setMarketsOpen(true), { once: true });
+                  else setMarketsOpen(true);
+                  setNavOpen(false);
+                }}
+              />
+            </VStack>
           }
           footer={
             conversations.length ? (
@@ -1750,9 +1849,9 @@ export function Workspace({ bootstrap }: { bootstrap: NpgBootstrap }) {
                     )}
                   </HStack>
                 }
-                isSelected={item.id === conversation?.id}
+                isSelected={!marketsOpen && item.id === conversation?.id}
                 isDisabled={busy}
-                onClick={() => void open(item.id, true)}
+                onClick={() => { setMarketsOpen(false); void open(item.id, true); }}
               />
             ))
           ) : (
@@ -1769,7 +1868,13 @@ export function Workspace({ bootstrap }: { bootstrap: NpgBootstrap }) {
         </SideNav>
       }
     >
-      <HStack gap={0} height="100%" minHeight={0} className="npg-workspace min-w-0" align="stretch">
+      {marketsOpen ? <MarketActivity onResearch={(locale) => {
+        setMarketsOpen(false);
+        void create(`Find nurse practitioners in ${locale}. Show registry coverage and include the complete sourcing CSV.`);
+      }} onBack={() => {
+        setMarketsOpen(false);
+        focusAfterNavigation(Boolean(conversation?.pending), 'restore');
+      }} /> : <HStack gap={0} height="100%" minHeight={0} className="npg-workspace min-w-0" align="stretch">
         <VStack gap={0} minHeight={0} className="npg-chat-column flex-1 min-w-0">
           <Section padding={narrow ? 2 : 4} dividers={['bottom']}>
             {narrow && enrichment && !conversation?.pending ? (
@@ -1869,8 +1974,7 @@ export function Workspace({ bootstrap }: { bootstrap: NpgBootstrap }) {
                               endContent={<Icon icon={ArrowRight} size="sm" />}
                               align="first-line"
                               onClick={() => {
-                                changeDraft(example.prompt);
-                                input.current?.focus();
+                                chooseExample(example.prompt);
                               }}
                             />
                           ))}
@@ -1945,12 +2049,9 @@ export function Workspace({ bootstrap }: { bootstrap: NpgBootstrap }) {
                       </ChatMessage>
                     )}
                     {busy && submitted && (
-                      <Banner
-                        className="npg-working-feedback"
-                        status="info"
-                        title="Working on your question"
-                        description="Your answer will appear here when it is ready."
-                      />
+                      <Text className="npg-working-feedback" color="secondary">
+                        Your request is being processed. Your answer will appear here when ready.
+                      </Text>
                     )}
                     {conversation?.pending && (
                       <Section
@@ -2043,6 +2144,7 @@ export function Workspace({ bootstrap }: { bootstrap: NpgBootstrap }) {
                         </VStack>
                       </Collapsible>
                     )}
+                    {historyNotice && <Text color="secondary">{historyNotice}</Text>}
                     {notice && (
                       <Banner
                         className="npg-error-feedback"
@@ -2126,7 +2228,7 @@ export function Workspace({ bootstrap }: { bootstrap: NpgBootstrap }) {
             </VStack>
           </Section>
         )}
-      </HStack>
+      </HStack>}
     </AppShell>
   );
 }

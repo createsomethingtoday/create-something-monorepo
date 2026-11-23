@@ -5,6 +5,7 @@ import { readFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import { renderNpgDocument, NPG_DOCUMENT_HEADERS } from '../../src/lib/server/npg/document.ts';
 import { fixture } from './fixtures.ts';
+import { marketFixture } from './market-fixture.ts';
 const sessions = new Map();
 const server = createServer(async (req, res) => {
   try {
@@ -39,6 +40,10 @@ const server = createServer(async (req, res) => {
         return;
       }
       res.setHeader('Content-Type', 'application/json');
+      if (url.searchParams.get('view') === 'market') {
+        res.end(JSON.stringify(marketFixture(state.listing().length === 0)));
+        return;
+      }
       if (req.method === 'POST') {
         let raw = '';
         for await (const chunk of req) raw += chunk;
