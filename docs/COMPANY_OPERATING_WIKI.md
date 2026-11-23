@@ -34,6 +34,8 @@ Start with a dated signal from a customer, a shipped system, or a primary extern
 
 For example, if two prospects ask who approved an automated action, one hypothesis is that approval history will matter in the next buying cycle. Both prospects could also be responding to the same temporary audit. In the next three discovery calls, ask for a recent buying decision where approval history mattered. The person running discovery can then decide whether to test new positioning. This is an illustrative scenario.
 
+When a workflow already works, ask which step could disappear, move earlier, or pass to someone better placed to act. The [template validator and Ground replay](guides/LEARNING_FROM_SHIPPED_WORK.md) shows how to turn that question into a small experiment.
+
 ## Turn a correction into company knowledge
 
 Use the [wiki-maintainer skill](../.agents/skills/wiki-maintainer/SKILL.md) to trace a missed decision or source change and replay the task with a fresh agent.
