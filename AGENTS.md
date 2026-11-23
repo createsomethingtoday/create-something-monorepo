@@ -1,5 +1,7 @@
 # Agent Principles & Workflow
 
+For marketing, development, socials, and future casting, start with [How CREATE SOMETHING works](docs/COMPANY_OPERATING_WIKI.md).
+
 ## Atlas/Substrate agent context
 
 For Atlas/Substrate orientation, use the shared repository skill at

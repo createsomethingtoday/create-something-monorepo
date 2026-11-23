@@ -164,6 +164,7 @@ than inferred as a second documentation truth surface.
 
 ## Operating Doctrine
 
+- [How CREATE SOMETHING works](../../../../docs/COMPANY_OPERATING_WIKI.md) routes marketing, development, socials, and future casting to their operating guidance.
 - [Agent-Run Receipt Charter](../../../../docs/AGENT_RUN_RECEIPT_CHARTER.md): CREATE SOMETHING is agent-run with receipts; topology orientation does not grant mutation authority.
 - [Operator Agent System](../../../../docs/guides/OPERATOR_AGENT_SYSTEM.md): autonomy levels, receipts, rollback, and fail-closed operator-agent behavior.
 
