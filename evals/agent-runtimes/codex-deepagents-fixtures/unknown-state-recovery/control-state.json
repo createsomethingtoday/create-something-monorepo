@@ -1,0 +1,9 @@
+{
+  "status": "unknown",
+  "sources": [
+    { "id": "payout-ledger", "observed": "release is pending bank confirmation" },
+    { "id": "bank-receipt", "observed": "missing" }
+  ],
+  "allowed_decision": "hold_release",
+  "recovery": "rerun_bank_reconciliation"
+}
