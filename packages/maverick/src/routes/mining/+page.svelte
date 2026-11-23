@@ -1,138 +1,230 @@
 <script lang="ts">
-	/**
-	 * LithX - Mining & Metals Solutions
-	 * Maverick X
-	 *
-	 * Content fetched from CMS at request time (not build time)
-	 */
+  import Media from '$lib/redesign/Media.svelte';
+  import SEO from '$lib/components/SEO.svelte';
+  import { openContact } from '$lib/redesign/contact';
 
-	import KineticHero from '$lib/components/KineticHero.svelte';
-	import TabbedSolutions from '$lib/components/TabbedSolutions.svelte';
-	import ProcessSection from '$lib/components/ProcessSection.svelte';
-	import WhySection from '$lib/components/WhySection.svelte';
-	import {
-		lithxSolutions,
-		lithxSolutionsHeader,
-		lithxMethods,
-		lithxMethodsHeader
-	} from '$lib/data/lithx';
-	import type { PageData } from './$types';
-
-	interface Props {
-		data: PageData;
-	}
-
-	type LithxFeature = {
-		icon: string;
-		title: string;
-	};
-
-	let { data }: Props = $props();
-	const content = $derived(data.content);
-
-	// Hero content with CMS overrides
-	const heroTitle = $derived(content?.hero?.title ?? 'Next Generation Recovery');
-	const heroSubtitle = $derived(content?.hero?.subtitle ?? 'Valorize low-grade ores with LithX—advanced chelation technology for critical metals recovery from heaps, tailings, and complex mineralogy');
-	const heroVideo = $derived(content?.hero?.video ?? 'https://pub-fb87e05654104f5fbb33989fc4dca65b.r2.dev/videos/168384056-deep-open-pit-mine-copper-ore-.mp4');
-	const heroCta = $derived(content?.hero?.cta ?? 'Learn More');
-
-	// Why section with CMS overrides
-	const whyTitle = $derived(content?.why?.title ?? 'Advanced Chelation Technology');
-	const whySubtitle = $derived(content?.why?.subtitle ?? 'Our proprietary chemistry platform enables efficient metal extraction with reduced environmental impact and operational complexity.');
-	const whyFeatures = $derived(content?.whyFeatures ?? [
-		{ icon: 'beaker', title: 'Ultra-Strong Chelators' },
-		{ icon: 'thermometer', title: 'Ambient Temperature' },
-		{ icon: 'leaf', title: 'Environmentally Friendly' },
-		{ icon: 'plug', title: 'Drop-In Solution' }
-	]);
-
-	// Section headers with CMS overrides
-	const solutionsHeadline = $derived(content?.solutionsHeader?.headline ?? lithxSolutionsHeader.headline);
-	const methodsHeadline = $derived(content?.methodsHeader?.headline ?? lithxMethodsHeader.headline);
-
-	// Transform lithx solutions to TabbedSolutions format
-	const tabbedSolutions = lithxSolutions.map(solution => ({
-		id: solution.id,
-		name: solution.name,
-		symbol: solution.symbol,
-		description: solution.description,
-		details: solution.details,
-		image: solution.image,
-		features: solution.features,
-		stats: solution.stats
-	}));
-
-	// Transform lithx methods to ProcessSection format
-	const processSteps = lithxMethods.map(method => ({
-		id: method.id,
-		title: method.name,
-		description: method.details,
-		image: method.image,
-		ctaText: 'Learn More'
-	}));
-
+  import type { PageData } from './$types';
+  let { data }: { data: PageData } = $props();
+  const overrides = $derived(data.content?.redesign);
+  const categoryId = 'lithx';
 </script>
 
-<svelte:head>
-	<title>LithX | Mining & Metals Solutions | Maverick X</title>
-	<meta name="description" content="Next-generation metal recovery chemistry for critical minerals extraction. LithX enables sustainable, high-yield processing for lithium, cobalt, and rare earth elements." />
-</svelte:head>
-
-<!-- Hero Section (Main) -->
-<KineticHero
-	videoSrc={heroVideo}
-	title={heroTitle}
-	subtitle={heroSubtitle}
-	ctaText={heroCta}
+<SEO
+  title="Mining | Maverick X"
+  description="Revitalizing critical resource extraction with precision biologics."
+  canonical="https://www.maverickx.com/mining"
+  ogImage="https://www.maverickx.com/images/logo.png"
 />
 
-<!-- Tabbed Solutions Section -->
-<TabbedSolutions
-	headline={solutionsHeadline}
-	solutions={tabbedSolutions}
-	productPrefix="LithX"
-	accentColor="lithx"
-	labelType="symbol"
-/>
+<div>
+  <section
+    class="design-section design-hero"
+    style="position:relative;display:flex;align-items:flex-end;overflow:hidden"
+    data-screen-label="Mining hero"
+  >
+    <Media kind="miningHero" opacity={1} />
+    <div
+      style="position:absolute;inset:0;background:linear-gradient(rgba(0,0,0,.08) 40%,rgba(0,0,0,.65))"
+    ></div>
+    <div class="hero-copy" style="position:relative;padding:0 48px 88px;max-width:1000px;">
+      <div
+        style="font-size:13px;letter-spacing:4px;text-transform:uppercase;color:rgba(255,255,255,.7);margin-bottom:20px"
+      >
+        MINING
+      </div>
+      <h1
+        class="display-title"
+        style="margin:0;font-family:'Barlow Condensed',sans-serif;font-weight:600;font-size:clamp(52px,6.5vw,96px);line-height:.95;text-transform:uppercase"
+      >
+        {#if overrides?.title}{overrides.title}{:else}more metal <br />from every mine{/if}
+      </h1>
+      <p
+        style="margin:26px 0 0;font-size:19px;color:rgba(255,255,255,.85);max-width:560px;line-height:1.5;text-wrap:pretty"
+      >
+        {#if overrides?.subtitle}{overrides.subtitle}{:else}LithX — a revolutionary curing agent
+          that unlocks copper, gold, and more from ores too lean for conventional leaching.{/if}
+      </p>
+    </div>
+  </section>
 
-<!-- Features: Advanced Chelation Technology Section -->
-{#snippet lithxIcons(feature: LithxFeature)}
-	{#if feature.icon === 'beaker'}
-		<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="why-icon">
-			<path d="M4.5 3h15"></path>
-			<path d="M6 3v16a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V3"></path>
-			<path d="M6 14h12"></path>
-		</svg>
-	{:else if feature.icon === 'thermometer'}
-		<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="why-icon">
-			<path d="M14 4v10.54a4 4 0 1 1-4 0V4a2 2 0 0 1 4 0Z"></path>
-		</svg>
-	{:else if feature.icon === 'leaf'}
-		<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="why-icon">
-			<path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z"></path>
-			<path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12"></path>
-		</svg>
-	{:else}
-		<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="why-icon">
-			<path d="M12 2v10"></path>
-			<path d="M18.4 6.6a9 9 0 1 1-12.77.04"></path>
-		</svg>
-	{/if}
-{/snippet}
+  <section
+    class="design-section"
+    style="padding:120px 48px;border-bottom:1px solid rgba(255,255,255,.12)"
+    data-screen-label="LithX"
+  >
+    <div
+      class="grid-two"
+      style="max-width:1200px;margin:0 auto;display:grid;gap:72px;align-items:center"
+    >
+      <div class="media-panel" style="position:relative;height:480px;overflow:hidden">
+        <Media kind="mining" />
+      </div>
+      <div>
+        <div
+          style="font-size:13px;letter-spacing:3px;text-transform:uppercase;color:rgba(255,255,255,.6);margin-bottom:16px"
+        >
+          Curing Chemistry
+        </div>
+        <h2
+          class="display-title"
+          style="margin:0 0 24px;font-family:'Barlow Condensed',sans-serif;font-weight:600;font-size:60px;line-height:1;text-transform:uppercase"
+        >
+          LithX
+        </h2>
+        <p
+          style="margin:0 0 18px;font-size:18px;color:rgba(255,255,255,.85);line-height:1.6;text-wrap:pretty"
+        >
+          LithX raises the efficiency of leaching low-grade ores. Applied during agglomeration and
+          curing, it accelerates metal dissolution and lifts recovery across heaps, tailings, and
+          complex mineralogy.
+        </p>
+        <p
+          style="margin:0 0 32px;font-size:18px;color:rgba(255,255,255,.85);line-height:1.6;text-wrap:pretty"
+        >
+          A drop-in addition to existing leach circuits. LithX is non-toxic, operates at ambient
+          temperature across a wide pH range, and requires no new infrastructure.
+        </p>
+        <button
+          type="button"
+          onclick={() => openContact(categoryId)}
+          style="cursor:pointer;display:inline-block;background:#fff;color:#000;font-size:13px;font-weight:600;letter-spacing:2.5px;text-transform:uppercase;padding:16px 34px"
+          >Talk to Us</button
+        >
+      </div>
+    </div>
+  </section>
 
-<WhySection
-	title={whyTitle}
-	subtitle={whySubtitle}
-	features={whyFeatures}
-	videoUrl="https://pub-fb87e05654104f5fbb33989fc4dca65b.r2.dev/videos/mining-aerial.mp4"
-	accentColor="lithx"
-	iconSnippet={lithxIcons}
-/>
+  <section
+    class="design-section"
+    style="padding:120px 48px;border-bottom:1px solid rgba(255,255,255,.12)"
+  >
+    <div style="max-width:1200px;margin:0 auto">
+      <h2
+        class="display-title"
+        style="margin:0 0 56px;font-family:'Barlow Condensed',sans-serif;font-weight:500;font-size:44px;text-transform:uppercase"
+      >
+        Metals of Interest
+      </h2>
+      <div
+        class="grid-three"
+        style="display:grid;gap:1px;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.12)"
+      >
+        <div style="background:#000;padding:56px 48px">
+          <div
+            style="font-family:'Barlow Condensed',sans-serif;font-size:80px;font-weight:400;color:rgba(255,255,255,.35);line-height:1"
+          >
+            Cu
+          </div>
+          <h3
+            class="display-title"
+            style="margin:20px 0 12px;font-family:'Barlow Condensed',sans-serif;font-weight:600;font-size:34px;text-transform:uppercase"
+          >
+            Copper
+          </h3>
+          <p
+            style="margin:0;font-size:16px;color:rgba(255,255,255,.75);line-height:1.6;max-width:420px"
+          >
+            Unlock stranded copper in low-grade sulfide and oxide heaps. LithX curing lifts
+            dissolution rates where conventional acid leaching stalls.
+          </p>
+        </div>
+        <div style="background:#000;padding:56px 48px">
+          <div
+            style="font-family:'Barlow Condensed',sans-serif;font-size:80px;font-weight:400;color:rgba(255,255,255,.35);line-height:1"
+          >
+            Au
+          </div>
+          <h3
+            class="display-title"
+            style="margin:20px 0 12px;font-family:'Barlow Condensed',sans-serif;font-weight:600;font-size:34px;text-transform:uppercase"
+          >
+            Gold
+          </h3>
+          <p
+            style="margin:0;font-size:16px;color:rgba(255,255,255,.75);line-height:1.6;max-width:420px"
+          >
+            Recover more ounces from heaps and tailings previously written off. Higher extraction
+            from the ore you already own.
+          </p>
+        </div>
+        <div style="background:#000;padding:56px 48px;display:flex;flex-direction:column">
+          <div
+            style="font-family:'Barlow Condensed',sans-serif;font-size:80px;font-weight:400;color:rgba(255,255,255,.35);line-height:1"
+          >
+            +
+          </div>
+          <h3
+            class="display-title"
+            style="margin:20px 0 12px;font-family:'Barlow Condensed',sans-serif;font-weight:600;font-size:34px;text-transform:uppercase"
+          >
+            More
+          </h3>
+          <p
+            style="margin:0 0 24px;font-size:16px;color:rgba(255,255,255,.75);line-height:1.6;max-width:420px"
+          >
+            Working a different metal or a challenging ore body? Tell us what you’re leaching —
+            we’ll tell you if LithX fits.
+          </p>
+          <button
+            type="button"
+            onclick={() => openContact(categoryId)}
+            style="cursor:pointer;margin-top:auto;align-self:flex-start;font-size:13px;font-weight:600;letter-spacing:2.5px;text-transform:uppercase;border-bottom:1px solid rgba(255,255,255,.6);padding-bottom:4px"
+            >Ask about your ore →</button
+          >
+        </div>
+      </div>
+    </div>
+  </section>
 
-<!-- Methods/Process Section -->
-<ProcessSection
-	headline={methodsHeadline}
-	steps={processSteps}
-	numbered={false}
-	accentColor="lithx"
-/>
+  <section
+    class="design-section"
+    style="padding:100px 48px;border-bottom:1px solid rgba(255,255,255,.12)"
+  >
+    <div class="grid-four" style="max-width:1200px;margin:0 auto;display:grid;gap:48px">
+      <div>
+        <div style="width:32px;height:2px;background:#fff;margin-bottom:20px"></div>
+        <div
+          style="font-size:15px;font-weight:600;letter-spacing:2px;text-transform:uppercase;margin-bottom:10px"
+        >
+          Higher Recovery
+        </div>
+        <div style="font-size:14px;color:rgba(255,255,255,.65);line-height:1.5">
+          More metal from every tonne placed on the pad.
+        </div>
+      </div>
+      <div>
+        <div style="width:32px;height:2px;background:#fff;margin-bottom:20px"></div>
+        <div
+          style="font-size:15px;font-weight:600;letter-spacing:2px;text-transform:uppercase;margin-bottom:10px"
+        >
+          Ambient Temperature
+        </div>
+        <div style="font-size:14px;color:rgba(255,255,255,.65);line-height:1.5">
+          Works in existing heap conditions — no heating.
+        </div>
+      </div>
+      <div>
+        <div style="width:32px;height:2px;background:#fff;margin-bottom:20px"></div>
+        <div
+          style="font-size:15px;font-weight:600;letter-spacing:2px;text-transform:uppercase;margin-bottom:10px"
+        >
+          Environmentally Friendly
+        </div>
+        <div style="font-size:14px;color:rgba(255,255,255,.65);line-height:1.5">
+          Biodegradable chemistry from organic feedstocks.
+        </div>
+      </div>
+      <div>
+        <div style="width:32px;height:2px;background:#fff;margin-bottom:20px"></div>
+        <div
+          style="font-size:15px;font-weight:600;letter-spacing:2px;text-transform:uppercase;margin-bottom:10px"
+        >
+          Drop-In Solution
+        </div>
+        <div style="font-size:14px;color:rgba(255,255,255,.65);line-height:1.5">
+          Integrates into your agglomeration circuit as-is.
+        </div>
+      </div>
+    </div>
+  </section>
+</div>

@@ -6,22 +6,25 @@ import type { PageServerLoad } from './$types';
 import { fetchPageContent } from '$lib/server/content';
 
 export interface NewsArticle {
-	id: string;
-	date: string;
-	title: string;
-	excerpt: string;
-	image: string;
-	slug: string;
-	featured: boolean;
-	category: string;
+  id: string;
+  date: string;
+  title: string;
+  excerpt: string;
+  image: string;
+  slug: string;
+  featured: boolean;
+  category: string;
 }
 
 export interface NewsContent {
-	title?: string;
-	articles?: NewsArticle[];
+  redesign?: {
+    articles?: Array<{ date: string; kind: string; title: string; source: string; url: string }>;
+  };
+  title?: string;
+  articles?: NewsArticle[];
 }
 
 export const load: PageServerLoad = async ({ platform }) => {
-	const content = await fetchPageContent<NewsContent>(platform, 'news');
-	return { content };
+  const content = await fetchPageContent<NewsContent>(platform, 'news');
+  return { content };
 };
