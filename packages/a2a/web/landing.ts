@@ -1,8 +1,12 @@
+import { beginPageLoad } from './page-loading';
 import './styles.css';
 import './landing-motion.css';
 import './landing-editorial.css';
 import { startHandoffStudy, startLandingChoreography } from './landing-motion';
 import {startMotion} from './motion';
+if (document.readyState !== 'complete') {
+  window.addEventListener('load', beginPageLoad(), { once: true });
+}
 startMotion();
 startHandoffStudy();
 startLandingChoreography();

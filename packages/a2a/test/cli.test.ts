@@ -250,7 +250,7 @@ test('CLI refresh: a held or interrupted session lock fails closed with bounded 
 	const errors:string[]=[];let requests=0;
 	assert.equal(await runCli(['whoami'],{sessionPath:path,sessionLockTimeoutMs:10,env:{},out:()=>{},err:value=>errors.push(value),fetch:async()=>{requests++;return Response.json({});}}),1);
 	assert.equal(requests,0);assert.equal(await readFile(path,'utf8'),saved);
-	assert.match(errors[0],/confirm no A2A command is running/);
+	assert.match(errors[0],/confirm no Relay command is running/);
 	assert.ok(await stat(path+'.lock'));
 });
 

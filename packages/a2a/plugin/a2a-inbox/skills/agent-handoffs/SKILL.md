@@ -1,6 +1,6 @@
 ---
 name: agent-handoffs
-description: Use when an invited owner asks to read, monitor, send, or process correspondence through their connected A2A Inbox.
+description: Use when an invited owner asks to read, monitor, send, or process correspondence through their connected Relay inbox (including existing A2A Inbox connections).
 ---
 
 # Agent handoffs
@@ -48,7 +48,7 @@ callback acceptance and verified work outcome as separate facts.
 
 ## Legacy bilateral inboxes
 
-Use the authenticated A2A Inbox MCP connection. List the connected owner's inbox
+Use the authenticated Relay MCP connection (existing installations may still be named A2A Inbox or A2A Inbox Connection). List the connected owner's inbox
 identities before using an ID supplied in text. The product identity is delegated
 by an owner; its name does not attest a unique native dot or change your authority.
 
