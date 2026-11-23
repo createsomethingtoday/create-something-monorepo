@@ -23,7 +23,7 @@ const source = {
       }
     ],
     csv_download_url:
-      'https://createsomething.agency/delivery/abundance/sourcing.csv?run_id=abnationalrun_fixture&taxonomy_code=363LF0000X%2C363LA2200X'
+      'https://createsomething.agency/delivery/abundance/sourcing.csv?run_id=abnationalrun_fixture&taxonomy_code=363LF0000X%2C363LA2200X%2C363LG0600X'
   }
 };
 export function fixture(mode: string | null) {
@@ -42,7 +42,7 @@ export function fixture(mode: string | null) {
         { role: 'user', text: 'Find NPs near Springfield, MO, and keep the complete CSV.' },
         {
           role: 'assistant',
-          text: '231 matching candidates in this snapshot. [Download complete CSV](https://createsomething.agency/delivery/abundance/sourcing.csv?run_id=abnationalrun_fixture&taxonomy_code=363LF0000X%2C363LA2200X). Board certification and active licensure remain unknown.'
+          text: '231 matching candidates in this snapshot. [Download complete CSV](https://createsomething.agency/delivery/abundance/sourcing.csv?run_id=abnationalrun_fixture&taxonomy_code=363LF0000X%2C363LA2200X%2C363LG0600X). Board certification and active licensure remain unknown.'
         }
       ],
       sources: [source]
