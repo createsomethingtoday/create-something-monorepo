@@ -164,7 +164,7 @@ plausible matches. Preview the evidence locally first:
 node scripts/ontology.mjs vocabulary review ./vocabulary.json type:implementation-partner type:delivery-partner type:software-vendor
 ```
 
-Append `--provider jev` to send the displayed packet (IDs, names, descriptions
+Jev is the selected provider for duplicate review. Append `--provider jev` to send the displayed packet (IDs, names, descriptions
 and short source excerpts) to Jev using `TYPESAFE_API_KEY`. OpenAI Decisions is
 available with `--provider openai` and `OPENAI_API_KEY`. Use data permitted
 for the selected provider. The command returns a candidate ID or `no_match`.

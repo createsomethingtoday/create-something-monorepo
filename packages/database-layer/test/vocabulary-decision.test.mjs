@@ -57,3 +57,11 @@ test('already aborted callers perform no request and reject cleanly', async () =
     fetch: async () => {calls++; throw Error('unexpected');}}), /cancelled|aborted/);
   assert.equal(calls, 0);
 });
+
+test('uses Jev when a ranking caller omits the provider', async () => {
+  const result = await rankVocabulary(input, {apiKey: 'fake', fetch: async url => {
+    assert.equal(url, 'https://api.typesafe.ai/v1/systemone');
+    return Response.json(response('jev'));
+  }});
+  assert.equal(result.provider, 'jev');
+});

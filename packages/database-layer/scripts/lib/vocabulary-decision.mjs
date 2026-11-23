@@ -23,7 +23,7 @@ export async function rankVocabulary({subject, candidates}, options = {}) {
   const offered = candidates.map(entry);
   const ids = offered.map(candidate => candidate.id);
   if (new Set(ids).size !== ids.length || ids.includes(source.id)) throw new Error('Vocabulary candidate IDs must be unique and exclude the subject');
-  const provider = options.provider ?? 'openai';
+  const provider = options.provider ?? 'jev';
   if (!['openai', 'jev'].includes(provider)) throw new Error('Unsupported vocabulary decision provider');
   const keyName = provider === 'openai' ? 'OPENAI_API_KEY' : 'TYPESAFE_API_KEY';
   const apiKey = options.apiKey ?? process.env[keyName];
