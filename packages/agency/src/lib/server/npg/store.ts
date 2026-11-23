@@ -17,13 +17,15 @@ export class NpgReceiptHoldError extends NpgError {
     super(409, message);
   }
 }
-export type Message = { role: 'user' | 'assistant'; text: string; skipTraceReceipt?: string };
+export type Message = { role: 'user' | 'assistant'; text: string; answerId?: string; skipTraceReceipt?: string };
 export type Source = {
+  answerId?: string;
   tool: string;
   data: unknown;
   actionId?: string;
   existingReceipt?: boolean;
   receiptConversationId?: string;
+  market?: { id: string; at: number; locale: string };
 };
 export type PendingSkipReceipt = { actionId: string; id: string; run_id: string; npi?: string };
 export type State = {
@@ -122,6 +124,15 @@ export class NpgStore {
       .bind(id, owner, now, now)
       .run();
     return this.read(owner, id);
+  }
+  async progress(owner: string, id: string) {
+    const row = await this.db.prepare(`SELECT version, status,
+      (SELECT count(*) FROM json_each(state_json, '$.sources')
+       WHERE json_extract(value, '$.tool') = 'search_registry_sourcing') AS registrySources
+      FROM npg_analyst_conversations WHERE owner_id=? AND id=? AND scope='npg'`)
+      .bind(owner, id).first<{ version: number; status: string; registrySources: number }>();
+    if (!row) throw new NpgError(404, 'Conversation not found.');
+    return row;
   }
   async list(owner: string) {
     const rows = await this.db
@@ -559,12 +570,19 @@ export class NpgStore {
       }
     }
     const action = state.pendingId ? await this.action(owner, state.pendingId) : undefined;
+    const answerPositions = new Map(state.messages.flatMap((message, index) =>
+      message.role === 'assistant' && message.answerId ? [[message.answerId, index] as const] : []
+    ));
+    const sources = await this.sourcesForRead(owner, id, state);
     return {
       id: row.id,
       version: row.version,
       status: row.status,
       messages: state.messages,
-      sources: await this.sourcesForRead(owner, id, state),
+      sources: sources.map((source): Source & { assistantMessageIndex?: number } => {
+        const index = source.answerId && !source.existingReceipt ? answerPositions.get(source.answerId) : undefined;
+        return index === undefined ? source : { ...source, assistantMessageIndex: index };
+      }),
       enrichmentRecovery: recoveryView(state, this.now()),
       pending:
         action && action.status === 'pending'

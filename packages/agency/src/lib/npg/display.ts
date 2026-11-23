@@ -555,7 +555,7 @@ export type NpgView = {
   }>;
   status: string;
   messages: Array<{ role: 'user' | 'assistant'; text: string }>;
-  sources: Array<{ tool: string; data: unknown; existingReceipt?: boolean; receiptConversationId?: string }>;
+  sources: Array<{ tool: string; data: unknown; assistantMessageIndex?: number; existingReceipt?: boolean; receiptConversationId?: string }>;
   pending: null | {
     id: string;
     tool: string;

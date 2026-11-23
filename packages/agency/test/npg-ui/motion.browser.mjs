@@ -369,7 +369,7 @@ try {
         'The exact request starts at the beginning of the reading region'
       );
       await expect(
-        page.getByRole('button', { name: 'Approve this action', exact: true })
+        page.getByRole('button', { name: 'Approve paid lookup', exact: true })
       ).toBeInViewport();
     },
     { viewport: { width: 320, height: 568 } }

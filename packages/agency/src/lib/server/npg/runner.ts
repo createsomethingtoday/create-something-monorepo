@@ -1,3 +1,4 @@
+import { marketLocale } from './market';
 import { recomputeProfile, recoveryView } from './recovery';
 import { NPG_TOOL_NAMES, PAID_TOOLS } from './policy';
 import { validateArguments, type Providers, type Tool } from './providers';
@@ -897,6 +898,7 @@ export async function executeCommand(
       const p = providers!,
         c = row!,
         s = state!;
+      const firstSource = s.sources.length;
       for (let step = 0; step < 7; step++) {
         await store.assertLease(c);
         if (JSON.stringify(s).length > 280000)
@@ -908,7 +910,12 @@ export async function executeCommand(
         s.responseId = response.id;
         if (!response.call) {
           if (!response.text.trim()) throw new Error('No answer');
-          s.messages.push({ role: 'assistant', text: response.text });
+          const registrySources = s.sources.slice(firstSource).filter(source =>
+            source.tool === 'search_registry_sourcing' || source.tool === 'get_healthcare_coverage'
+          );
+          const answerId = registrySources.length ? crypto.randomUUID() : undefined;
+          for (const source of registrySources) source.answerId = answerId;
+          s.messages.push({ role: 'assistant', text: response.text, answerId });
           await store.finish(c, s, 'idle', toolCount);
           return store.view(owner, c.id);
         }
@@ -968,7 +975,16 @@ export async function executeCommand(
         }
         const result = await p.call(tool.name, args);
         toolCount++;
-        s.sources.push({ tool: tool.name, data: result });
+        const source: State['sources'][number] = { tool: tool.name, data: result };
+        if (tool.name === 'search_registry_sourcing' || tool.name === 'search_coverage_candidates') {
+          // Both search tools default to nationwide when no geographic filter is supplied.
+          source.market = {
+            id: `${c.run_id}:${call.call_id}`,
+            at: store.now(),
+            locale: marketLocale(args, args.market_id === undefined)
+          };
+        }
+        s.sources.push(source);
         await store.checkpoint(c, s);
         input = [
           { type: 'function_call_output', call_id: call.call_id, output: JSON.stringify(result) }

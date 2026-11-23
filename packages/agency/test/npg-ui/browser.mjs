@@ -107,7 +107,7 @@ try {
       const bar = page.locator('.npg-review-decision-bar');
       await expect(bar.getByText('Price unknown. Confirmed receipts are prior spend.', {exact:true})).toBeInViewport();
       await expect(bar.getByText('PDL · Exa · Skip Trace', {exact:true})).toBeInViewport();
-      await expect(bar.getByRole('button', {name:'Approve this action'})).toBeInViewport();
+      await expect(bar.getByRole('button', {name:'Approve paid lookup'})).toBeInViewport();
       const contactScope = page.getByRole('heading', { name: 'Contact scope', exact: true }).locator('..');
       await contactScope.scrollIntoViewIfNeeded();
       const scopeBox = await contactScope.boundingBox();
@@ -378,7 +378,7 @@ try {
       await expect(summary).toContainText('1234567890');
       await expect(summary).toContainText('Jamie Example');
       await expect(summary).toContainText('(unverified)');
-      await expect(summary).toContainText('Estimate Unknown');
+      await expect(summary).toContainText('Cost unknown');
       const bounds = await summary.boundingBox();
       const pane = await page.locator('.npg-review-surface').boundingBox();
       assert.ok(pane.y >= 0 && pane.y + pane.height <= page.viewportSize().height + 1);
@@ -387,7 +387,7 @@ try {
         'Full decision summary must be visible with decision controls'
       );
       await expect(
-        page.getByRole('button', { name: 'Approve this action', exact: true })
+        page.getByRole('button', { name: 'Approve paid lookup', exact: true })
       ).toBeInViewport();
       await expect(reject).toBeInViewport();
       const rejectBox = await reject.boundingBox();
@@ -540,7 +540,7 @@ try {
           .evaluate((element) => element.scrollWidth <= element.clientWidth),
         'Long exact request values must wrap without losing their original data'
       );
-      const approve = page.getByRole('button', { name: 'Approve this action', exact: true });
+      const approve = page.getByRole('button', { name: 'Approve paid lookup', exact: true });
       await expect(approve).toBeInViewport();
       await expect(
         page.getByRole('button', { name: 'Reject action', exact: true })
@@ -795,7 +795,7 @@ try {
     await input.press('Control+Enter');
     await expect(page.getByRole('button', { name: 'Working…' })).toBeDisabled();
     await expect(
-      page.getByText('Your answer will appear here when it is ready.', { exact: true })
+      page.getByText('Your request is being processed. Your answer will appear here when ready.', { exact: true })
     ).toBeVisible();
     await page.screenshot({ path: `${evidence}/working.png` });
     await input.fill('My next question');
@@ -841,7 +841,7 @@ try {
   await scenario('expiry disables only approval', async (page) => {
     await gotoState(page, 'expired');
     await expect(page.locator('.npg-state')).toHaveText('Review expired');
-    await expect(page.getByRole('button', { name: 'Approve this action' })).toBeDisabled();
+    await expect(page.getByRole('button', { name: 'Approve paid lookup' })).toBeDisabled();
     await expect(page.getByRole('button', { name: 'Reject action', exact: true })).toBeEnabled();
     await expect(page.getByText('This review has expired. Approval is unavailable.')).toBeVisible();
   });
@@ -997,6 +997,61 @@ try {
     { width: 390, height: 844 },
     { javaScriptEnabled: false }
   );
+  await scenario('review UX source ownership across multiple answers', async page => {
+    await gotoState(page, 'multi-turn');
+    const answers = page.locator('.npg-saved-message').filter({has:page.locator('.npg-answer-source')});
+    await expect(answers).toHaveCount(2);
+    await expect(answers.nth(0).locator('.npg-answer-source')).toContainText('231 source records');
+    await expect(answers.nth(1).locator('.npg-answer-source')).toContainText('19 source records');
+    await expect(answers.nth(0).locator('.npg-answer-source')).not.toContainText('19 source records');
+    await expect(answers.nth(0).getByRole('button',{name:'View registry evidence'})).toHaveAttribute('aria-expanded','false');
+  });
+  await scenario('slow registry request reports a saved source before the final answer', async page => {
+    await gotoState(page, 'idle');
+    let resume;
+    const hold = new Promise(resolve => { resume = resolve; });
+    await page.route('**/healthcare-analyst/api', async route => {
+      if (route.request().method() === 'POST') await hold;
+      await route.continue();
+    });
+    await page.route('**/api?view=progress&id=*', route => route.fulfill({
+      json: { version: 1, status: 'running', registrySources: 2 }
+    }));
+    await page.getByRole('textbox', {name: 'Your question'}).fill('Compare Springfield.');
+    await page.getByRole('button', {name: 'Send question', exact: true}).click();
+    try {
+      await expect(page.locator('.npg-state')).toHaveText('Registry results received', {timeout: 12000});
+    } finally {
+      resume();
+    }
+    await expect(page.locator('.npg-state')).toHaveText('Chat ready');
+    assert.equal((await commands(page)).filter(command => command.type === 'message').length, 1);
+  });
+  await scenario('review UX protects draft and undo restores original', async page => {
+    await gotoState(page, 'new');
+    const input = page.getByRole('textbox',{name:'Your question'});
+    await input.fill('Keep my exact draft');
+    await page.getByRole('button',{name:/Find candidates by city/}).click();
+    await expect(input).toHaveText('Keep my exact draft');
+    await page.getByRole('button',{name:'Keep draft',exact:true}).click();
+    await expect(input).toHaveText('Keep my exact draft');
+    await page.getByRole('button',{name:/Find candidates by city/}).click();
+    await page.getByRole('button',{name:'Replace draft',exact:true}).click();
+    await expect(input).toContainText('Find FNP');
+    await page.getByRole('button',{name:'Undo example replacement'}).click();
+    await expect(input).toHaveText('Keep my exact draft');
+    assert.deepEqual(await commands(page), []);
+  });
+  await scenario('review UX keeps accepted answer when history refresh fails', async page => {
+    await gotoState(page, 'history-error');
+    await page.getByRole('textbox',{name:'Your question'}).fill('New accepted question');
+    await page.getByRole('button',{name:'Send question',exact:true}).click();
+    await expect(page.getByText('Your answer is saved. Conversation list could not refresh.')).toBeVisible();
+    await expect(page.locator('.npg-saved-message')).toHaveCount(4);
+    await expect(page.getByRole('textbox',{name:'Your question'})).toHaveText('');
+    await expect(page.getByText('Could not complete the request')).toHaveCount(0);
+    assert.equal((await commands(page)).filter(command=>command.type==='message').length,1);
+  });
 } finally {
   await browser.close();
   await writeFile(`${evidence}/browser-report.json`, JSON.stringify(report, null, 2));

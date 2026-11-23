@@ -3,6 +3,7 @@ import type { HistoryItem } from '../../src/lib/npg/astryx/types';
 const id = '0d0822cf-c2ac-4713-a6ba-fef887b7bccc';
 const source = {
   tool: 'search_registry_sourcing',
+  assistantMessageIndex: 1,
   data: {
     run_id: 'abnationalrun_fixture',
     total: 231,
@@ -442,7 +443,14 @@ export function fixture(mode: string | null) {
     { role: 'user', text: 'What did Exa return?' },
     { role: 'assistant', text: 'Exa returned no confirmed contact match. That does not establish that no contact exists.' }
   );
+  if (mode === 'multi-turn') {
+    view.messages.push({role: 'user', text: 'Now show a different market.'},
+      {role: 'assistant', text: 'A different snapshot has 19 source records.'});
+    view.sources.push({...source, assistantMessageIndex: 3, data: {...source.data, total: 19, unresolved_count: 2}});
+  }
   function listing(): HistoryItem[] {
+    if (mode === 'history-error' && commands.some(command => command.type === 'message'))
+      throw new Error('Synthetic conversation list unavailable');
     return created
       ? [
           {
@@ -527,7 +535,7 @@ export function fixture(mode: string | null) {
               text: '231 matching candidates. Certification remains unknown. <script>alert("untrusted")</script>'
             }
           ],
-          sources: [source]
+          sources: [...view.sources, {...source, assistantMessageIndex: view.messages.length + 1}]
         };
       } else
         view = {

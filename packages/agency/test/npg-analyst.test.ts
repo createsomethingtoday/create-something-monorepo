@@ -364,6 +364,9 @@ test('owner isolation, server IDs, complete sourcing CSV and source snapshot sur
     const v = await executeCommand(store, 'alice', message(c), () => f.p);
     assert.equal(v.status, 'idle');
     assert.equal(v.sources.length, 1);
+    assert.equal(v.sources[0].assistantMessageIndex, 1);
+    assert.deepEqual(await store.progress('alice', c.id), {version: v.version, status: 'idle', registrySources: 1});
+    await assert.rejects(store.progress('bob', c.id), { status: 404 });
     const s = v.sources[0].data as any;
     assert.equal(s.total, 231);
     assert.equal(s.unresolved_count, 17);
@@ -2275,3 +2278,18 @@ test('saved four-provider approval is rejected before provider calls and require
     assert.equal(f.calls.length,before);
     assert.match(result.messages.at(-1)!.text,/outdated provider scope/);
   }));
+
+for (const tool of ['get_healthcare_coverage', 'search_coverage_candidates']) {
+  test('saves normalized coverage evidence for ' + tool, () => database(async store => {
+    const initial = await conversation(store);
+    const first = await executeCommand(store, 'alice', message(initial), () => fixture('search_registry_sourcing', {}).p);
+    const provider = fixture(tool, {}).p;
+    provider.tools = async () => [{name:tool, inputSchema: {type:'object', properties:{}}}];
+    provider.call = async () => ({market_id: 'npg-family-np-nationwide', total: 12});
+    const next = await executeCommand(store, 'alice', message(first), () => provider);
+    const source = next.sources.find(item => item.tool === tool)!;
+    if (tool === 'get_healthcare_coverage') assert.equal(source.assistantMessageIndex, 3);
+    else assert.equal(source.market?.locale, 'Nationwide');
+    assert.equal(next.sources[0].assistantMessageIndex, 1);
+  }));
+}
