@@ -1,5 +1,6 @@
 import './styles.css';
 import './landing-motion.css';
+import './landing-editorial.css';
 import { startHandoffStudy } from './landing-motion';
 import {startMotion} from './motion';
 startMotion();

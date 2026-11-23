@@ -1,5 +1,6 @@
 import {effectiveSubscriptionStatus} from '../src/subscription-status';
 import './styles.css';
+import './console-editorial.css';
 import {startMotion,motionEnter} from './motion';
 startMotion();
 import {createSharedContext} from './shared-context';
