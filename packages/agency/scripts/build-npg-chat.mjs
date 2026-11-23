@@ -52,6 +52,9 @@ const gsapSource = await readFile(
 const gsapNotice = gsapSource.match(/\/\*![\s\S]*?\*\//)?.[0];
 if (!gsapNotice?.includes('@license')) throw new Error('GSAP license notice missing.');
 notices.push('gsap\n' + gsapNotice);
+notices.push(
+  await readFile(new URL('../src/lib/npg/assets/us-states-LICENSE.md', import.meta.url), 'utf8')
+);
 await writeFile(
   new URL('../static/npg-chat/LICENSES.txt', import.meta.url),
   notices.join('\n\n--------------------\n\n')

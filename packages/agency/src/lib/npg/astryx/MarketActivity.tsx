@@ -10,6 +10,24 @@ import { Banner } from '@astryxdesign/core/Banner';
 import { List, ListItem } from '@astryxdesign/core/List';
 import { Disclosure } from './Disclosure';
 import type { MarketActivitySummary } from '../market';
+const MarketMap = React.lazy(() =>
+  import('./MarketMap').then((module) => ({ default: module.MarketMap }))
+);
+class MapBoundary extends React.Component<{ children: React.ReactNode }, { failed: boolean }> {
+  state = { failed: false };
+  static getDerivedStateFromError() {
+    return { failed: true };
+  }
+  render() {
+    return this.state.failed ? (
+      <Text role="alert">
+        The map could not be loaded. Choose List to continue comparing your saved activity.
+      </Text>
+    ) : (
+      this.props.children
+    );
+  }
+}
 
 const counted = (value: number, noun: string) =>
   `${value.toLocaleString('en-US')} ${noun}${value === 1 ? '' : noun === 'search' ? 'es' : 's'}`;
@@ -30,6 +48,7 @@ export function MarketActivity({
   onResearch?: (locale: string) => void;
 }) {
   const [sort, setSort] = useState<'searches' | 'matchingResults' | 'exportsPrepared'>('searches');
+  const [view, setView] = useState<'list' | 'map'>('list');
   const heading = useRef<HTMLHeadingElement>(null);
   const [data, setData] = useState<MarketActivitySummary | null>(null);
   const [error, setError] = useState('');
@@ -104,76 +123,100 @@ export function MarketActivity({
               />
             ) : (
               <VStack gap={1}>
-                <Heading level={2}>Compare locales</Heading>
-                <HStack gap={2} wrap="wrap" aria-label="Sort locales">
-                  {(['searches', 'matchingResults', 'exportsPrepared'] as const).map((metric) => (
-                    <Button
-                      size="sm"
-                      key={metric}
-                      label={
-                        metric === 'searches'
-                          ? 'Most searches'
-                          : metric === 'matchingResults'
-                            ? 'Most matches'
-                            : 'Most exports'
-                      }
-                      variant={sort === metric ? 'primary' : 'ghost'}
-                      aria-pressed={sort === metric}
-                      onClick={() => setSort(metric)}
-                    />
-                  ))}
-                </HStack>
-                <List aria-label="Locale comparison">
-                  {[...data.locales]
-                    .sort((a, b) => b[sort] - a[sort] || a.locale.localeCompare(b.locale))
-                    .map((locale) => (
-                      <ListItem
-                        key={locale.locale}
+                <Heading level={2} className="sr-only">Compare locales</Heading>
+                <HStack gap={1} wrap="wrap" aria-label="Activity view">
+                  <Button
+                    size="sm"
+                    label="List"
+                    variant={view === 'list' ? 'primary' : 'ghost'}
+                    aria-pressed={view === 'list'}
+                    onClick={() => setView('list')}
+                  />
+                  <Button
+                    size="sm"
+                    label="Map"
+                    variant={view === 'map' ? 'primary' : 'ghost'}
+                    aria-pressed={view === 'map'}
+                    onClick={() => setView('map')}
+                  />
+                  <HStack gap={1} wrap="wrap" aria-label="Sort locales">
+                    {(['searches', 'matchingResults', 'exportsPrepared'] as const).map((metric) => (
+                      <Button
+                        size="sm"
+                        key={metric}
                         label={
-                          <VStack gap={1} className="min-w-0 w-full">
-                            <HStack justify="between" gap={2} align="center">
-                              <Heading level={3}>{locale.locale}</Heading>
-                              <Text weight="semibold">
-                                {sort === 'matchingResults'
-                                  ? matches(locale)
-                                  : `${number(locale[sort])} ${sort === 'searches' ? (locale[sort] === 1 ? 'search' : 'searches') : 'prepared'}`}
-                              </Text>
-                            </HStack>
-                            <Grid columns={2} gap={2} className="md:grid-cols-4">
-                              <Text>{counted(locale.searches, 'search')}</Text>
-                              <Text>{matches(locale)}</Text>
-                              <Text>{counted(locale.exportsRequested, 'export request')}</Text>
-                              <Text>{number(locale.exportsPrepared)} prepared</Text>
-                            </Grid>
-                            <HStack gap={2} wrap="wrap" justify="start">
-                              {onResearch &&
-                                /^(?:[A-Za-z .'-]+, )?[A-Z]{2}$/.test(locale.locale) && (
-                                  <Button
-                                    size="sm"
-                                    variant="ghost"
-                                    label={`Research ${locale.locale}`}
-                                    onClick={() => onResearch(locale.locale)}
-                                  />
-                                )}
-                            </HStack>
-                            <Disclosure trigger="Source quality and dates">
-                              <Text color="secondary">
-                                {counted(locale.incompleteSearches, 'search')} flagged incomplete ·{' '}
-                                {counted(locale.unknownResultCounts, 'unknown result count')}
-                              </Text>
-                              <Text color="secondary">
-                                Source snapshot: {locale.sourceFetchedAt || 'not recorded'} · Latest
-                                saved search:{' '}
-                                {locale.latestSearchAt
-                                  ? new Date(locale.latestSearchAt).toLocaleDateString('en-US')
-                                  : 'not recorded'}
-                              </Text>
-                            </Disclosure>
-                          </VStack>
+                          metric === 'searches'
+                            ? 'Most searches'
+                            : metric === 'matchingResults'
+                              ? 'Most matches'
+                              : 'Most exports'
                         }
+                        variant={sort === metric ? 'primary' : 'ghost'}
+                        aria-pressed={sort === metric}
+                        onClick={() => setSort(metric)}
                       />
                     ))}
-                </List>
+                  </HStack>
+                </HStack>
+                {view === 'map' ? (
+                  <MapBoundary>
+                    <React.Suspense fallback={<Text role="status">Loading state map…</Text>}>
+                      <MarketMap data={data} metric={sort} onResearch={onResearch} />
+                    </React.Suspense>
+                  </MapBoundary>
+                ) : (
+                  <List aria-label="Locale comparison">
+                    {[...data.locales]
+                      .sort((a, b) => b[sort] - a[sort] || a.locale.localeCompare(b.locale))
+                      .map((locale) => (
+                        <ListItem
+                          key={locale.locale}
+                          label={
+                            <VStack gap={1} className="min-w-0 w-full">
+                              <HStack justify="between" gap={2} align="center">
+                                <Heading level={3}>{locale.locale}</Heading>
+                                <Text weight="semibold">
+                                  {sort === 'matchingResults'
+                                    ? matches(locale)
+                                    : `${number(locale[sort])} ${sort === 'searches' ? (locale[sort] === 1 ? 'search' : 'searches') : 'prepared'}`}
+                                </Text>
+                              </HStack>
+                              <Grid columns={2} gap={2} className="md:grid-cols-4">
+                                <Text>{counted(locale.searches, 'search')}</Text>
+                                <Text>{matches(locale)}</Text>
+                                <Text>{counted(locale.exportsRequested, 'export request')}</Text>
+                                <Text>{number(locale.exportsPrepared)} prepared</Text>
+                              </Grid>
+                              <HStack gap={2} wrap="wrap" justify="start">
+                                {onResearch &&
+                                  /^(?:[A-Za-z .'-]+, )?[A-Z]{2}$/.test(locale.locale) && (
+                                    <Button
+                                      size="sm"
+                                      variant="ghost"
+                                      label={`Research ${locale.locale}`}
+                                      onClick={() => onResearch(locale.locale)}
+                                    />
+                                  )}
+                              </HStack>
+                              <Disclosure trigger="Source quality and dates">
+                                <Text color="secondary">
+                                  {counted(locale.incompleteSearches, 'search')} flagged incomplete
+                                  · {counted(locale.unknownResultCounts, 'unknown result count')}
+                                </Text>
+                                <Text color="secondary">
+                                  Source snapshot: {locale.sourceFetchedAt || 'not recorded'} ·
+                                  Latest saved search:{' '}
+                                  {locale.latestSearchAt
+                                    ? new Date(locale.latestSearchAt).toLocaleDateString('en-US')
+                                    : 'not recorded'}
+                                </Text>
+                              </Disclosure>
+                            </VStack>
+                          }
+                        />
+                      ))}
+                  </List>
+                )}
               </VStack>
             )}
             <Disclosure trigger="How to read this comparison">
