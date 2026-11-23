@@ -4,7 +4,7 @@
 
 For Atlas/Substrate orientation, use the shared repository skill at
 `.agents/skills/atlas-substrate/SKILL.md` (also exposed under `.claude/skills`).
-Start with `node packages/database-layer/scripts/atlas-context.mjs search "your question"`.
+For committed-main context on a Mac with the scheduled reader installed, start with `~/.local/bin/atlas-context search "your question"`. Resolve its relative citations under the checkout printed by `~/.local/bin/atlas-context --root`. For checkout-specific work, or on machines without that reader, start with `node packages/database-layer/scripts/atlas-context.mjs search "your question"`.
 Load the cited domain module, then inspect its canonical source. Search is local and bounded. Changed local artifacts automatically refresh only
 the ignored wiki/index cache; no model evaluation or external refresh runs.
 Context is descriptive evidence, not action permission. See
