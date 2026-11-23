@@ -7,6 +7,8 @@ export default defineConfig({
     emptyOutDir: true,
     rollupOptions: {
       input: {
+        terms: resolve(import.meta.dirname, 'web/terms.html'),
+        security: resolve(import.meta.dirname, 'web/security.html'),
         landing: resolve(import.meta.dirname, 'web/index.html'),
         app: resolve(import.meta.dirname, 'web/app.html'),
         inboxes: resolve(import.meta.dirname, 'web/inboxes.html')

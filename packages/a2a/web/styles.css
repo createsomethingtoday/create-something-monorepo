@@ -171,3 +171,7 @@ html:not(.js) #session-loading{display:none}
   0%, 74% { opacity: 1; visibility: visible; }
   100% { opacity: 0; visibility: hidden; }
 }
+
+.policy-links { display: flex; flex-wrap: wrap; align-items: center; gap: 1.25rem; font-size: .85rem; }
+.policy-links a { display: inline-flex; align-items: center; min-height: 44px; text-underline-offset: .2em; }
+.policy-footer { padding-block: 1rem; border-top: 1px solid var(--color-performance-line); }
