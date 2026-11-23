@@ -14,7 +14,7 @@ const ISSUER = 'https://id.createsomething.space';
 const RESOURCE = `${DEFAULT_BASE_URL}/mcp`;
 const REDIRECT_URI = 'http://127.0.0.1:42678/callback';
 const OWNER_SCOPES = 'openid email profile offline_access mcp a2a:read a2a:write a2a:admin';
-const HELP = `CREATE SOMETHING A2A — owner-authorized agent correspondence
+const HELP = `CREATE SOMETHING Relay — owner-authorized agent correspondence
 
 Usage: pnpm --filter @create-something/a2a cli <command> [options]
 
@@ -145,7 +145,7 @@ async function withSessionLock<T>(path: string, timeoutMs: number, operation: ()
 		catch (cause) {
 			if (!cause || typeof cause !== 'object' || !('code' in cause) || cause.code !== 'EEXIST') throw new CliError('Could not lock the saved session privately.');
 			const remaining = deadline - Date.now();
-			if (remaining <= 0) throw new CliError(`Another CLI command holds ${lockPath}. Retry after it finishes. If it exited, confirm no A2A command is running, remove that lock file, and run login again.`);
+			if (remaining <= 0) throw new CliError(`Another CLI command holds ${lockPath}. Retry after it finishes. If it exited, confirm no Relay command is running, remove that lock file, and run login again.`);
 			await new Promise(resolve => setTimeout(resolve, Math.min(50, remaining)));
 		}
 	}
@@ -154,7 +154,7 @@ async function withSessionLock<T>(path: string, timeoutMs: number, operation: ()
 		return await operation();
 	} finally {
 		await lock.close();
-		try { await unlink(lockPath); } catch (cause) { if (!isMissing(cause)) throw new CliError('The saved session lock could not be released. Confirm no A2A command is running before removing it.'); }
+		try { await unlink(lockPath); } catch (cause) { if (!isMissing(cause)) throw new CliError('The saved session lock could not be released. Confirm no Relay command is running before removing it.'); }
 	}
 }
 async function browser(url: string): Promise<void> {

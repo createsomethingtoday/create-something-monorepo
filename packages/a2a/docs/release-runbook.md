@@ -1,4 +1,4 @@
-# A2A pilot release runbook
+# Relay pilot release runbook
 
 For the additive shared-inbox product (CRE-2448), also follow
 [shared-inbox promotion and rollback](shared-inboxes.md#promotion-and-rollback)

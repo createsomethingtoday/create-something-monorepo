@@ -71,7 +71,7 @@ bash scripts/ona-bootstrap-local.sh node packages/a2a/acceptance/local.mjs
 bash scripts/ona-bootstrap-local.sh pnpm --filter @create-something/a2a exec tsx scripts/shared-inbox-fixture.ts
 ```
 
-The last command serves the actual A2A handlers with ephemeral SQLite and synthetic
+The last command serves the actual Relay handlers with ephemeral SQLite and synthetic
 signed owner sessions on loopback port 4176. It never contacts real Identity,
 sends callbacks, or changes production. In a separate terminal, run:
 
@@ -86,10 +86,10 @@ effects. Neither fixture establishes real-owner login or host monitoring.
 
 ## Promotion and rollback
 
-The source rollout switches are off. A2A `SHARED_INBOXES_ENABLED=true` enables v2
+The source rollout switches are off. Relay `SHARED_INBOXES_ENABLED=true` enables v2
 APIs, MCP tools/events, recovery and retention. `SELF_SERVICE_ENABLED=true` admits
 any verified Identity owner instead of the pilot email allowlist. Identity
-`A2A_ENROLLMENT_ENABLED=true` separately enables mailbox-verified A2A enrollment;
+`A2A_ENROLLMENT_ENABLED=true` separately enables mailbox-verified Relay enrollment;
 do not enable global public enrollment or borrow GiGi's application admission.
 
 Before public enablement, qualify the candidate with two actual owners and
@@ -103,17 +103,17 @@ to manufacture these receipts.
 
 Promotion follows [the existing runbook](release-runbook.md). Capture live versions
 and sanitized settings before any change; preserve Identity's existing flags and
-all bindings. Apply the pending Identity enrollment migration and A2A migrations
+all bindings. Apply the pending Identity enrollment migration and Relay migrations
 `0007_shared_inboxes.sql` and `0008_shared_delivery.sql` before enabling the new
 code. The Identity migration is `0021_a2a_enrollment.sql`; it preserves existing
-pending verification challenges while admitting A2A provenance. The shared tables
+pending verification challenges while admitting Relay provenance. The shared tables
 are additive to the v1 product; no bilateral consent is converted.
-Deploy the reviewed Identity artifact first, then A2A with existing variables and
+Deploy the reviewed Identity artifact first, then Relay with existing variables and
 container preserved, recording exact source SHA and Worker version. Read back
 schema, flags, revision, actual login and shared flows. Local checks alone do not
 authorize or prove a public launch.
 
-For rollback, disable the two A2A switches and A2A-specific enrollment, preserving
+For rollback, disable the two Relay switches and Relay-specific enrollment, preserving
 all tables and credentials for reconciliation. Pending events remain durable and
 are eligible for recovery only under current authorization when reenabled. A
 disabled shared switch also pauses shared retention; restore the reviewed pruning

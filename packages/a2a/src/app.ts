@@ -32,7 +32,7 @@ async function route(request:Request,env:RuntimeEnv,requestId:string,phase:{auth
   const url=new URL(request.url);const path=url.pathname;
   if(path==='/.well-known/a2a-connection'&&request.method==='GET')return json(connectionStatus(env),200,{'cache-control':'no-store'});
   if(path==='/health')return json({service:'a2a',version:VERSION,revision:env.BUILD_REVISION,environment:env.ENVIRONMENT});
-  if(path==='/.well-known/oauth-protected-resource'||path==='/.well-known/oauth-protected-resource/mcp')return json({resource:env.AUTH_RESOURCE,authorization_servers:[env.IDENTITY_ISSUER],scopes_supported:[READ_SCOPE,WRITE_SCOPE,'offline_access'],bearer_methods_supported:['header'],resource_name:'CREATE SOMETHING A2A inbox'});
+  if(path==='/.well-known/oauth-protected-resource'||path==='/.well-known/oauth-protected-resource/mcp')return json({resource:env.AUTH_RESOURCE,authorization_servers:[env.IDENTITY_ISSUER],scopes_supported:[READ_SCOPE,WRITE_SCOPE,'offline_access'],bearer_methods_supported:['header'],resource_name:'CREATE SOMETHING Relay'});
   if(path==='/api/v1/config')return json({issuer:env.IDENTITY_ISSUER,resource:env.AUTH_RESOURCE,clientId:env.AUTH_CLIENT_ID,cliRedirectUri:'http://127.0.0.1:42678/callback',sharedSelfService:env.SHARED_INBOXES_ENABLED==='true'&&env.SELF_SERVICE_ENABLED==='true'});
   if(path==='/api/v1/status')return json({version:VERSION,environment:env.ENVIRONMENT,eventDelivery:env.CALLBACK_SENDER_TOKEN?'available':'not_configured',retention:{contentDays:30,auditDays:90,actionableDays:7}});
   if(path.startsWith('/auth/'))return await authRoute(request,env)??new Response('Not found',{status:404});

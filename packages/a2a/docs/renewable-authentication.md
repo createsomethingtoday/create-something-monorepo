@@ -13,8 +13,8 @@ describes authorization-request scopes. Both therefore include renewable consent
 
 ## Recovery contract
 
-Only Identity refresh grants for the exact A2A application resource can opt in
-with `refresh_request_id`, a 43–128 character base64url nonce. A2A derives a
+Only Identity refresh grants for the exact Relay application resource can opt in
+with `refresh_request_id`, a 43–128 character base64url nonce. Relay derives a
 stable, secret 256-bit HMAC request id from its SESSION_KEY, session id and exact
 predecessor refresh token. Retrying a generation reuses that id; each successor
 gets another id. This needs no plaintext nonce or credential in storage/logs and
@@ -43,7 +43,7 @@ recovery. Family/user revocation is checked again before returning a committed
 or cached response. Existing OAuth lifetimes, audiences and scope grants stay
 unchanged; request fields cannot widen or silently narrow signed claims.
 
-A2A verifies each replacement's signature, exact resource, same owner subject,
+Relay verifies each replacement's signature, exact resource, same owner subject,
 verified invited owner and absence of scope expansion before persistence or use.
 It bounds local access expiry by the verified JWT expiry, including a recovered
 response whose original expires_in has aged. A random lease ownership fence plus
@@ -75,8 +75,8 @@ acceptance and release readiness belong to the parent review/promotion pass.
 
 Apply additive Identity migration `0019_oauth_refresh_recovery.sql` before
 shipping the Identity handler. Deploy compatible Identity recovery support before
-activating A2A's opt-in client. Apply A2A migration `0006_refresh_fencing.sql` before
-shipping A2A; existing sessions acquire fences lazily. Preserve all current live
+activating Relay's opt-in client. Apply Relay migration `0006_refresh_fencing.sql` before
+shipping Relay; existing sessions acquire fences lazily. Preserve all current live
 Identity variables/feature flags and App identity, audience and approvals.
 
 Refresh the existing backing App through its supported
@@ -84,11 +84,11 @@ Refresh the existing backing App through its supported
 read back saved scopes, then reconsent once where the actual host requires it.
 Do not assume Refresh grants consent, stores the intended scopes, or implements
 the private `refresh_request_id` extension. Ordinary host clients keep legacy
-single-use rotation; A2A cookie sessions opt in explicitly.
+single-use rotation; Relay cookie sessions opt in explicitly.
 
 For rollback, retain the additive tables/column. Prefer keeping backward-compatible
-Identity recovery support while reverting A2A. If Identity must be downgraded,
-stop A2A refresh work and invalidate affected cookie sessions/reconsent rather
+Identity recovery support while reverting Relay. If Identity must be downgraded,
+stop Relay refresh work and invalidate affected cookie sessions/reconsent rather
 than retrying an uncertain predecessor against a legacy endpoint; drain in-flight
 recovery work before removing support. Reverting source does not revert App
 configuration or revoke issued credentials. The parent owns those actions.
@@ -99,7 +99,7 @@ Verify the actual private App's saved renewable scopes without replacing its id
 or widening its audience. Read tools from that actual host after access-token
 expiry and after idle with no fresh messages; verify repeated rotation, concurrent
 reads, temporary failure recovery and denial after revocation. Verify the deployed
-A2A cookie session path separately, including fault recovery and successor state.
+Relay cookie session path separately, including fault recovery and successor state.
 Provider receipts or local fixtures do not establish these live outcomes.
 
 No deployment, merge, installed-App changes or issue closeout occurred in this

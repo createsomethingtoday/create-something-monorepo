@@ -19,6 +19,7 @@ export function startHandoffStudy() {
   let selected = 0;
   let preview = -1;
   let renderMotion = (_stage: number) => {};
+  let playStage = (_stage: number) => {};
   const show = (stage: number) => {
     if (preview === stage) return;
     preview = stage;
@@ -33,6 +34,7 @@ export function startHandoffStudy() {
       selected = i;
       buttons.forEach((item, j) => item.setAttribute('aria-pressed', String(j === i)));
       show(i);
+      playStage(i);
       status.textContent = copy[i];
     });
     button.addEventListener('pointerenter', (event) => {
@@ -110,8 +112,37 @@ export function startHandoffStudy() {
           const highlighted = Array.from(groups[stage]);
           paths.forEach((path, i) => opacity[i](highlighted.includes(path) ? 1 : 0.72));
         };
+        const envelope = drawing.querySelector<SVGGElement>('.study-envelope')!;
+        const routes = drawing.querySelectorAll<SVGPathElement>('.diagram-line path');
+        const travel = { progress: 0 };
+        let route = routes[0];
+        let length = route.getTotalLength();
+        const hide = () => envelope.setAttribute('visibility', 'hidden');
+        const position = () => {
+          const point = route.getPointAtLength(travel.progress * length);
+          envelope.setAttribute('transform', `translate(${point.x} ${point.y})`);
+        };
+        const flight = gsap.to(travel, { progress: 1, paused: true, ease: 'power1.inOut',
+          duration: .6, onUpdate: position, onComplete: hide });
+        const shackle = drawing.querySelector('.gate-drawing path:last-child');
+        const unlock = gsap.timeline({ paused: true })
+          .to(shackle, { y: -4, duration: .16, ease: 'power2.out' })
+          .to(shackle, { y: 0, duration: .22, ease: 'power2.inOut' });
+        playStage = (stage) => {
+          flight.pause(0);
+          unlock.pause(0);
+          hide();
+          if (stage === 0) { unlock.restart(); return; }
+          route = routes[stage - 1];
+          length = route.getTotalLength();
+          position();
+          envelope.setAttribute('visibility', 'visible');
+          flight.duration(stage === 3 ? .85 : .5).restart();
+        };
         renderMotion(preview);
         return () => {
+          hide();
+          playStage = () => {};
           renderMotion = () => {};
         };
       });
@@ -129,6 +160,96 @@ export function startHandoffStudy() {
       suspended = false;
       void mount();
     }
+  });
+  void mount();
+}
+
+/** Editorial motion follows the reader; it never advances the example's meaning. */
+export function startLandingChoreography() {
+  let media: ReturnType<(typeof import('gsap'))['gsap']['matchMedia']> | undefined;
+  let suspended = false;
+  const mount = async () => {
+    try {
+      const { gsap } = await import('gsap');
+      if (suspended) return;
+      media?.revert();
+      media = gsap.matchMedia();
+      media.add('(prefers-reduced-motion: no-preference)', () => {
+        let frame = 0;
+        const studies = Array.from(document.querySelectorAll<HTMLElement>('.audience-card,.example-section'));
+        const timelines = studies.map((section) => {
+          const timeline = gsap.timeline({ paused: true });
+          if (section.matches('.audience-card')) {
+            timeline.fromTo(section.querySelector('.card-illustration'), { y: 13 }, { y: -9, duration: 1, ease: 'none', immediateRender: false });
+          } else {
+            // The request arrives first; the reply settles a little later. Every
+            // word remains visible, including without JS or before the chunk loads.
+            timeline.fromTo(section.querySelector('.example-message:not(.reply)'), { y: 10 }, { y: -3, duration: .8, ease: 'none', immediateRender: false }, 0)
+              .fromTo(section.querySelector('.reply'), { y: 16 }, { y: -5, duration: 1, ease: 'none', immediateRender: false }, .12);
+          }
+          return timeline;
+        });
+        const update = () => {
+          frame = 0;
+          if (document.hidden) return;
+          studies.forEach((section, i) => {
+            const bounds = section.getBoundingClientRect();
+            const progress = Math.max(0, Math.min(1, (window.innerHeight - bounds.top) / (window.innerHeight + bounds.height)));
+            timelines[i].progress(progress);
+          });
+        };
+        const schedule = () => { if (!frame) frame = requestAnimationFrame(update); };
+        window.addEventListener('scroll', schedule, { passive: true });
+        window.addEventListener('resize', schedule, { passive: true });
+        document.addEventListener('visibilitychange', schedule);
+        update();
+        const fine = window.matchMedia('(hover: hover) and (pointer: fine)');
+        const cleanups: Array<() => void> = [];
+        studies.forEach((section) => {
+          const targets = Array.from(section.querySelectorAll<HTMLElement>('.desk-sheet,.desk-stamp,.mini-envelope,.mini-receipt,.example-thread'));
+          const motions = targets.map((target, i) => ({
+            x: gsap.quickTo(target, 'x', { duration: .45, ease: 'power2.out' }),
+            y: gsap.quickTo(target, 'y', { duration: .45, ease: 'power2.out' }),
+            depth: section.matches('.example-section') ? 2 : i % 2 ? 6 : 3
+          }));
+          const reset = () => motions.forEach(({ x, y }) => { x(0); y(0); });
+          const move = (event: PointerEvent) => {
+            if (!fine.matches || event.pointerType !== 'mouse' || event.buttons || section.contains(document.activeElement)) return;
+            const bounds = section.getBoundingClientRect();
+            const x = Math.max(-1, Math.min(1, (event.clientX - bounds.left) / bounds.width * 2 - 1));
+            const y = Math.max(-1, Math.min(1, (event.clientY - bounds.top) / bounds.height * 2 - 1));
+            motions.forEach((motion) => { motion.x(x * motion.depth); motion.y(y * motion.depth); });
+          };
+          section.addEventListener('pointermove', move);
+          section.addEventListener('pointerleave', reset);
+          section.addEventListener('pointercancel', reset);
+          section.addEventListener('focusin', reset);
+          window.addEventListener('blur', reset);
+          fine.addEventListener('change', reset);
+          cleanups.push(() => {
+            section.removeEventListener('pointermove', move);
+            section.removeEventListener('pointerleave', reset);
+            section.removeEventListener('pointercancel', reset);
+            section.removeEventListener('focusin', reset);
+            window.removeEventListener('blur', reset);
+            fine.removeEventListener('change', reset);
+          });
+        });
+        return () => {
+          cancelAnimationFrame(frame);
+          window.removeEventListener('scroll', schedule);
+          window.removeEventListener('resize', schedule);
+          document.removeEventListener('visibilitychange', schedule);
+          cleanups.forEach((cleanup) => cleanup());
+        };
+      });
+    } catch {
+      // The static illustrations and the complete thread are the fallback.
+    }
+  };
+  window.addEventListener('pagehide', () => { suspended = true; media?.revert(); });
+  window.addEventListener('pageshow', (event) => {
+    if (event.persisted) { suspended = false; void mount(); }
   });
   void mount();
 }
