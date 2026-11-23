@@ -661,7 +661,7 @@ try {
         );
         await expect(csv).toHaveAttribute(
           'href',
-          '/delivery/abundance/sourcing.csv?run_id=abnationalrun_fixture&taxonomy_code=363LF0000X%2C363LA2200X'
+          '/delivery/abundance/sourcing.csv?run_id=abnationalrun_fixture&taxonomy_code=363LF0000X%2C363LA2200X%2C363LG0600X'
         );
         assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
         if (width < 1280)
@@ -688,7 +688,7 @@ try {
           await expect(page.locator('.source-link')).toHaveCount(1);
           await expect(page.locator('.source-link')).toHaveAttribute(
             'href',
-            '/delivery/abundance/sourcing.csv?run_id=abnationalrun_fixture&taxonomy_code=363LF0000X%2C363LA2200X'
+            '/delivery/abundance/sourcing.csv?run_id=abnationalrun_fixture&taxonomy_code=363LF0000X%2C363LA2200X%2C363LG0600X'
           );
         } else assert.deepEqual(await commands(page), []);
       },
