@@ -1,0 +1,451 @@
+{
+  "schemaVersion": 1,
+  "dataset": "operating-slice-public-doc-metadata-v1",
+  "studyHash": "de32aef7bc89d77ed36096e1e17f7adce5331eb844c335880662f289d9c259dd",
+  "provider": "jev",
+  "baseline": {
+    "totalCases": 8,
+    "scoredCases": 8,
+    "correct": 2,
+    "mistakes": 6,
+    "abstentions": 0,
+    "correctNoMatch": 0,
+    "missedEvidence": 0,
+    "providerErrors": 0,
+    "results": [
+      {
+        "id": "s01",
+        "kind": "function",
+        "choice": "evidence-1",
+        "selectedPath": "docs/CANON_DATABASE_LAYER_DESIGN.md",
+        "expectedPaths": [
+          "docs/CANON_DATABASE_LAYER_DESIGN.md"
+        ],
+        "correct": true,
+        "mistake": false,
+        "abstention": false,
+        "correctNoMatch": false,
+        "missedEvidence": false,
+        "latencyMs": 0.05,
+        "providerError": null
+      },
+      {
+        "id": "s02",
+        "kind": "function",
+        "choice": "evidence-1",
+        "selectedPath": "docs/CANON_DATABASE_LAYER_DESIGN.md",
+        "expectedPaths": [
+          "docs/CREATE_SOMETHING_DATABASE_LAYER.md"
+        ],
+        "correct": false,
+        "mistake": true,
+        "abstention": false,
+        "correctNoMatch": false,
+        "missedEvidence": false,
+        "latencyMs": 0.01,
+        "providerError": null
+      },
+      {
+        "id": "s03",
+        "kind": "function",
+        "choice": "evidence-1",
+        "selectedPath": "docs/CANON_DATABASE_LAYER_DESIGN.md",
+        "expectedPaths": [
+          "docs/MCP_FIRST_THESIS.md"
+        ],
+        "correct": false,
+        "mistake": true,
+        "abstention": false,
+        "correctNoMatch": false,
+        "missedEvidence": false,
+        "latencyMs": 0.01,
+        "providerError": null
+      },
+      {
+        "id": "s04",
+        "kind": "function",
+        "choice": "evidence-1",
+        "selectedPath": "docs/CANON_DATABASE_LAYER_DESIGN.md",
+        "expectedPaths": [
+          "docs/MCP_HUB_CONTROL_PLANE.md"
+        ],
+        "correct": false,
+        "mistake": true,
+        "abstention": false,
+        "correctNoMatch": false,
+        "missedEvidence": false,
+        "latencyMs": 0.01,
+        "providerError": null
+      },
+      {
+        "id": "s05",
+        "kind": "function",
+        "choice": "evidence-1",
+        "selectedPath": "docs/CANON_DATABASE_LAYER_DESIGN.md",
+        "expectedPaths": [
+          "docs/THREE_TIER_FRAMEWORK.md"
+        ],
+        "correct": false,
+        "mistake": true,
+        "abstention": false,
+        "correctNoMatch": false,
+        "missedEvidence": false,
+        "latencyMs": 0.01,
+        "providerError": null
+      },
+      {
+        "id": "s06",
+        "kind": "ownership",
+        "choice": "evidence-1",
+        "selectedPath": "docs/CANON_DATABASE_LAYER_DESIGN.md",
+        "expectedPaths": [
+          "docs/CANON_DATABASE_LAYER_DESIGN.md",
+          "docs/CREATE_SOMETHING_DATABASE_LAYER.md",
+          "docs/MCP_FIRST_THESIS.md",
+          "docs/MCP_HUB_CONTROL_PLANE.md",
+          "docs/README.md",
+          "docs/THREE_TIER_FRAMEWORK.md"
+        ],
+        "correct": true,
+        "mistake": false,
+        "abstention": false,
+        "correctNoMatch": false,
+        "missedEvidence": false,
+        "latencyMs": 0.02,
+        "providerError": null
+      },
+      {
+        "id": "s07",
+        "kind": "insufficient_evidence",
+        "choice": "evidence-1",
+        "selectedPath": "docs/CANON_DATABASE_LAYER_DESIGN.md",
+        "expectedPaths": [
+          "no_match"
+        ],
+        "correct": false,
+        "mistake": true,
+        "abstention": false,
+        "correctNoMatch": false,
+        "missedEvidence": false,
+        "latencyMs": 0.01,
+        "providerError": null
+      },
+      {
+        "id": "s08",
+        "kind": "no_match",
+        "choice": "evidence-1",
+        "selectedPath": "docs/CANON_DATABASE_LAYER_DESIGN.md",
+        "expectedPaths": [
+          "no_match"
+        ],
+        "correct": false,
+        "mistake": true,
+        "abstention": false,
+        "correctNoMatch": false,
+        "missedEvidence": false,
+        "latencyMs": 0.01,
+        "providerError": null
+      }
+    ]
+  },
+  "lexical": {
+    "totalCases": 8,
+    "scoredCases": 8,
+    "correct": 4,
+    "mistakes": 0,
+    "abstentions": 6,
+    "correctNoMatch": 2,
+    "missedEvidence": 4,
+    "providerErrors": 0,
+    "results": [
+      {
+        "id": "s01",
+        "kind": "function",
+        "choice": "evidence-1",
+        "selectedPath": "docs/CANON_DATABASE_LAYER_DESIGN.md",
+        "expectedPaths": [
+          "docs/CANON_DATABASE_LAYER_DESIGN.md"
+        ],
+        "correct": true,
+        "mistake": false,
+        "abstention": false,
+        "correctNoMatch": false,
+        "missedEvidence": false,
+        "latencyMs": 0.15,
+        "providerError": null
+      },
+      {
+        "id": "s02",
+        "kind": "function",
+        "choice": "no_match",
+        "selectedPath": "no_match",
+        "expectedPaths": [
+          "docs/CREATE_SOMETHING_DATABASE_LAYER.md"
+        ],
+        "correct": false,
+        "mistake": false,
+        "abstention": true,
+        "correctNoMatch": false,
+        "missedEvidence": true,
+        "latencyMs": 0.05,
+        "providerError": null
+      },
+      {
+        "id": "s03",
+        "kind": "function",
+        "choice": "no_match",
+        "selectedPath": "no_match",
+        "expectedPaths": [
+          "docs/MCP_FIRST_THESIS.md"
+        ],
+        "correct": false,
+        "mistake": false,
+        "abstention": true,
+        "correctNoMatch": false,
+        "missedEvidence": true,
+        "latencyMs": 0.05,
+        "providerError": null
+      },
+      {
+        "id": "s04",
+        "kind": "function",
+        "choice": "no_match",
+        "selectedPath": "no_match",
+        "expectedPaths": [
+          "docs/MCP_HUB_CONTROL_PLANE.md"
+        ],
+        "correct": false,
+        "mistake": false,
+        "abstention": true,
+        "correctNoMatch": false,
+        "missedEvidence": true,
+        "latencyMs": 0.04,
+        "providerError": null
+      },
+      {
+        "id": "s05",
+        "kind": "function",
+        "choice": "no_match",
+        "selectedPath": "no_match",
+        "expectedPaths": [
+          "docs/THREE_TIER_FRAMEWORK.md"
+        ],
+        "correct": false,
+        "mistake": false,
+        "abstention": true,
+        "correctNoMatch": false,
+        "missedEvidence": true,
+        "latencyMs": 0.05,
+        "providerError": null
+      },
+      {
+        "id": "s06",
+        "kind": "ownership",
+        "choice": "evidence-1",
+        "selectedPath": "docs/CANON_DATABASE_LAYER_DESIGN.md",
+        "expectedPaths": [
+          "docs/CANON_DATABASE_LAYER_DESIGN.md",
+          "docs/CREATE_SOMETHING_DATABASE_LAYER.md",
+          "docs/MCP_FIRST_THESIS.md",
+          "docs/MCP_HUB_CONTROL_PLANE.md",
+          "docs/README.md",
+          "docs/THREE_TIER_FRAMEWORK.md"
+        ],
+        "correct": true,
+        "mistake": false,
+        "abstention": false,
+        "correctNoMatch": false,
+        "missedEvidence": false,
+        "latencyMs": 0.03,
+        "providerError": null
+      },
+      {
+        "id": "s07",
+        "kind": "insufficient_evidence",
+        "choice": "no_match",
+        "selectedPath": "no_match",
+        "expectedPaths": [
+          "no_match"
+        ],
+        "correct": true,
+        "mistake": false,
+        "abstention": true,
+        "correctNoMatch": true,
+        "missedEvidence": false,
+        "latencyMs": 0.03,
+        "providerError": null
+      },
+      {
+        "id": "s08",
+        "kind": "no_match",
+        "choice": "no_match",
+        "selectedPath": "no_match",
+        "expectedPaths": [
+          "no_match"
+        ],
+        "correct": true,
+        "mistake": false,
+        "abstention": true,
+        "correctNoMatch": true,
+        "missedEvidence": false,
+        "latencyMs": 0.03,
+        "providerError": null
+      }
+    ]
+  },
+  "shadow": {
+    "totalCases": 8,
+    "scoredCases": 8,
+    "correct": 6,
+    "mistakes": 0,
+    "abstentions": 4,
+    "correctNoMatch": 2,
+    "missedEvidence": 2,
+    "providerErrors": 0,
+    "results": [
+      {
+        "id": "s01",
+        "kind": "function",
+        "choice": "no_match",
+        "selectedPath": "no_match",
+        "expectedPaths": [
+          "docs/CANON_DATABASE_LAYER_DESIGN.md"
+        ],
+        "correct": false,
+        "mistake": false,
+        "abstention": true,
+        "correctNoMatch": false,
+        "missedEvidence": true,
+        "latencyMs": 266.56,
+        "providerError": null
+      },
+      {
+        "id": "s02",
+        "kind": "function",
+        "choice": "no_match",
+        "selectedPath": "no_match",
+        "expectedPaths": [
+          "docs/CREATE_SOMETHING_DATABASE_LAYER.md"
+        ],
+        "correct": false,
+        "mistake": false,
+        "abstention": true,
+        "correctNoMatch": false,
+        "missedEvidence": true,
+        "latencyMs": 112.81,
+        "providerError": null
+      },
+      {
+        "id": "s03",
+        "kind": "function",
+        "choice": "evidence-3",
+        "selectedPath": "docs/MCP_FIRST_THESIS.md",
+        "expectedPaths": [
+          "docs/MCP_FIRST_THESIS.md"
+        ],
+        "correct": true,
+        "mistake": false,
+        "abstention": false,
+        "correctNoMatch": false,
+        "missedEvidence": false,
+        "latencyMs": 144.85,
+        "providerError": null
+      },
+      {
+        "id": "s04",
+        "kind": "function",
+        "choice": "evidence-4",
+        "selectedPath": "docs/MCP_HUB_CONTROL_PLANE.md",
+        "expectedPaths": [
+          "docs/MCP_HUB_CONTROL_PLANE.md"
+        ],
+        "correct": true,
+        "mistake": false,
+        "abstention": false,
+        "correctNoMatch": false,
+        "missedEvidence": false,
+        "latencyMs": 115.96,
+        "providerError": null
+      },
+      {
+        "id": "s05",
+        "kind": "function",
+        "choice": "evidence-6",
+        "selectedPath": "docs/THREE_TIER_FRAMEWORK.md",
+        "expectedPaths": [
+          "docs/THREE_TIER_FRAMEWORK.md"
+        ],
+        "correct": true,
+        "mistake": false,
+        "abstention": false,
+        "correctNoMatch": false,
+        "missedEvidence": false,
+        "latencyMs": 149.79,
+        "providerError": null
+      },
+      {
+        "id": "s06",
+        "kind": "ownership",
+        "choice": "evidence-1",
+        "selectedPath": "docs/CANON_DATABASE_LAYER_DESIGN.md",
+        "expectedPaths": [
+          "docs/CANON_DATABASE_LAYER_DESIGN.md",
+          "docs/CREATE_SOMETHING_DATABASE_LAYER.md",
+          "docs/MCP_FIRST_THESIS.md",
+          "docs/MCP_HUB_CONTROL_PLANE.md",
+          "docs/README.md",
+          "docs/THREE_TIER_FRAMEWORK.md"
+        ],
+        "correct": true,
+        "mistake": false,
+        "abstention": false,
+        "correctNoMatch": false,
+        "missedEvidence": false,
+        "latencyMs": 112.15,
+        "providerError": null
+      },
+      {
+        "id": "s07",
+        "kind": "insufficient_evidence",
+        "choice": "no_match",
+        "selectedPath": "no_match",
+        "expectedPaths": [
+          "no_match"
+        ],
+        "correct": true,
+        "mistake": false,
+        "abstention": true,
+        "correctNoMatch": true,
+        "missedEvidence": false,
+        "latencyMs": 121.01,
+        "providerError": null
+      },
+      {
+        "id": "s08",
+        "kind": "no_match",
+        "choice": "no_match",
+        "selectedPath": "no_match",
+        "expectedPaths": [
+          "no_match"
+        ],
+        "correct": true,
+        "mistake": false,
+        "abstention": true,
+        "correctNoMatch": true,
+        "missedEvidence": false,
+        "latencyMs": 155.94,
+        "providerError": null
+      }
+    ]
+  },
+  "operatorTime": {
+    "measured": false
+  },
+  "limitations": [
+    "Eight answer-keyed cases from one public-facing first-party documentation slice, not a production accuracy estimate.",
+    "Candidates retain the exact operating-slice packet order; provider sees metadata, never source bodies or answer keys.",
+    "Ownership accepts every source with the declared owner; mapped ownership is not live operational ownership verification.",
+    "Provider errors are separate from abstentions and excluded from scored decisions.",
+    "Wall latency measures ranker time, not human effort; human pilot must be run separately."
+  ]
+}

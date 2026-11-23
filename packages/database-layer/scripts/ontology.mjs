@@ -5,11 +5,14 @@ import { composeTopology, exportTopologyRdf, exportShapes, exportVocabulary, top
 
 const defaultTopology = fileURLToPath(new URL('../data/create-something-internal-topology.json', import.meta.url));
 const read = (file) => JSON.parse(fs.readFileSync(file, 'utf8'));
-const usage = 'Usage: node scripts/ontology.mjs check [module.json ...] | export <new-directory> [module.json ...] | plan <baseline.json> <proposed.json> [protected-node-id ...]';
+const usage = 'Usage: node scripts/ontology.mjs vocabulary sync|watch|edit ... | check [module.json ...] | export <new-directory> [module.json ...] | plan <baseline.json> <proposed.json> [protected-node-id ...]';
 try {
   const [command = 'check', ...args] = process.argv.slice(2);
   let report;
-  if (command === 'plan') {
+  if (command === 'vocabulary') {
+    const { vocabularyCommand } = await import('./vocabulary-cli.mjs');
+    report = await vocabularyCommand(args);
+  } else if (command === 'plan') {
     if (args.length < 2) throw new Error(usage);
     report = planTopologyChange(read(args[0]), read(args[1]), { protectedNodeIds: args.slice(2) });
     if (!report.protectedContractsSatisfied) process.exitCode = 1;

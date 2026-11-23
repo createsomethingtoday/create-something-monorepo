@@ -30,7 +30,7 @@
     },
     {
       "path": "packages/database-layer/scripts/ontology.mjs",
-      "sha256": "sha256:c1a5f2e1f9d3fa353c43c15f06571ca415360c99468fc79caf92ca5635697978"
+      "sha256": "sha256:adfa645969e9d690381617ce50b7cd87c11a151362623831fd81cc05e1750885"
     },
     {
       "path": "packages/database-layer/scripts/lib/ontology.mjs",
