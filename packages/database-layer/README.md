@@ -301,6 +301,17 @@ the bridge from "everything is mapped" to "this specific slice is approved for
 workflow use"; it is not permission to mutate Atlas production, Cloudflare,
 Dify Studio, client systems, or other third-party state.
 
+For a specific review question, preview the evidence choices from the package directory:
+
+```sh
+node scripts/review-slice-evidence.mjs --slice 'substrate:create-something:operating-slice:substrate-create-something-atlas-coverage-group-knowledge-surface-mixed-doc' --question 'Where do we describe how a gateway manages several MCP servers?'
+```
+
+Inspect the preview before appending `--live`. A live review sends the question
+and candidate metadata to Jev using `TYPESAFE_API_KEY`. Use a question and
+candidate set approved for that provider. Follow the suggested path and check
+the source yourself. The original evidence order remains available.
+
 Use `operating-slice-readiness:generate` after `operating-slices:generate` to
 create the local readiness gate projection:
 
