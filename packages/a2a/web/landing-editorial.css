@@ -109,3 +109,48 @@
   .landing .site-header nav a:first-child { display:inline-flex; }
   .landing .byline { display:inline; }
 }
+/* Warm editorial introduction: human permission beside practical agent work. */
+.landing { --color-performance-paper:#faf9f6; --color-performance-panel:#eceae5; }
+.landing .hero h1 em,.landing .audience-heading em,.landing .example-intro em { color:#827c72; font-style:normal; }
+.landing .hero { padding-top:5.5rem; padding-bottom:5.5rem; }
+.landing .hero h1 { font-size:clamp(3.2rem,5.1vw,4.65rem); }
+.landing .handoff-figure { box-shadow:0 8px 28px #332d2105; border-radius:1.25rem; }
+.landing .audience-section { padding-block:2rem 6rem; }
+.landing .audience-heading { text-align:center; margin-bottom:2.6rem; }
+.landing .audience-heading h2,.landing .example-intro h2 { font-size:clamp(2.5rem,4vw,3.7rem); line-height:1.08; }
+.landing .audience-grid { display:grid; grid-template-columns:1fr 1fr; gap:1.5rem; }
+.landing .audience-card { background:#eceae5; padding:2rem 2.5rem 2.5rem; border-radius:1.2rem; }
+.landing .card-index { font-size:.63rem; letter-spacing:.1em; color:#625e56; }
+.landing .audience-card h3 { font-size:2.2rem; margin:1rem 0; }
+.landing .audience-card p { color:#514e47; font-size:.9rem; line-height:1.8; max-width:25rem; }
+.landing .audience-card .text-link { margin-top:1rem; }
+.landing .card-illustration { height:190px; display:flex; justify-content:center; align-items:center; position:relative; margin-top:.5rem; }
+.landing .desk-sheet { display:block; background:#faf9f6; width:192px; padding:1.5rem; font-family:Georgia,serif; font-size:1.1rem; line-height:1.6; transform:rotate(-7deg); box-shadow:3px 5px 0 #d6d2c9; border:1px solid #b5afa4; }
+.landing .desk-sheet span { font-family:Arial,sans-serif; font-size:.6rem; color:#726a5e; }
+.landing .desk-stamp { position:absolute; top:105px; left:64%; border:2px solid #797364; border-radius:50%; padding:.5rem; font-size:.9rem; transform:rotate(16deg); background:#e8e4da; }
+.landing .mini-envelope { display:grid; place-items:center; font-size:3.5rem; width:152px; height:100px; border:1px solid #736b5f; background:linear-gradient(32deg,transparent 49%,#b7afa0 50%,transparent 51%),linear-gradient(-32deg,transparent 49%,#b7afa0 50%,transparent 51%),#ded9ce; transform:rotate(-9deg); }
+.landing .mini-receipt { padding:1.3rem; background:#faf9f6; border:1px solid #b5afa4; font-family:monospace; font-size:.67rem; line-height:1.8; transform:rotate(8deg); margin-left:-28px; margin-top:30px; box-shadow:3px 5px 0 #d6d2c9; }
+.landing .example-section { display:grid; grid-template-columns:.9fr 1.1fr; gap:5rem; padding-block:1rem 6rem; align-items:center; }
+.landing .example-intro>p:not(.eyebrow) { color:#615c53; font-size:.9rem; line-height:1.8; max-width:25rem; margin-top:1.5rem; }
+.landing .example-disclaimer { display:inline-block; margin-top:1rem; font-size:.7rem; color:#696357; border:1px solid #d3cec4; border-radius:2rem; padding:.5rem .8rem; }
+.landing .example-thread { background:#272823; color:#f6f4ee; border-radius:1.2rem; padding:1.5rem; }
+.landing .example-message { border:1px solid #54554d; border-radius:.65rem; padding:1.4rem; }
+.landing .message-meta { display:flex; flex-wrap:wrap; justify-content:space-between; gap:.6rem; color:#c9c5b9; font-size:.6rem; letter-spacing:.02em; margin-bottom:1rem; }
+.landing .example-message p { font-size:.8rem; line-height:1.8; color:#e0ddd3; }
+.landing .receipt-chip { display:inline-block; margin-top:1rem; font-size:.6rem; color:#d2d8c2; }
+.landing .thread-connector { color:#b2b59f; text-align:center; padding:.5rem; }
+.landing .reply { background:#363830; }
+.landing .example-message blockquote { margin:0 0 1rem; font-family:Georgia,serif; font-size:1.7rem; line-height:1.2; letter-spacing:-.025em; }
+.landing .example-message blockquote strong { font-weight:400; color:#cfcca9; }
+.landing .example-foot { font-size:.65rem; line-height:1.6; color:#c1bfb4; margin:1rem .3rem 0; }
+.landing .process-section { background:#eceae5; }
+@media(max-width:767px) {
+ .landing .audience-section { padding-bottom:3.5rem; }
+ .landing .audience-grid,.landing .example-section { grid-template-columns:1fr; }
+ .landing .audience-card { padding:1.5rem; }
+ .landing .example-section { gap:2rem; padding-bottom:3.5rem; }
+ .landing .audience-heading { text-align:left; }
+ .landing .hero h1 { font-size:clamp(2.9rem,9vw,4.5rem); }
+ .landing .example-thread { padding:1rem; }
+ .landing .example-message { padding:1rem; }
+}

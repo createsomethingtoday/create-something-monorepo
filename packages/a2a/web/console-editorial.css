@@ -128,3 +128,39 @@ body.console {
 }
 .console :is(input, select, textarea) { color: var(--color-performance-ink); }
 .console :is(input, textarea)::placeholder { color: var(--color-performance-muted); opacity: 1; }
+
+/* Alfred: quiet warm-grey cards and a second tone within the serif hierarchy. */
+body.console { background: #faf9f6; }
+.console .heading-tail { color: #77736d; }
+.console .session-screen,
+.console .console-sidebar,
+.console .inbox-rail { border-radius: 8px; background: #eeece7; }
+.console .session-screen { border: 1px solid #e1ded7; }
+.console .console-layout,
+.console.shared-console .shared-layout { border: 0; gap: 1.25rem; }
+.console .console-sidebar { border: 1px solid #e1ded7; }
+.console .workspace-pane,
+.console.shared-console .shared-workspace { border: 1px solid #e1ded7; border-radius: 8px; background: #f5f3ef; }
+.console .conversation-search { background: #eeece7; }
+.console .copy-row,
+.console .instruction-text,
+.console .connection-example blockquote {
+  background: #292a27;
+  color: #f2f0e9;
+  border-color: #42443e;
+}
+.console .copy-row code { color: inherit; }
+.console .copy-row .button { background: transparent; color: #f2f0e9; border-color: #595b55; }
+.console .copy-row .button:hover { background: #3c3e38; }
+.console .connection-example { max-width: 58rem; padding: 1.5rem; background: #eeece7; border: 1px solid #dedbd4; border-radius: 8px; margin-bottom: 1.75rem; }
+.console .connection-example h3 { font: 400 clamp(1.5rem, 2.5vw, 2rem)/1.15 var(--desk-heading); letter-spacing: -.025em; margin-block: .75rem; }
+.console .connection-example > p { max-width: 55ch; }
+.console .connection-example blockquote { margin: 1.25rem 0 1rem; padding: 1.25rem; border-radius: 5px; font: .82rem/1.8 var(--font-performance-mono); overflow-wrap: anywhere; }
+.console.shared-console .record-details > code { background: #292a27; color: #f2f0e9; padding: .75rem; border-radius: 4px; }
+.console.shared-console .status-facts { background: #eeece7; padding: 1rem; border: 1px solid #dedbd4; border-radius: 5px; }
+@media (max-width: 767px) {
+  .console .console-layout,
+  .console.shared-console .shared-layout { gap: .75rem; }
+  .console .connection-example { padding: 1rem; }
+  .console .connection-example blockquote { padding: 1rem; }
+}
