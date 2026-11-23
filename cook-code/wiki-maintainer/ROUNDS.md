@@ -18,3 +18,7 @@ Independent Sol 6.1 review passed the wiki route, evidence, scope and directly v
 
 Skill SHA-256: `3cdf32a74dbb2c7715c7ab5701fb21818fe64d8deb11ecec3c2787ecf7efdbdc`. Guide SHA-256: `7e7a12b465c5c4900fdab72542e4e5213cae2e2376f8150dc354433149e342c6`. Worktree disposition: preserved in the shared repository checkout. No external publication or shipping step.
 Finished 2026-11-22 23:55 UTC.
+
+## Operator correction before merge
+
+The original blind replay failed the illustration check. The reviewer accepted the current typography and missed the retired graphite character. The operator identified felt as the current direction. Replaced the artwork with the owned felt handoff scene, updated alt text and provenance, and separated the illustration check from the typography check in the wiki and maintainer skill. This supersedes Round 1's visual verdict for the originally submitted post.

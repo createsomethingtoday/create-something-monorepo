@@ -1,8 +1,7 @@
 {
   "design_revision": "18eb4c2ed89e0fe181a292dc76ec232c89e049a3",
-  "artwork": "packages/agency/static/images/agency-stories/editorial-template-review-evidence-trays.webp",
-  "artwork_revision": "5f9bfab3f6a9069332d650f42a09f5bd18d806a7",
-  "artwork_sha256": "cf91d05b72f6f0f8d1650f394aab18429abd676743d354c5278cafa87adff2b9",
+  "artwork": "cook-code/wiki-maintainer/evidence/r01/social/felt-handoff.png",
+  "artwork_sha256": "4ea2c237673de8495eb8697df4e6528ded59e67bc312f40ba9488c468f124138",
   "dimensions": [
     1080,
     1350

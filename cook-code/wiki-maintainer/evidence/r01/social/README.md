@@ -20,7 +20,7 @@ The accompanying workshop scene is a concept illustration.
 
 ## Alt text
 
-Warm paper card headed “Prepare the evidence. Keep the decision.” It reports usable evidence packets for 49 of 50 selected cases in a balanced shadow sample. A graphite workshop character places a sheet into a sorting tray before a physical stop and a separate lever. The scene is labeled concept illustration. Human review was retained; reviewer time savings remain unmeasured.
+Warm paper card headed “Prepare the evidence. Keep the decision.” It reports usable evidence packets for 49 of 50 selected cases in a balanced shadow sample. A charcoal felt character with cream stitched eyes offers a paper card while a human hand inspects a folded sample on an oak table. The scene is labeled concept illustration. Human review was retained; reviewer time savings remain unmeasured.
 
 ## Sources and decisions
 
@@ -28,7 +28,7 @@ Warm paper card headed “Prepare the evidence. Keep the decision.” It reports
 - Applied create-something-brand-materials skill and its brand-direction, formats-and-delivery, and renderer references. Chose a portrait draft as its default for unspecified format.
 - Read packages/agency/src/routes/field-reports/template-review/+page.svelte; independently checked the public field report on November 22. Both support the sample result and its limits. The post makes no current runtime or business-impact claim.
 - Compared the older local measured-whimsy foundation with the wiki's later adopted editorial revision 18eb4c2ed89e0fe181a292dc76ec232c89e049a3, reading its editorial-runtime.css through git. Used that revision's warm paper, ink, serif and mono treatment. Live field-report text was checked; live visual styling was not independently viewed.
-- Reused owned editorial-template-review-evidence-trays.webp, directly viewed before composition. This scene already makes preparation and the separate decision legible. A new raster scene was unnecessary; the PNG composition is new. Source hash is in manifest.json.
+- The operator corrected the first replay’s use of a retired graphite character. The revised composition uses the reusable teach.png scene from the felt-collage-lessons skill (November 2026). The source is bundled here as felt-handoff.png. Its wool character offers material for a person to inspect. The manifest records the source hash.
 - Read docs/examples/social-gigi/README.md and render.py as the wiki's worked handoff and reproducible typography example. Created a different field-note story, artwork and layout.
 
 ## Reproduce
@@ -42,12 +42,12 @@ python3 -m venv "$social_env"
 "$social_env/bin/python" cook-code/wiki-maintainer/evidence/r01/social/render.py
 ```
 
-The renderer reads the owned artwork and fonts from their pinned Git revisions. It exports evidence-before-approval.png (1080 × 1350), feed-preview.png (360 × 450), and manifest.json.
+The renderer reads the bundled felt artwork and the fonts from their pinned Git revision. It exports evidence-before-approval.png (1080 × 1350), feed-preview.png (360 × 450), and manifest.json.
 
 ## Review status
 
 Functional: renderer asserts text stays within the card and produces the requested dimensions. Claim wording checked against local source and public field report.
 
-Perceptual: passed builder inspection of the actual 1080 × 1350 export and 360 × 450 feed preview. Headline and sample wording are readable; character, sheet, stop and lever remain visible; the concept label and time-saving limit are present without covering artwork. Compared against the pinned editorial colors/type and the owned source scene. Live visual comparison, independent review and human approval remain pending.
+Perceptual: passed builder inspection of the actual 1080 × 1350 export and 360 × 450 feed preview. Headline and sample wording are readable; the felt character, offered card and human hand remain visible; the concept label and time-saving limit are present without covering artwork. Compared against the pinned editorial colors/type and the owned source scene. Independent release review is recorded in the Cook rounds. Human approval of the draft remains pending.
 
 Release: local draft only. Account identity, native upload requirements, final copy/media approval and scheduling time must be settled before publication. No publication permission inferred.
