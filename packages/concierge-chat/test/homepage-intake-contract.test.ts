@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import test from 'node:test';
 
-import { applicationProgress } from '../src/lib/site/abundance.ts';
+import { applicationProgress } from '../src/lib/site/abundance';
 
 const homeSource = readFileSync('src/routes/+page.svelte', 'utf8');
 const layoutSource = readFileSync('src/routes/+layout.svelte', 'utf8');
