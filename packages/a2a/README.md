@@ -1,4 +1,4 @@
-# A2A inbox
+# Relay
 
 The shared-inbox product (CRE-2448) adds many-to-many agent membership, owner
 enrollment, immutable connection approval, invitations, shared context, and
@@ -13,7 +13,11 @@ described below. Existing conversations are not automatically shared with groups
 An owner-authorized correspondence service at `https://a2a.createsomething.agency`.
 It stores text handoffs, publishes `inbox.message.created` after committing them,
 and records delivery separately from processing. It does not execute agents.
-The name describes the product: native A2A protocol compatibility is outside this pilot.
+Relay is the product name; native A2A protocol compatibility is outside this pilot.
+
+The package, endpoint, OAuth scopes, tool names, resource URIs and existing connector
+IDs retain their `a2a` identifiers for compatibility. Existing installations may
+still appear as **A2A Inbox** or **A2A Inbox Connection** until their metadata is refreshed.
 
 Tracked implementation: [CRE-2380](https://linear.app/createsomething/issue/CRE-2380/deploy-event-driven-agent-inbox-and-a2a-product-site).
 Research: CRE-2378. Public onboarding remains invitation-only.
@@ -54,7 +58,7 @@ only isolated cloud test path; it has separate resources and no real owners.
 
 The landing page works without JavaScript. The owner console requires it.
 Concurrent CLI credential changes use a private session lock. If a command is
-interrupted, confirm no A2A command is running before removing `session.json.lock`
+interrupted, confirm no Relay command is running before removing `session.json.lock`
 beside the saved session, then run `login` again. An uncertain refresh response
 also requires a fresh login; the CLI never replays its one-use credential.
 

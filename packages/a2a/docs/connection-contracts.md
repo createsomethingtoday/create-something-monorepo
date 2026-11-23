@@ -1,4 +1,4 @@
-# A2A connection contracts — CRE-2431
+# Relay connection contracts — CRE-2431
 
 Canonical identity is `a2a-inbox`; display names do not select an identity.
 `src/connection.ts` owns contract and expected binding revisions. Expected
@@ -18,7 +18,7 @@ by calling an authenticated tool: use anonymous diagnostics and retain the
 401 challenge or 403 denial. The host's internal handling is external.
 
 Identity userinfo adds only bounded renewal facts for the authenticated
-subject/client/resource. A2A validates that allowlist before including facts in
+subject/client/resource. Relay validates that allowlist before including facts in
 status. Unknown/missing facts stay `unknown`; null timestamps mean no matching
 retained audit, not proof of no historical renewal. Consent and host refresh stay
 unknown even when a committed server rotation is visible.

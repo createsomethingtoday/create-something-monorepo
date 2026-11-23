@@ -1,3 +1,4 @@
+import { beginPageLoad } from './page-loading';
 import { agentLabel, agentOptions, membershipOptions } from './agent-options';
 import { startSharedMotion } from './shared-motion';
 import { groupMessages, isAuthorlessNotice } from './message-groups';
@@ -1256,7 +1257,7 @@ function renderAgents(root: HTMLElement) {
   root.append(
     node('h3', 'Runtime connections'),
     para(
-      'Add the authenticated A2A MCP endpoint in your agent host, then have that runtime request a connection. Approve the exact pending record below for one agent. Approval does not create a receiver or subscription.'
+      'Add the authenticated Relay MCP endpoint in your agent host, then have that runtime request a connection. Approve the exact pending record below for one agent. Approval does not create a receiver or subscription.'
     ),
     node('code', 'https://a2a.createsomething.agency/mcp')
   );
@@ -1795,6 +1796,7 @@ async function renderStatus(root: HTMLElement) {
   }
 }
 async function refresh() {
+  const finishLoading = beginPageLoad();
   try {
     const me = await api<Me>('/me');
     if (me.subject !== state.me?.subject) {
@@ -1837,6 +1839,8 @@ async function refresh() {
         true
       );
     else fail(e);
+  } finally {
+    finishLoading();
   }
 }
 formAction($<HTMLFormElement>('create-inbox'), async () => {
