@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 
-import { AirtableClient } from '../src/airtable.js';
+import { AirtableClient, AirtableClientError, findFeedbackTextChange } from '../src/airtable.js';
 import { CONFIRMED_ASSET_FIELDS, CONFIRMED_VERSION_FIELDS, CONFIRMED_WRITE_FIELD_IDS, FEATURED_ASSET_FIELDS, FEATURED_ASSET_FIELD_IDS, METRICS_ASSET_FIELD_IDS, TABLE_IDS } from '../src/schema.js';
 
 const ericReviewer = {
@@ -2225,4 +2225,110 @@ test('setVersionZendeskTicket enforces a fresh-read precondition and writes only
   assert.deepEqual(patch!.body, { fields: { fldHKvyh55jJ0VK1u: '1200001' } });
   assert.equal(result.previousTicketId, '1199299');
   assert.equal(result.version.zendeskTicketId, '1200001');
+});
+
+test('findFeedbackTextChange ignores line endings and outer whitespace, and reports the first difference', () => {
+  assert.equal(findFeedbackTextChange('1. Fix the link.\r\n2. Publish.', '1. Fix the link.\n2. Publish.\n'), null);
+  const change = findFeedbackTextChange('The mailto link reads hello\\@example.com.', 'The mailto link reads hello@example.com.');
+  assert.equal(change?.index, 27);
+  assert.match(change?.sent ?? '', /hello\\@example/);
+  assert.match(change?.stored ?? '', /hello@example/);
+});
+
+test('updateVersionReview holds the status change when Airtable stores different feedback text', async () => {
+  const bodies: Array<Record<string, unknown>> = [];
+  const client = new AirtableClient({
+    apiKey: 'test',
+    fetchFn: async (_input, init) => {
+      const body = JSON.parse(String(init?.body)) as { fields: Record<string, unknown> };
+      bodies.push(body.fields);
+      return jsonResponse({
+        id: 'rec_version_text_changed',
+        createdTime: '2026-11-23T00:00:00.000Z',
+        fields: {
+          [CONFIRMED_VERSION_FIELDS.assetRecordId]: 'rec_asset_current',
+          [CONFIRMED_VERSION_FIELDS.reviewFeedback]: 'The mailto link reads hello@example.com.\n',
+        },
+      });
+    },
+  });
+
+  await assert.rejects(
+    client.updateVersionReview('rec_version_text_changed', {
+      review_status: '📤Changes Requested',
+      review_feedback: 'The mailto link reads hello\\@example.com.',
+    }),
+    (error: unknown) => {
+      assert.ok(error instanceof AirtableClientError);
+      assert.equal(error.code, 'FEEDBACK_TEXT_CHANGED');
+      assert.equal(error.status, 409);
+      assert.match(error.message, /status was not changed/);
+      return true;
+    },
+  );
+  // Only the feedback write happened; the status write never ran.
+  assert.deepEqual(bodies, [{ [CONFIRMED_WRITE_FIELD_IDS.versions.reviewFeedback]: 'The mailto link reads hello\\@example.com.' }]);
+});
+
+test('updateVersionReview writes the feedback first and the status second when the stored text matches', async () => {
+  const bodies: Array<Record<string, unknown>> = [];
+  const client = new AirtableClient({
+    apiKey: 'test',
+    fetchFn: async (_input, init) => {
+      const body = JSON.parse(String(init?.body)) as { fields: Record<string, unknown> };
+      bodies.push(body.fields);
+      return jsonResponse({
+        id: 'rec_version_text_same',
+        createdTime: '2026-11-23T00:00:00.000Z',
+        fields: {
+          [CONFIRMED_VERSION_FIELDS.assetRecordId]: 'rec_asset_current',
+          [CONFIRMED_VERSION_FIELDS.reviewFeedback]: '1. Fix the link.\n',
+          ...(bodies.length === 2 ? { [CONFIRMED_VERSION_FIELDS.reviewStatus]: '📤Changes Requested' } : {}),
+        },
+      });
+    },
+  });
+
+  const version = await client.updateVersionReview('rec_version_text_same', {
+    review_status: '📤Changes Requested',
+    review_feedback: '1. Fix the link.',
+  });
+
+  assert.deepEqual(bodies, [
+    { [CONFIRMED_WRITE_FIELD_IDS.versions.reviewFeedback]: '1. Fix the link.' },
+    { [CONFIRMED_VERSION_FIELDS.reviewStatus]: '📤Changes Requested' },
+  ]);
+  assert.equal(version.reviewStatus, '📤Changes Requested');
+});
+
+test('updateVersionReview reports feedback that another save replaced between the two writes', async () => {
+  let calls = 0;
+  const client = new AirtableClient({
+    apiKey: 'test',
+    fetchFn: async () => {
+      calls += 1;
+      return jsonResponse({
+        id: 'rec_version_text_replaced',
+        createdTime: '2026-11-23T00:00:00.000Z',
+        fields: {
+          [CONFIRMED_VERSION_FIELDS.assetRecordId]: 'rec_asset_current',
+          [CONFIRMED_VERSION_FIELDS.reviewFeedback]: calls === 1 ? '1. Fix the link.\n' : 'An unfinished draft.\n',
+        },
+      });
+    },
+  });
+
+  await assert.rejects(
+    client.updateVersionReview('rec_version_text_replaced', {
+      review_status: '📤Changes Requested',
+      review_feedback: '1. Fix the link.',
+    }),
+    (error: unknown) => {
+      assert.ok(error instanceof AirtableClientError);
+      assert.equal(error.code, 'FEEDBACK_REPLACED_DURING_DECISION');
+      assert.deepEqual((error.details as { status_changed: boolean }).status_changed, true);
+      return true;
+    },
+  );
+  assert.equal(calls, 2);
 });

@@ -81,6 +81,57 @@ function assertNoRawHtmlInCreatorFeedback(field: 'review_feedback' | 'rejection_
   }
 }
 
+// 📝Review Feedback is a rich text field: Airtable parses the text as Markdown when it is
+// saved and can change it (a backslash before punctuation is dropped; observed: Nooir,
+// 2026-11-23, a quoted "\@" reached the creator as "@"). The Review Status Trigger
+// automation sends the stored text to the creator, so a changed text must stop the decision.
+function normalizeFeedbackText(text: string): string {
+  return text.replace(/\r\n/g, '\n').trim();
+}
+
+/** Null when the stored text is the text that was sent; otherwise where they first differ. */
+export function findFeedbackTextChange(sent: string, stored: string): { index: number; sent: string; stored: string } | null {
+  const a = normalizeFeedbackText(sent);
+  const b = normalizeFeedbackText(stored);
+  if (a === b) return null;
+  let index = 0;
+  while (index < a.length && index < b.length && a[index] === b[index]) index += 1;
+  const from = Math.max(0, index - 30);
+  return { index, sent: a.slice(from, index + 30), stored: b.slice(from, index + 30) };
+}
+
+function assertFeedbackStoredAsSent(
+  field: 'review_feedback' | 'rejection_feedback',
+  sent: string | undefined,
+  stored: string | undefined,
+  statusHeld: boolean,
+): void {
+  // A response without the field cannot be compared; Airtable returns it by name on every update.
+  if (sent === undefined || stored === undefined) return;
+  const change = findFeedbackTextChange(sent, stored);
+  if (change === null) return;
+  throw new AirtableClientError(
+    'FEEDBACK_TEXT_CHANGED',
+    `Airtable changed the ${field} text when it saved it (rich text Markdown), near "${change.sent}" (stored as "${change.stored}"). ` +
+      (statusHeld ? 'The review status was not changed and nothing was sent to the creator. ' : '') +
+      'Reword that part without Markdown characters such as a backslash, then send it again.',
+    409,
+    { field, ...change, status_changed: false },
+  );
+}
+
+function assertFeedbackUnchangedAfterStatus(field: 'review_feedback' | 'rejection_feedback', sent: string | undefined, stored: string | undefined): void {
+  if (sent === undefined || stored === undefined) return;
+  const change = findFeedbackTextChange(sent, stored);
+  if (change === null) return;
+  throw new AirtableClientError(
+    'FEEDBACK_REPLACED_DURING_DECISION',
+    `Another save replaced the ${field} text while this decision was written, near "${change.stored}". The review status WAS changed, so the creator may get the other text. Read the review thread now and send a correction if it is wrong.`,
+    409,
+    { field, ...change, status_changed: true },
+  );
+}
+
 // A published Webflow site legitimately serves assets under two cdn.prod.website-files.com
 // prefixes: the site ID (Designer/Assets-panel uploads) and the CMS database ID (uploads
 // made through CMS image fields). Reviewer sessions that crawl the HTML and group image
@@ -2382,7 +2433,31 @@ export class AirtableClient {
 
     const shouldReassertReviewOwner = requestedReviewOwner !== undefined && Object.keys(fields).some((fieldName) => fieldName !== CONFIRMED_VERSION_FIELDS.reviewOwner);
 
-    const updated = await this.updateRecord(TABLE_IDS.assetVersions, versionId, fields);
+    // Creator-facing feedback is saved first and compared with what was sent. The other
+    // fields (the status change that starts the automation) are written only when it matches.
+    const feedbackFields: Record<string, unknown> = {};
+    for (const key of [CONFIRMED_WRITE_FIELD_IDS.versions.reviewFeedback, CONFIRMED_VERSION_FIELDS.rejectionFeedback]) {
+      if (key in fields) feedbackFields[key] = fields[key];
+    }
+    const hasFeedback = Object.keys(feedbackFields).length > 0;
+    const otherFields = Object.fromEntries(Object.entries(fields).filter(([key]) => !(key in feedbackFields)));
+    const hasOther = Object.keys(otherFields).length > 0;
+
+    let updated = await this.updateRecord(TABLE_IDS.assetVersions, versionId, hasFeedback ? feedbackFields : fields);
+    if (hasFeedback) {
+      const stored = mapVersion(updated);
+      assertFeedbackStoredAsSent('review_feedback', input.review_feedback, stored.reviewFeedback, hasOther);
+      assertFeedbackStoredAsSent('rejection_feedback', input.rejection_feedback, stored.rejectionFeedback, hasOther);
+      if (hasOther) {
+        updated = await this.updateRecord(TABLE_IDS.assetVersions, versionId, otherFields);
+        // Two requests leave a short window in which another save can replace the feedback
+        // (a draft saved from a second session). It cannot be closed from here, so it is reported:
+        // the second answer must still hold the text that was compared.
+        const after = mapVersion(updated);
+        assertFeedbackUnchangedAfterStatus('review_feedback', input.review_feedback, after.reviewFeedback);
+        assertFeedbackUnchangedAfterStatus('rejection_feedback', input.rejection_feedback, after.rejectionFeedback);
+      }
+    }
     if (shouldReassertReviewOwner && requestedReviewOwner !== undefined) {
       return this.reassertVersionReviewOwner(versionId, requestedReviewOwner);
     }
