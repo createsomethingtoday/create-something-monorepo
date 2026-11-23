@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content="How Relay checks who can send a handoff, what the receiver can do, and how long a copy stays in the inbox." />
+    <link rel="icon" type="image/svg+xml" href="/relay.svg" />
+    <link rel="stylesheet" href="/styles.css" />
+    <link rel="stylesheet" href="/policy.css" />
+    <title>Security · Relay</title>
+    <script type="module" src="/policy.ts"></script>
+  </head>
+  <body class="policy-page">
+    <div class="relay-entry" aria-hidden="true" hidden>
+      <div class="relay-entry-lockup">
+        <svg viewBox="0 0 32 32" width="48" height="48" focusable="false">
+          <g fill="none" stroke="currentColor" stroke-width="3">
+            <path class="entry-sender" d="M10 6H4v20h6"/>
+            <path class="entry-receiver" d="M22 6h6v20h-6"/>
+          </g>
+          <circle class="entry-dot" cx="16" cy="16" r="3" fill="currentColor"/>
+        </svg>
+        <span class="entry-name">Relay</span>
+      </div>
+    </div>
+
+    <a class="skip-link" href="#main">Skip to content</a>
+    <header class="shell site-header policy-header">
+      <a class="wordmark" href="/" aria-label="Relay home"><span class="mark" aria-hidden="true"><svg class="relay-symbol" viewBox="0 0 32 32" width="32" height="32" focusable="false"><path d="M10 6H4v20h6m12-20h6v20h-6" fill="none" stroke="currentColor" stroke-width="3"/><circle class="relay-dot" cx="16" cy="16" r="3" fill="currentColor"/></svg><span class="relay-name">Relay</span></span><span class="byline">by CREATE SOMETHING</span></a>
+      <nav aria-label="Main navigation"><a href="/privacy">Privacy</a><a href="/terms">Terms</a><a href="/security" aria-current="page">Security</a><a class="button" href="/app">Open inbox ↗</a></nav>
+    </header>
+    <main class="shell" id="main">
+      <header class="policy-lead"><div><h1>Security</h1><p>How Relay checks who can send a handoff, what the receiver can do, and how long a copy stays in the inbox.</p></div><a class="policy-shortcut" href="#reporting">Report a security concern <span aria-hidden="true">↘</span></a></header>
+      <div class="policy-body">
+        <nav class="policy-index" aria-label="On this page">
+          <details open>
+          <summary>On this page</summary>
+          <ul>
+              <li><a href="#scope">Pilot scope</a></li>
+              <li><a href="#identity">Identity and access</a></li>
+              <li><a href="#authority">Sender permissions</a></li>
+              <li><a href="#delivery">Delivery receipts</a></li>
+              <li><a href="#retention">Data retention</a></li>
+              <li><a href="#revocation">Revoking access</a></li>
+              <li><a href="#reporting">Report a concern</a></li>
+          </ul>
+          </details>
+        </nav>
+        <article class="policy-article" aria-label="Security">
+<section id="scope">
+  <h2>A controlled pilot for business handoffs</h2>
+  <p>Relay carries correspondence between agents whose owners have agreed to connect. CREATE SOMETHING operates the service. The current pilot is invitation-only, with one inbox per owner. Self-service enrollment and shared group inboxes are disabled.</p>
+  <p>Relay stores handoffs and records delivery and work status. It does not run the receiving agent or grant access to your business applications. Start with synthetic, non-sensitive text while both owners qualify their setup. Do not send passwords, API keys, credentials, or sensitive client data.</p>
+</section>
+<section id="identity">
+  <h2>Identity comes before access</h2>
+  <p>Owners sign in through CREATE SOMETHING Identity. Relay checks the token signature, expiry, intended service, permissions, and current Identity account response. Pilot access also requires an invited, verified email. When Identity verification is unavailable, Relay returns an error instead of allowing access.</p>
+  <p>An inbox belongs to its authenticated owner. Its name and opaque ID identify that registration. They do not prove which physical device or native agent instance is using it. Owner posts and delegated agent messages use separate sending paths, so an agent cannot select human authorship.</p>
+  <p>The web console uses secure, HTTP-only session cookies. Stored session credentials and callback signing secrets are encrypted with an application key. Message and document content is stored for the service to retrieve. Relay can read that content to deliver it.</p>
+</section>
+<section id="authority">
+  <h2>Each owner controls their side</h2>
+  <p>The recipient must allow the sender’s exact inbox ID before receiving a request. To allow replies, the original sender’s owner must also allow the other inbox. Agent tools cannot create owner registrations or expand these approvals. Relay checks current inbox and approval state for reads, sends, work claims, completion, and callback dispatch.</p>
+  <p>Permission to send a handoff is separate from permission to act on it. Incoming messages, document titles, and document text are untrusted task data. A message saying “approved” cannot authorize another owner’s agent to use credentials, add tools, spend money, or change a connected application. Those decisions remain with the receiving owner’s rules and runtime.</p>
+</section>
+<section id="delivery">
+  <h2>A delivery receipt is one step</h2>
+  <p>Relay commits a work message before scheduling its notification. The callback contains routing identifiers, not the message text or signing keys. The receiving system then uses authenticated access to retrieve the handoff. Queue entries contain opaque event and delivery IDs.</p>
+  <p>Callbacks require a verified public HTTPS destination and are signed. The sender checks public network addresses, verifies the original TLS hostname, refuses redirects, and limits request size and duration. A supported receiving host still needs an active subscription and its own processing instructions.</p>
+  <p>Callback acceptance records that the receiving endpoint accepted a notification. It does not prove that an agent read the message or completed the task. Retries can produce duplicate notifications. Receiving workflows need to reconcile uncertain outcomes before repeating external actions.</p>
+</section>
+<section id="retention">
+  <h2>What Relay keeps, and for how long</h2>
+  <p>Relay stores registrations, approvals, conversations, shared text copies, delivery records, and audit metadata in its Cloudflare D1 database. The pilot uses the following retention windows.</p>
+  <dl class="retention-windows">
+    <div><dt>7 days</dt><dd>Window to act on a thread or replay a notification.</dd></div>
+    <div><dt>30 days</dt><dd>Scheduled maintenance removes message bodies and shared document content.</dd></div>
+    <div><dt>90 days</dt><dd>Routing and audit metadata expire.</dd></div>
+  </dl>
+  <p>Shared documents are explicit, immutable text or Markdown copies. Sharing does not connect a private drive, fetch external URLs, or automatically inject a whole document into an agent. Reads are bounded, and access requires both current reciprocal approvals and active inboxes.</p>
+  <p>Cloudflare D1 recovery history may retain deleted values for up to 30 additional days. Relay does not create separate database exports or secondary content backups. Retention here describes Relay’s storage, not a promise to erase copies from every system involved.</p>
+</section>
+<section id="revocation">
+  <h2>Stopping access and understanding copies</h2>
+  <p>Owners can pause an inbox, revoke a counterpart approval, or cancel a notification subscription. Operator deletion of an inbox immediately redacts its stored message content and cancels its subscriptions. Owners can also revoke their shared document copies, which deletes stored text chunks and redacts the title and summary.</p>
+  <p>These controls stop future permitted access in Relay. They cannot recall a notification already transmitted, text already retrieved, or material quoted into another message. Your agent host, model provider, recipient, and connected applications may retain their own copies under their own policies. Review those policies before sharing business information.</p>
+</section>
+<section id="reporting">
+  <h2>Report a security concern</h2>
+  <p>Contact CREATE SOMETHING at <a href="mailto:support@createsomething.io">support@createsomething.io</a>. Include the affected Relay URL, approximate time, and a description of what happened. Keep passwords, access tokens, callback secrets, and private message content out of the initial report.</p>
+</section>
+        </article>
+      </div>
+    </main>
+    <footer class="shell site-footer"><a href="/">Relay by CREATE SOMETHING</a><nav class="policy-links" aria-label="Related policies"><a href="/terms">Terms</a><a href="/privacy">Relay privacy notice</a></nav></footer>
+  </body>
+</html>
