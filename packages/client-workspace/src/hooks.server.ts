@@ -23,13 +23,54 @@ export function remoteMutationAllowed(method: string, origin: string | null, exp
 }
 
 export const handle: Handle = async ({ event, resolve }) => {
-  if (process.env.CLIENT_WORKSPACE_REMOTE === '1') {
+  const remoteMode = process.env.CLIENT_WORKSPACE_REMOTE === '1';
+  const desktopMode = process.env.CLIENT_WORKSPACE_DESKTOP === '1';
+  if (process.env.CLIENT_WORKSPACE_MANAGED_CONNECTOR === '1' && (!remoteMode || !desktopMode)) {
+    return new Response('Access required.', {
+      status: 403,
+      headers: { 'cache-control': 'no-store' }
+    });
+  }
+  const remoteOrigin = process.env.CLIENT_WORKSPACE_REMOTE_ORIGIN ?? '';
+  const loopbackOrigin = process.env.CLIENT_WORKSPACE_LOOPBACK_ORIGIN ?? '';
+  if (remoteMode && desktopMode) {
+    const requestHost = event.request.headers.get('host');
+    const expectedRemoteHost = remoteOrigin ? new URL(remoteOrigin).host : '';
+    const expectedLoopbackHost = loopbackOrigin ? new URL(loopbackOrigin).host : '';
+    const local = event.url.origin === loopbackOrigin && requestHost === expectedLoopbackHost;
+    const remote = event.url.origin === remoteOrigin && requestHost === expectedRemoteHost;
+    if (!local && !remote) {
+      return new Response('Access required.', {
+        status: 403,
+        headers: { 'cache-control': 'no-store' }
+      });
+    }
+    if (remote) {
+      const allowedOrigin = remoteMutationAllowed(
+        event.request.method,
+        event.request.headers.get('origin'),
+        remoteOrigin
+      );
+      const authorized = allowedOrigin && await verifyRemoteAccess(event.request, {
+        teamDomain: process.env.CLIENT_WORKSPACE_ACCESS_TEAM_DOMAIN ?? '',
+        audience: process.env.CLIENT_WORKSPACE_ACCESS_AUD ?? '',
+        allowedEmail: process.env.CLIENT_WORKSPACE_ACCESS_EMAIL ?? ''
+      });
+      if (!authorized) {
+        return new Response('Access required.', {
+          status: 403,
+          headers: { 'cache-control': 'no-store' }
+        });
+      }
+      return await resolve(event);
+    }
+  } else if (remoteMode) {
     const allowedOrigin = remoteMutationAllowed(
       event.request.method,
       event.request.headers.get('origin'),
-      process.env.CLIENT_WORKSPACE_REMOTE_ORIGIN ?? ''
+      remoteOrigin
     );
-    const authorized = allowedOrigin && process.env.CLIENT_WORKSPACE_DESKTOP !== '1' && await verifyRemoteAccess(
+    const authorized = allowedOrigin && await verifyRemoteAccess(
       event.request,
       {
         teamDomain: process.env.CLIENT_WORKSPACE_ACCESS_TEAM_DOMAIN ?? '',
@@ -45,9 +86,9 @@ export const handle: Handle = async ({ event, resolve }) => {
     }
     return await resolve(event);
   }
-  if (process.env.CLIENT_WORKSPACE_DESKTOP !== '1') return await resolve(event);
+  if (!desktopMode) return await resolve(event);
   const configuredToken = process.env.CLIENT_WORKSPACE_CAPABILITY_TOKEN ?? '';
-  const expectedOrigin = process.env.CLIENT_WORKSPACE_LOOPBACK_ORIGIN ?? '';
+  const expectedOrigin = loopbackOrigin;
   const decision = decideLoopbackRequest({
     configuredToken,
     expectedOrigin,

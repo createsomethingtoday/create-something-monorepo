@@ -45,3 +45,25 @@ test('reset refuses previews admitted during the source swap and creates a fresh
     await rm(root, { recursive: true, force: true });
   }
 });
+
+test('managed connector registers only imported signed deliveries, without the demo', async () => {
+  const root = await mkdtemp(join(tmpdir(), 'client-workspace-connector-'));
+  const names = ['CLIENT_WORKSPACE_STATE_ROOT', 'CLIENT_WORKSPACE_MANAGED_ROOT',
+    'CLIENT_WORKSPACE_DESKTOP', 'CLIENT_WORKSPACE_MANAGED_CONNECTOR'] as const;
+  const previous = names.map((name) => process.env[name]);
+  process.env.CLIENT_WORKSPACE_STATE_ROOT = join(root, 'state');
+  process.env.CLIENT_WORKSPACE_MANAGED_ROOT = join(root, 'managed');
+  delete process.env.CLIENT_WORKSPACE_DESKTOP;
+  process.env.CLIENT_WORKSPACE_MANAGED_CONNECTOR = '1';
+  try {
+    const runtime = new ClientWorkspaceRuntime();
+    assert.deepEqual(runtime.registry.list(), []);
+    await runtime.close();
+  } finally {
+    names.forEach((name, index) => {
+      if (previous[index] === undefined) delete process.env[name];
+      else process.env[name] = previous[index];
+    });
+    await rm(root, { recursive: true, force: true });
+  }
+});

@@ -32,3 +32,64 @@ test('remote workspace rejects requests before route resolution without Access',
     else process.env.CLIENT_WORKSPACE_REMOTE = oldMode;
   }
 });
+
+test('dual-mode workspace still bootstraps the native app on its exact loopback origin', async () => {
+  const previous = {
+    remote: process.env.CLIENT_WORKSPACE_REMOTE,
+    desktop: process.env.CLIENT_WORKSPACE_DESKTOP,
+    remoteOrigin: process.env.CLIENT_WORKSPACE_REMOTE_ORIGIN,
+    loopbackOrigin: process.env.CLIENT_WORKSPACE_LOOPBACK_ORIGIN,
+    capability: process.env.CLIENT_WORKSPACE_CAPABILITY_TOKEN
+  };
+  process.env.CLIENT_WORKSPACE_REMOTE = '1';
+  process.env.CLIENT_WORKSPACE_DESKTOP = '1';
+  process.env.CLIENT_WORKSPACE_REMOTE_ORIGIN = 'https://client-agent.example.test';
+  process.env.CLIENT_WORKSPACE_LOOPBACK_ORIGIN = 'http://127.0.0.1:5290';
+  process.env.CLIENT_WORKSPACE_CAPABILITY_TOKEN = 'a'.repeat(64);
+  try {
+    const url = new URL(`http://127.0.0.1:5290/?cap=${'a'.repeat(64)}`);
+    const response = await handle({
+      event: {
+        request: new Request(url, { headers: { host: '127.0.0.1:5290' } }),
+        url,
+        cookies: { get: () => undefined }
+      } as never,
+      resolve: async () => new Response('workspace')
+    });
+    assert.equal(response.status, 200);
+    assert.match(response.headers.get('set-cookie') ?? '', /cs_workspace_capability=/);
+  } finally {
+    for (const [key, value] of Object.entries({
+      CLIENT_WORKSPACE_REMOTE: previous.remote,
+      CLIENT_WORKSPACE_DESKTOP: previous.desktop,
+      CLIENT_WORKSPACE_REMOTE_ORIGIN: previous.remoteOrigin,
+      CLIENT_WORKSPACE_LOOPBACK_ORIGIN: previous.loopbackOrigin,
+      CLIENT_WORKSPACE_CAPABILITY_TOKEN: previous.capability
+    })) {
+      if (value === undefined) delete process.env[key];
+      else process.env[key] = value;
+    }
+  }
+});
+
+test('managed connector refuses requests when remote policy is disabled', async () => {
+  const prior = {
+    connector: process.env.CLIENT_WORKSPACE_MANAGED_CONNECTOR,
+    remote: process.env.CLIENT_WORKSPACE_REMOTE
+  };
+  process.env.CLIENT_WORKSPACE_MANAGED_CONNECTOR = '1';
+  delete process.env.CLIENT_WORKSPACE_REMOTE;
+  try {
+    const url = new URL('http://127.0.0.1:5290/');
+    const response = await handle({
+      event: { request: new Request(url), url } as never,
+      resolve: async () => new Response('workspace')
+    });
+    assert.equal(response.status, 403);
+  } finally {
+    if (prior.connector === undefined) delete process.env.CLIENT_WORKSPACE_MANAGED_CONNECTOR;
+    else process.env.CLIENT_WORKSPACE_MANAGED_CONNECTOR = prior.connector;
+    if (prior.remote === undefined) delete process.env.CLIENT_WORKSPACE_REMOTE;
+    else process.env.CLIENT_WORKSPACE_REMOTE = prior.remote;
+  }
+});
