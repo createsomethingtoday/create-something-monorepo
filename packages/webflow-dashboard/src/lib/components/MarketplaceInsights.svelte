@@ -142,6 +142,24 @@
     return listed && typeof selling === 'number' ? selling / listed : null;
   });
 
+  /** Unique marketplace numbers for the active window: the one row that rows below can be read against. */
+  const totalsRow = $derived.by(() => {
+    const totals = summary.segments;
+    if (!totals || !totals.listedTemplates) return null;
+    const ninety = activeWindow === '90d';
+    const sold = ninety ? totals.sellingTemplates90d : totals.sellingTemplates;
+    const sales = ninety ? totals.totalSales90d : totals.totalSales;
+    const revenue = ninety ? totals.totalRevenue90d : totals.totalRevenue;
+    if (sold === null || sales === null) return null;
+    return {
+      listed: totals.listedTemplates,
+      sold,
+      sales,
+      rate: Math.min(1, sold / totals.listedTemplates),
+      revenuePerSold: revenue !== null && sold > 0 ? revenue / sold : null
+    };
+  });
+
   function setSegmentWindow(next: SegmentWindow) {
     if (next === segmentWindow) return;
     trackEvent('marketplace_segment_window_changed', { segment_window: next });
@@ -452,18 +470,19 @@
 {#snippet cardMetricValue(category: CategoryEntry)}
   {@const estimateShare = getEstimateShare(category)}
   {#if sellingTemplates(category, activeWindow) === 0}
-    -
+    <span class="metric-empty">No sales</span>
   {:else}
-    ${Math.round(revenuePerSeller(category, activeWindow)).toLocaleString()}
+    ${Math.round(revenuePerSeller(category, activeWindow)).toLocaleString()}{#if estimateShare !== null}<span
+        class="mark mark-hero"
+        title={getEstimateTitle(estimateShare)}>est.</span
+      >{/if}
   {/if}
 {/snippet}
 
 {#snippet cardMetricLabel(category: CategoryEntry)}
-  {@const estimateShare = getEstimateShare(category)}
-  revenue per sold template
-  {#if estimateShare !== null}
-    <span class="data-chip chip-estimate" title={getEstimateTitle(estimateShare)}>est.</span>
-  {/if}
+  {sellingTemplates(category, activeWindow) === 0
+    ? `in the ${windowDays}-day window`
+    : 'revenue per sold template'}
 {/snippet}
 
 <!-- The four numbers of a segment, in reading order: supply, sellers, the rate, then sales. -->
@@ -496,14 +515,7 @@
       <div class="stat">
         <span class="stat-label">Sell-through</span>
         <span class="stat-value stat-value-rate" class:is-soft={thin || sellers === 0}>
-          {rate === null ? '-' : formatShare(rate)}
-          {#if thin}
-            <span
-              class="data-chip chip-thin"
-              title="Fewer than {THIN_SELLERS} templates sold in the window. Read the rate as a hint."
-              >few sold</span
-            >
-          {/if}
+          {rate === null ? '-' : `${thin ? '~' : ''}${formatShare(rate)}`}
         </span>
       </div>
     {/if}
@@ -590,9 +602,7 @@
   {#if categories.length > 0}
     <section class="categories-section">
       <div class="categories-header">
-        <h3 class="section-title">
-          Category Performance{ninetyAvailable ? '' : ` (${windowDays}-Day Window)`}
-        </h3>
+        <h3 class="section-title">Category Performance ({windowDays}-Day Window)</h3>
         <div class="header-controls">
           {#if ninetyAvailable}
             <span class="toggle-label" id="segment-window-label">Sales window</span>
@@ -717,29 +727,32 @@
         Showing {sortedCategories.length} of {categories.length} category rows
       </p>
       {#if supplyAvailable}
-        <details class="segments-key" open={tableViewport !== 'mobile'}>
-          <summary>How to read this</summary>
-          <ul>
-            <li>
-              <Info size={13} aria-hidden="true" />
-              <span>
-                <strong>Rows overlap.</strong> A template counts in every subcategory it belongs
-                to, so rows do not add up.
-              </span>
-            </li>
-            <li>
-              <span class="data-chip chip-thin">few sold</span>
-              <span>Fewer than {THIN_SELLERS} templates sold. Read the rate as a hint.</span>
-            </li>
-            <li>
-              <span class="data-chip chip-estimate">est.</span>
-              <span>
-                {formatWholeShare(ESTIMATE_SHARE)} or more of the sales went through fulfillment
-                links. That revenue is assumed at list price.
-              </span>
-            </li>
-          </ul>
-        </details>
+        <ul class="segments-key" aria-label="How to read the rows">
+          <li>
+            <Info size={13} aria-hidden="true" />
+            <span>
+              <strong>Rows overlap.</strong> A template counts in every subcategory it is in.
+              {viewMode === 'table' && tableViewport !== 'mobile'
+                ? 'Read totals from the first row.'
+                : 'Read totals from the summary at the top.'}
+            </span>
+          </li>
+          <li>
+            <span class="mark" aria-hidden="true">~</span>
+            <span>
+              <strong>Few sold.</strong> Fewer than {THIN_SELLERS} templates sold, so the rate is
+              approximate.
+            </span>
+          </li>
+          <li>
+            <span class="mark" aria-hidden="true">est.</span>
+            <span>
+              <strong>Estimate.</strong>
+              {formatWholeShare(ESTIMATE_SHARE)} or more of the sales used fulfillment links. That
+              revenue is assumed at list price.
+            </span>
+          </li>
+        </ul>
       {/if}
 
       {#if sortedCategories.length === 0}
@@ -907,7 +920,7 @@
                 </th>
                 <th
                   scope="col"
-                  class="right-head"
+                  class="right-head marked-head"
                   aria-sort={getAriaSort('avgRevenuePerTemplate')}
                 >
                   <button
@@ -940,6 +953,34 @@
               </tr>
             </thead>
             <tbody>
+              {#if supplyAvailable && totalsRow}
+                <tr class="total-row">
+                  <td>
+                    <span class="category-stack">
+                      <span class="category-name">Marketplace total</span>
+                    </span>
+                    <span class="total-note">all templates, each counted once</span>
+                  </td>
+                  <td class="right"></td>
+                  <td class="right">{totalsRow.listed.toLocaleString()}</td>
+                  <td class="right">{totalsRow.sold.toLocaleString()}</td>
+                  <td class="right sell-through-cell">
+                    <span class="sell-through-value">{formatShare(totalsRow.rate)}</span>
+                  </td>
+                  <td class="right">{totalsRow.sales.toLocaleString()}</td>
+                  <td class="right">
+                    <span class="marked-value">
+                      <span class="revenue"
+                        >{totalsRow.revenuePerSold === null
+                          ? '-'
+                          : `$${Math.round(totalsRow.revenuePerSold).toLocaleString()}`}</span
+                      >
+                      <span class="mark-slot"></span>
+                    </span>
+                  </td>
+                  <td class="competition-cell"></td>
+                </tr>
+              {/if}
               {#each sortedCategories as category, index (getCategoryRowKey(category, index))}
                 {@const competition = getCategoryCompetition(category)}
                 {@const rate = sellThrough(category, activeWindow)}
@@ -971,20 +1012,13 @@
                       {#if rate === null}
                         <span class="cell-empty">-</span>
                       {:else}
-                        <span class="marked-value">
-                          <span class="marker-slot">
-                            {#if thin}
-                              <span
-                                class="data-chip chip-thin"
-                                title="Fewer than {THIN_SELLERS} templates sold in the window. Read the rate as a hint."
-                                >few sold</span
-                              >
-                            {/if}
-                          </span>
-                          <span class="sell-through-value" class:is-soft={thin || sellers === 0}>
-                            {formatShare(rate)}
-                          </span>
-                        </span>
+                        <span
+                          class="sell-through-value"
+                          class:is-soft={thin || sellers === 0}
+                          title={thin
+                            ? `Fewer than ${THIN_SELLERS} templates sold in the window. Read the rate as a hint.`
+                            : undefined}>{thin ? '~' : ''}{formatShare(rate)}</span
+                        >
                       {/if}
                     </td>
                   {/if}
@@ -993,20 +1027,20 @@
                   </td>
                   <td class="right">
                     {#if sellers === 0}
-                      <span class="cell-empty" title="No template sold in the window">-</span>
+                      <span class="marked-value">
+                        <span class="cell-empty" title="No template sold in the window">-</span>
+                        <span class="mark-slot"></span>
+                      </span>
                     {:else}
                       <span class="marked-value">
-                        <span class="marker-slot">
-                          {#if estimateShare !== null}
-                            <span
-                              class="data-chip chip-estimate"
-                              title={getEstimateTitle(estimateShare)}>est.</span
-                            >
-                          {/if}
-                        </span>
-                        <span class="revenue" class:is-estimate={estimateShare !== null}
+                        <span class="revenue"
                           >${Math.round(revenuePerSeller(category, activeWindow)).toLocaleString()}</span
                         >
+                        <span class="mark-slot">
+                          {#if estimateShare !== null}
+                            <span class="mark" title={getEstimateTitle(estimateShare)}>est.</span>
+                          {/if}
+                        </span>
                       </span>
                     {/if}
                   </td>
@@ -2364,7 +2398,7 @@
   }
 
   .data-table.has-supply col.category-col {
-    width: 24%;
+    width: 26%;
   }
 
   .data-table.has-supply col.rank-col {
@@ -2376,11 +2410,11 @@
   }
 
   .data-table.has-supply col.active-col {
-    width: 12%;
+    width: 11%;
   }
 
   .data-table.has-supply col.sell-through-col {
-    width: 14%;
+    width: 11%;
   }
 
   .data-table.has-supply col.sales-col {
@@ -2388,7 +2422,7 @@
   }
 
   .data-table.has-supply col.revenue-col {
-    width: 15%;
+    width: 17%;
   }
 
   .data-table.has-supply col.competition-col {
@@ -2400,26 +2434,64 @@
     color: var(--color-fg-muted);
   }
 
-  /* A number at the cell's right edge, with a fixed slot before it for a marker. */
+  /* A number with a fixed slot after it for a footnote mark, so every number in a column ends at the same place. */
   .marked-value {
     display: inline-grid;
-    grid-template-columns: 4.3rem auto;
+    grid-template-columns: auto 1.55rem;
     align-items: baseline;
-    justify-items: end;
-    column-gap: 0.45rem;
+    column-gap: 0.25rem;
   }
 
-  .marker-slot {
-    display: inline-flex;
-    justify-content: flex-end;
-    width: 100%;
+  .mark-slot {
+    text-align: left;
   }
 
-  .marker-slot .data-chip {
-    margin: 0;
+  .mark {
+    color: var(--color-info-soft-text);
+    font-size: 0.78em;
+    font-weight: var(--font-medium);
+    line-height: 1;
+    cursor: help;
   }
 
+  .mark-hero {
+    margin-left: 0.3rem;
+    font-size: 0.5em;
+  }
 
+  /* Headers of marked columns end where their numbers end. */
+  .data-table th.marked-head .table-sort-button {
+    padding-right: 1.8rem;
+  }
+
+  .data-table tr.total-row td,
+  .data-table tr.total-row td:first-child {
+    background: color-mix(in srgb, var(--color-info-soft-wash) 70%, var(--color-bg-surface));
+    border-bottom: 2px solid var(--color-info-soft-border);
+    font-weight: var(--font-semibold);
+  }
+
+  .data-table tr.total-row .category-name {
+    font-weight: var(--font-semibold);
+  }
+
+  .data-table tr.total-row .sell-through-value,
+  .data-table tr.total-row .revenue {
+    font-weight: var(--font-semibold);
+  }
+
+  .total-note {
+    display: block;
+    margin-top: 1px;
+    font-size: var(--text-caption);
+    color: var(--color-fg-muted);
+  }
+
+  .metric-empty {
+    color: var(--color-fg-muted);
+    font-size: 0.7em;
+    font-weight: var(--font-medium);
+  }
 
   .sell-through-cell,
   .data-table td.right {
@@ -2446,85 +2518,39 @@
     font-weight: var(--font-medium);
   }
 
-  .revenue.is-estimate {
-    color: var(--color-fg-secondary);
-  }
-
-  /* A chip marks a number the reader must not take at face value. */
-  .data-chip {
-    display: inline-flex;
-    align-items: center;
-    margin-right: 0.4rem;
-    padding: 0.04rem 0.3rem;
-    border: 1px solid transparent;
-    border-radius: var(--radius-sm);
-    font-size: 0.6875rem;
-    font-weight: var(--font-medium);
-    line-height: 1.3;
-    white-space: nowrap;
-    vertical-align: 0.06em;
-    cursor: help;
-  }
-
-  .chip-thin {
-    border-color: color-mix(in srgb, var(--color-fg-muted) 50%, transparent);
-    border-style: dashed;
-    color: var(--color-fg-muted);
-  }
-
-  .chip-estimate {
-    border-color: color-mix(in srgb, var(--color-fg-muted) 50%, transparent);
-    background: color-mix(in srgb, var(--color-fg-muted) 14%, transparent);
-    color: var(--color-fg-secondary);
-  }
-
-  .stat-value .data-chip,
-  .metric-label .data-chip {
-    margin: 0 0 0 0.3rem;
-  }
-
   .cell-empty,
   .data-table td.is-zero {
     color: var(--color-fg-muted);
   }
 
   .segments-key {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.4rem var(--space-lg);
     margin: 0 0 var(--space-sm);
+    padding: 0;
+    list-style: none;
     font-size: var(--text-caption);
     line-height: 1.45;
     color: var(--color-fg-muted);
   }
 
-  .segments-key summary {
-    display: none;
-    cursor: pointer;
-    color: var(--color-fg-secondary);
-  }
-
-  .segments-key ul {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.35rem 1.6rem;
-    margin: 0;
-    padding: 0;
-    list-style: none;
-  }
-
   .segments-key li {
-    display: flex;
+    display: grid;
+    grid-template-columns: 1.6rem 1fr;
     align-items: baseline;
-    gap: 0.4rem;
+    column-gap: 0.35rem;
+    padding-right: 0.5rem;
   }
 
   .segments-key li :global(svg) {
-    flex: none;
-    align-self: center;
+    align-self: start;
+    margin-top: 0.18rem;
     color: var(--color-info-soft-text);
   }
 
-  .segments-key .data-chip {
-    flex: none;
-    margin: 0;
+  .segments-key .mark {
+    font-size: 1em;
     cursor: default;
   }
 
@@ -2533,17 +2559,9 @@
     font-weight: var(--font-medium);
   }
 
-  @media (max-width: 767px) {
-    .segments-key summary {
-      display: list-item;
-    }
-
-    .segments-key[open] summary {
-      margin-bottom: 0.4rem;
-    }
-
-    .segments-key ul {
-      flex-direction: column;
+  @media (max-width: 900px) {
+    .segments-key {
+      grid-template-columns: 1fr;
     }
   }
 
@@ -2564,6 +2582,11 @@
 
     .header-controls {
       justify-content: flex-start;
+    }
+
+    /* The section title names the window, so both switches fit on one row. */
+    .toggle-label {
+      display: none;
     }
 
   }

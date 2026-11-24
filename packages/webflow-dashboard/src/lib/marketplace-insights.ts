@@ -41,7 +41,11 @@ export interface SegmentTotals {
 	sellingTemplates: number | null;
 	/** Sales in the 30-day window through fulfillment links. */
 	fulfillmentSales: number | null;
+	/** Unique marketplace totals for the 30-day window. */
+	totalSales: number | null;
+	totalRevenue: number | null;
 	totalSales90d: number | null;
+	totalRevenue90d: number | null;
 	sellingTemplates90d: number | null;
 }
 

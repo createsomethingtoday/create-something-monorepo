@@ -108,7 +108,10 @@ export const GET: RequestHandler = async ({ locals, platform }) => {
 			listedTemplates: snapshotSummary?.listedTemplates ?? null,
 			sellingTemplates: snapshotSummary?.sellingTemplates ?? null,
 			fulfillmentSales: snapshotSummary?.fulfillmentSales ?? null,
+			totalSales: snapshotSummary?.totalSales ?? null,
+			totalRevenue: snapshotSummary?.totalRevenue ?? null,
 			totalSales90d: snapshotSummary?.totalSales90d ?? null,
+			totalRevenue90d: snapshotSummary?.totalRevenue90d ?? null,
 			sellingTemplates90d: snapshotSummary?.sellingTemplates90d ?? null
 		};
 

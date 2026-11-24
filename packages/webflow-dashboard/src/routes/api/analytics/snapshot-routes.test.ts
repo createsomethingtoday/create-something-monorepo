@@ -118,7 +118,10 @@ describe('snapshot analytics API contracts', () => {
       listedTemplates: 3,
       sellingTemplates: 2,
       fulfillmentSales: 1,
+      totalSales: 5,
+      totalRevenue: 230,
       totalSales90d: 12,
+      totalRevenue90d: 570,
       sellingTemplates90d: 3
     });
     expect(body.categories.find((row) => row.subcategory === 'Agency')).toMatchObject({
