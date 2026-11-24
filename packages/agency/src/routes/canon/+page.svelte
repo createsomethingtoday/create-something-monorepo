@@ -1,6 +1,45 @@
 <script lang="ts">
+  import { onMount, tick } from 'svelte';
+  import CanonEyeStudy from '$lib/components/CanonEyeStudy.svelte';
   import { SEO } from '@create-something/canon';
   const art = '/images/canon-agency-v1/';
+  let activeView: 'studio' | 'walkthrough' | null = null;
+  let ready = false;
+  onMount(() => {
+    ready = true;
+  });
+  let lastOpener: HTMLButtonElement | undefined;
+  let engineStage: HTMLDivElement;
+  let studyPlayer: HTMLVideoElement;
+  let studyStarted = false;
+
+  async function playStudy(event: MouseEvent) {
+    if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+    event.preventDefault();
+    studyStarted = true;
+    await tick();
+    studyPlayer.focus({ preventScroll: true });
+    try {
+      await studyPlayer.play();
+    } catch {
+      /* The native player retains its playback controls. */
+    }
+  }
+
+  async function openView(view: 'studio' | 'walkthrough', event: MouseEvent) {
+    studyPlayer.pause();
+    lastOpener = event.currentTarget as HTMLButtonElement;
+    activeView = view;
+    await tick();
+    engineStage.focus({ preventScroll: true });
+    engineStage.scrollIntoView({ block: 'start', behavior: 'instant' });
+  }
+  function closeView() {
+    activeView = null;
+    lastOpener?.focus();
+  }
+  const studioUrl = 'https://canon-expression-studio.pages.dev/';
+  const walkthroughUrl = studioUrl + 'walkthrough';
 </script>
 
 <SEO
@@ -260,39 +299,126 @@
           only room for a face. A glance toward the footage has to do the pointing.
         </p>
         <p>
-          We built a pencil-drawn version of Canon with an animation rig. A director can choose from
-          100 expressions, adjust the gaze, then decide how strongly a reaction reads, how long it
-          holds and when it fades.
+          When the caption asks you to find the first frame of the pour, Canon looks across at the
+          footage. A moment later, one eye closes in a wink. In this study, the cream stitches
+          follow the eyelid all the way down.
         </p>
-        <a href="https://canon-expression-studio.pages.dev/">Try the expression studio</a>
       </div>
-      <figure>
+      <figure class="felt-study">
+        {#if !studyStarted}
+          <a class="study-cover" href={art + 'felt-eye-study.mp4'} onclick={playStudy}>
+            <img
+              width="360"
+              height="204"
+              src={art + 'felt-eye-study.webp'}
+              alt="Canon’s stitched cream eyes glance sideways."
+            />
+            <span>▶ Play eye study · 5 seconds</span>
+          </a>
+        {/if}
+        <video
+          hidden={!studyStarted}
+          bind:this={studyPlayer}
+          tabindex="-1"
+          width="732"
+          height="414"
+          controls
+          playsinline
+          preload="none"
+          poster={art + 'felt-eye-study.webp'}
+          aria-label="Canon felt eye study: a sideways glance and a wink, 5.1 seconds"
+        >
+          <source src={art + 'felt-eye-study.mp4'} type="video/mp4" />
+          <a href={art + 'felt-eye-study.mp4'}>Watch the felt eye study</a>
+        </video>
         <img
-          src={art + 'rig-look.webp'}
-          width="460"
-          height="253"
+          class="eye-poses"
+          src={art + 'felt-eye-poses.webp'}
+          width="840"
+          height="223"
           loading="lazy"
-          alt="Canon’s pencilled portrait with both pupils turned to the left."
+          alt="Three close-up renders of the current felt eyes: Glance, Closing and Wink. Cream woven eye shapes narrow and close against charcoal felt."
         />
-        <figcaption>“Look here”, held in the expression studio.</figcaption>
+        <figcaption>
+          Stitched-felt eye study, 5.1 seconds. The close-ups show the glance and the lid closing
+          into the wink.
+          <a href="#try-eye-study">Try the eye study yourself</a>.
+        </figcaption>
       </figure>
     </div>
-    <figure class="rig-demo">
-      <img
-        src={art + 'walkthrough-rig.webp'}
-        width="1440"
-        height="812"
-        loading="lazy"
-        alt="An editing lesson with a cup in the preview, two clips on the timeline and Canon’s small drawn face beside the title instruction."
-      />
-      <figcaption>
-        In the 18-second editing lesson, Canon stays beside the captions as the viewer trims the
-        opening, adds a title and finishes the edit. <a
-          href="https://canon-expression-studio.pages.dev/walkthrough"
-          >Play the captioned walkthrough</a
-        >
-      </figcaption>
-    </figure>
+    <div id="try-eye-study" data-scroll-behavior="instant" class="eye-exercise">
+      <CanonEyeStudy footageSrc={art + 'pour-study-frame.webp'} />
+    </div>
+    <div class="live-workbench">
+      <div class="rig-bridge">
+        <div class="reading">
+          <h3>Direct the glance.</h3>
+          <p>
+            In the expression studio, hold “Look here” and watch where the pupils settle. It’s one
+            of 100 expressions. In the captioned walkthrough, you can direct a reaction to a line of
+            dialogue and choose how long Canon holds it.
+          </p>
+          <p>
+            The portrait here comes from the pencil rig. In the next version, all 100 expressions
+            share the felt eyes. The pupils and embroidery follow the same curve as the lids close,
+            so a wink can settle without a jump.
+          </p>
+          {#if ready}
+            <div class="engine-controls" role="group" aria-label="Animation engine views">
+              <button
+                type="button"
+                aria-pressed={activeView === 'studio'}
+                aria-controls="engine-stage"
+                onclick={(event) => openView('studio', event)}>Try the expression studio</button
+              >
+              <button
+                type="button"
+                aria-pressed={activeView === 'walkthrough'}
+                aria-controls="engine-stage"
+                onclick={(event) => openView('walkthrough', event)}>Try the walkthrough</button
+              >
+            </div>
+          {/if}
+          <p class="engine-links">
+            Open separately <a href={studioUrl}>Expression studio</a> ·
+            <a href={walkthroughUrl}>18-second walkthrough</a>
+          </p>
+        </div>
+        <figure>
+          <img
+            src={art + 'rig-look.webp'}
+            width="460"
+            height="253"
+            loading="lazy"
+            alt="Both pupils look to the left in the pencilled portrait of Canon."
+          />
+          <figcaption>“Look here”, held in the pencil rig.</figcaption>
+        </figure>
+      </div>
+      <div
+        id="engine-stage"
+        bind:this={engineStage}
+        tabindex="-1"
+        class:engine-open={activeView !== null}
+      >
+        {#if activeView}
+          <div class="engine-toolbar">
+            <span>{activeView === 'studio' ? 'Expression studio' : 'Captioned walkthrough'}</span>
+            <button class="close-engine" type="button" onclick={closeView}>Close live view</button>
+          </div>
+          {#key activeView}
+            <iframe
+              src={activeView === 'studio' ? studioUrl : walkthroughUrl}
+              title={activeView === 'studio'
+                ? 'Live Canon expression studio'
+                : 'Live Canon captioned editing walkthrough'}
+              allow="fullscreen"
+              referrerpolicy="no-referrer"
+            ></iframe>
+          {/key}
+        {/if}
+      </div>
+    </div>
   </section>
 
   <footer class="story-ending">
@@ -482,22 +608,149 @@
     max-width: 34rem;
     line-height: 1.75;
   }
-  .rig-intro a,
-  .rig-demo a {
+  .rig-chapter a {
     text-decoration: underline;
   }
   .rig-chapter a:focus-visible {
     outline: 2px solid #345a72;
     outline-offset: 3px;
   }
-  .rig-intro img,
-  .rig-demo img {
+  .eye-poses {
+    margin-top: 1rem;
     width: 100%;
     height: auto;
   }
-  .rig-demo {
-    max-width: 60rem;
+  .study-cover {
+    display: block;
+    position: relative;
+  }
+  .study-cover img {
+    display: block;
+    width: 100%;
+    height: auto;
+  }
+  .study-cover span {
+    position: absolute;
+    bottom: 0.65rem;
+    left: 0.65rem;
+    background: #252720;
+    color: #fff;
+    padding: 0.5rem 0.7rem;
+    font-size: 0.82rem;
+    line-height: 1.35;
+  }
+  .felt-study video[hidden] {
+    display: none;
+  }
+  .engine-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 0.4rem;
+    padding-inline: 0.4rem;
+  }
+  #engine-stage {
+    scroll-margin-top: 6rem;
+  }
+  #engine-stage:not(.engine-open) {
+    display: none;
+  }
+  .felt-study video {
+    display: block;
+    width: 100%;
+    height: auto;
+    background: #242522;
+  }
+  .rig-bridge {
+    max-width: 72rem;
+    margin: auto;
+    display: grid;
+    grid-template-columns: 1.05fr 1fr;
+    gap: clamp(2rem, 7vw, 7rem);
+    align-items: center;
+  }
+  .rig-bridge h3 {
+    font: 400 clamp(1.8rem, 3vw, 2.7rem)/1.15 var(--font-performance-serif, Georgia, serif);
+    margin: 0 0 1rem;
+  }
+  .rig-bridge img {
+    width: 100%;
+  }
+  .eye-exercise {
+    max-width: 72rem;
+    margin: 3rem auto;
+    scroll-margin-top: 6rem;
+  }
+  .live-workbench {
+    max-width: 72rem;
     margin: 3rem auto 0;
+    border-top: 1px solid #bcbdb3;
+    padding-top: 3rem;
+  }
+  .engine-links {
+    font-size: 0.85rem;
+    line-height: 1.6;
+  }
+  .engine-links a {
+    display: inline-block;
+    padding: 0.5rem 0.15rem;
+  }
+  .engine-controls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.6rem;
+    margin: 1.4rem 0 0.4rem;
+  }
+  .engine-controls button,
+  .close-engine {
+    min-height: 44px;
+    padding: 0.65rem 1rem;
+    background: transparent;
+    color: #171815;
+    border: 1px solid #71746a;
+    border-radius: 3px;
+    font: inherit;
+    font-size: 0.85rem;
+    cursor: pointer;
+  }
+  .engine-controls button[aria-pressed='true'] {
+    color: #fff;
+    background: #292d26;
+  }
+  .engine-controls button:focus-visible,
+  .close-engine:focus-visible {
+    outline: 2px solid #345a72;
+    outline-offset: 3px;
+  }
+  #engine-stage.engine-open {
+    margin-top: 1rem;
+  }
+  #engine-stage iframe {
+    display: block;
+    width: 100%;
+    height: clamp(470px, 75svh, 820px);
+    border: 1px solid #a4a69b;
+    background: #f8f6ef;
+  }
+  .close-engine {
+    margin-top: 0.5rem;
+  }
+  @media (max-width: 760px) {
+    .rig-bridge {
+      grid-template-columns: 1fr;
+      gap: 1.25rem;
+    }
+    .rig-bridge figure {
+      grid-row: 1;
+      max-width: 26rem;
+    }
+    #engine-stage.engine-open {
+      margin-inline: calc(-1 * clamp(1.25rem, 6vw, 6rem));
+    }
+    #engine-stage .close-engine {
+      margin-inline: 1.25rem;
+    }
   }
   .rig-chapter figcaption {
     font-size: 0.82rem;

@@ -54,3 +54,7 @@ The two sleeve details are matching 422 × 304 crops at (1096, 478) from `hero-w
 The October images are historical plates from Micah Johnson’s public posts. `october-hop-film.jpg` shows the pivot frame of the October 1 film (`https://lnkd.in/p/gcJJte39`). `october-slate-workshop.jpg` shows the setting from the October workshop post (`https://lnkd.in/p/ghJtuwbw`). Both captures are confined to the published media. The full original posts are linked from the article.
 
 The expression-rig chapter uses original rendered captures of the public Canon Expression Studio and its captioned walkthrough. The studio portrait shows the held “Look here” preset. The walkthrough frame shows the title cue at approximately 7.5 seconds. Both are WebP exports; the live controls and lesson are linked alongside.
+
+The felt-eye chapter shows the November stitched-eye study from engine review r67. The original five-second render supplies felt-eye-study.mp4. The glance from the recorded pose sheet supplies the film’s close-up poster. The Glance, Closing and Wink strip is a WebP export of the original three engine poses. These are review artifacts of the material revision. The interactive expression studio and editing lesson load separately from their published URLs.
+
+The eye exercise pairs gaze and wink poses from the subsequent stitched-felt catalog with the cup illustration captured from the public walkthrough preview. Its three-second sequence lets the reader choose a gaze direction and time the wink to the caption.
