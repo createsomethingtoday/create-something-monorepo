@@ -44,3 +44,11 @@ This is a requested correction under the existing production scope, not a new ch
 The user selected the recommended Prepared reply v3 concept with “Deploy” after the local comparison and disclosure of remaining cosmetic critique. `prepared-reply-v3.webp` is a 74,104-byte, 1670 × 941 format-only export of the owned built-in image_gen output. See `prepared-reply-provenance.json` for source/export hashes and final refinement prompt.
 
 The semantic HTML image uses a proportional right-aligned crop on smaller screens so the review gesture remains visible. The scene is labelled as an example and must not be described as actual software or customer evidence. Prior strict 9/10 art scores are not retroactively passed by selection. Existing original hero assets remain for rollback.
+
+## Character history article (CRE-2565)
+
+The November 13 material study is a historical concept sheet. The left, center and right figures were alternative designs. The finished character is shown separately. `november-material-studies.webp` is a format conversion of the original 1536 × 1024 studio sheet (`cook/stills/r01/directions.png` in the retained character design archive).
+
+The two sleeve details are matching 422 × 304 crops at (1096, 478) from `hero-wide-v1.webp` and `hero-wide-v2.webp`. The social card is a 1200 × 630 JPEG derived from the repaired wide illustration. The article uses these illustrations to describe design decisions.
+
+The October images are historical plates from Micah Johnson’s public posts. `october-hop-film.jpg` shows the pivot frame of the October 1 film (`https://lnkd.in/p/gcJJte39`). `october-slate-workshop.jpg` shows the setting from the October workshop post (`https://lnkd.in/p/ghJtuwbw`). Both captures are confined to the published media. The full original posts are linked from the article.
