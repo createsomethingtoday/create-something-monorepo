@@ -638,6 +638,17 @@ export interface VersionExceptionWebhookContext {
   versionNumber: number | null;
 }
 
+/** What the review-ticket CC needs to know about a version (CRE-2567). */
+export interface VersionTicketCcContext {
+  versionId: string;
+  assetId: string | null;
+  /** False for templates and libraries, which share the versions table. */
+  isApp: boolean;
+  zendeskTicketId: string | null;
+  /** The creator's Webflow account email(s); the 👀 Override wins when set. */
+  wfAccountEmails: string[];
+}
+
 export interface ExceptionItemWebhookContext {
   id: string;
   item: string | null;
@@ -2312,6 +2323,36 @@ export class AirtableClient {
       partnershipApp: toBooleanValue(firstString(fields[v.partnershipApp])) ?? Boolean(firstString(fields[v.partnershipApp])),
       zendeskTicketId: firstString(fields[v.zendeskTicketId]) ?? null,
       versionNumber: toNumberValue(fields[v.versionNumber]) ?? null,
+    };
+  }
+
+  /** Version → asset read for the review-ticket CC. Returns null when the version does not exist. */
+  async getVersionTicketCcContext(versionId: string): Promise<VersionTicketCcContext | null> {
+    const v = FIELD_IDS.versions;
+    const a = FIELD_IDS.assets;
+    const version = await this.getRecord(TABLE_IDS.assetVersions, versionId, [v.assetLink, v.zendeskTicketId]);
+    if (!version) return null;
+
+    const assetId = toStringArray(version.fields[v.assetLink])[0] ?? null;
+    const zendeskTicketId = firstString(version.fields[v.zendeskTicketId]) ?? null;
+    const asset = assetId
+      ? await this.getRecord(TABLE_IDS.assets, assetId, [
+          a.capabilities,
+          a.clientId,
+          a.visibility,
+          a.creatorWfAccountEmail,
+          a.creatorWfAccountEmailOverride,
+        ])
+      : null;
+    if (!asset) return { versionId: version.id, assetId, isApp: false, zendeskTicketId, wfAccountEmails: [] };
+
+    const override = firstString(asset.fields[a.creatorWfAccountEmailOverride]);
+    return {
+      versionId: version.id,
+      assetId,
+      isApp: isAppLikeAsset(asset.fields),
+      zendeskTicketId,
+      wfAccountEmails: override ? [override] : toStringArray(asset.fields[a.creatorWfAccountEmail]),
     };
   }
 

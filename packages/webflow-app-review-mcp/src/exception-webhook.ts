@@ -14,12 +14,15 @@
  *  - ⚖️Requested By / ⚖️Decision By stamping from the webhook payload's
  *    acting user (UI edits only — API-sourced payloads attribute the PAT
  *    owner, so they are never stamped);
- *  - auto-proposal of approved exceptions into the reviewer-exceptions base.
+ *  - auto-proposal of approved exceptions into the reviewer-exceptions base;
+ *  - the creator's Webflow account email as a CC on the review ticket, when
+ *    the Zap writes 🧘ZD ID to an app version (CRE-2567, ticket-account-cc.ts).
  *
  * Loop safety: the subscriptions watch ONLY ⚖️Exception Status, ⏸️Hold
- * Reason (versions) and ⚖️Status (items). This module's own writes touch
- * 🔔Exception Slack TS and the actor stamps — unwatched fields — so worker
- * writes never generate payloads.
+ * Reason, 🧘ZD ID (versions) and ⚖️Status (items). This module's own writes
+ * touch 🔔Exception Slack TS and the actor stamps — unwatched fields — so
+ * they never generate payloads. A 🧘ZD ID write from the MCP link tool does
+ * generate one; the CC step is idempotent, so that is safe.
  *
  * Runbook: docs/exception-transparency-loop.md
  */
@@ -32,6 +35,7 @@ import {
 import { renderHoldNoticeMarkdown, type HoldNoticeStore } from './hold-notices.js';
 import { FIELD_IDS, TABLE_IDS } from './schema.js';
 import { SlackClient } from './slack.js';
+import { ensureTicketAccountCc } from './ticket-account-cc.js';
 import { renderCreatorFacingHtml, type ZendeskClient } from './zendesk.js';
 
 // --- State -------------------------------------------------------------------
@@ -301,7 +305,11 @@ async function webhookApiRequest<T>(
 const WEBHOOK_SPECS: ReadonlyArray<{ tableId: string; watchDataInFieldIds: string[] }> = [
   {
     tableId: TABLE_IDS.assetVersions,
-    watchDataInFieldIds: [FIELD_IDS.versions.exceptionStatus, FIELD_IDS.versions.holdReason],
+    watchDataInFieldIds: [
+      FIELD_IDS.versions.exceptionStatus,
+      FIELD_IDS.versions.holdReason,
+      FIELD_IDS.versions.zendeskTicketId,
+    ],
   },
   {
     tableId: TABLE_IDS.exceptions,
@@ -438,6 +446,11 @@ export interface ExceptionWebhookProcessorDeps {
    */
   zendesk?: ZendeskClient | null;
   holdNotices?: HoldNoticeStore | null;
+  /**
+   * Review-ticket CC for the creator's Webflow account email (CRE-2567).
+   * Omit to leave tickets as the Zap created them.
+   */
+  ticketAccountCc?: { zendesk: ZendeskClient } | null;
   logger?: (message: string) => void;
 }
 
@@ -676,6 +689,15 @@ async function handlePayload(
           result,
           checkpoint,
           `${recordId}:${FIELD_IDS.versions.holdReason}`,
+        );
+      }
+      if (FIELD_IDS.versions.zendeskTicketId in cells && cells[FIELD_IDS.versions.zendeskTicketId]) {
+        await handleVersionTicketLinked(
+          deps,
+          recordId,
+          result,
+          checkpoint,
+          `${recordId}:${FIELD_IDS.versions.zendeskTicketId}`,
         );
       }
     } else if (tableId === TABLE_IDS.exceptions) {
@@ -952,6 +974,38 @@ async function handleVersionHold(
     `${stepPrefix}:hold-reply`,
   );
   result.actions.push(`hold ${versionId}`);
+}
+
+/** 🧘ZD ID was written: the review ticket exists, so it can take the account-email CC. */
+async function handleVersionTicketLinked(
+  deps: ExceptionWebhookProcessorDeps,
+  versionId: string,
+  result: ProcessResult,
+  checkpoint: PayloadStepCheckpoint,
+  stepPrefix: string,
+): Promise<void> {
+  if (!deps.ticketAccountCc) return; // not configured — tickets stay as the Zap created them
+  let outcome: Awaited<ReturnType<typeof ensureTicketAccountCc>>;
+  try {
+    outcome = await ensureTicketAccountCc(
+      { airtable: deps.airtable, zendesk: deps.ticketAccountCc.zendesk },
+      versionId,
+      (operation) => checkpoint.run(`${stepPrefix}:ticket-cc`, operation),
+    );
+  } catch (error) {
+    if (error instanceof WebhookLeaseLostError) throw error;
+    // Best effort: a failed CC must not make the payload retry or dead-letter, because the
+    // same payload can carry exception and hold changes. Log the error code only, no address.
+    const code = (error as { code?: unknown } | null)?.code;
+    result.errors.push(`ticket-cc ${versionId} failed: ${typeof code === 'string' ? code : 'UNKNOWN'}`);
+    return;
+  }
+  // Addresses stay out of the action log: it goes to worker logs and the process route.
+  result.actions.push(
+    outcome.status === 'added'
+      ? `ticket-cc ${versionId} ticket ${outcome.ticketId} added ${outcome.emails.length}`
+      : `ticket-cc ${versionId} skipped: ${outcome.reason}`,
+  );
 }
 
 async function sendDeveloperHoldNotice(
