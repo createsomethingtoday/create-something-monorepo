@@ -64,9 +64,11 @@ const MAX_URL = 2048;
 const MAX_DEPTH = 6;
 
 const RULE_LINE = /^\s*([-*_])\1{2,}\s*$/;
-const HEADING_LINE = /^\s{0,3}#{1,6}\s+(\S.*)$/;
-const ORDERED_LINE = /^(\s*)(\d{1,9})[.)]\s+(.*)$/;
-const BULLET_LINE = /^(\s*)[-*+\u2022]\s+(.*)$/;
+// These match only the mark at the start of a line; the text after it is read by position.
+// A pattern that also matched the rest of the line could backtrack through a long run of spaces.
+const HEADING_MARK = /^\s{0,3}#{1,6}\s+/;
+const ORDERED_MARK = /^(\s*)(\d{1,9})[.)]\s+/;
+const BULLET_MARK = /^(\s*)[-*+\u2022]\s+/;
 const CAPS_LABEL_LINE = /^[A-Z0-9 &/():,'-]+:?$/;
 
 /** A link target the page may open, or null. Only web and email addresses pass. */
@@ -160,6 +162,7 @@ function linkNode(target: { url: string; host: string }, children: Inline[]): In
 /** One line of text as tokens: finished nodes (text, code, links) and emphasis marks. */
 function tokenize(line: string, allowLinks: boolean, depth: number): Token[] {
 	const tokens: Token[] = [];
+	const openers = new Set<string>();
 	let text = '';
 	const flush = () => {
 		if (text) tokens.push({ kind: 'node', node: { type: 'text', text } });
@@ -237,11 +240,7 @@ function tokenize(line: string, allowLinks: boolean, depth: number): Token[] {
 			if ((char === 'h' || char === 'H') && !isAlnum(line[i - 1])) {
 				WEB_ADDRESS.lastIndex = i;
 				const match = WEB_ADDRESS.exec(line);
-				const address = match
-					? trimAddress(match[0], (mark, length) =>
-							tokens.some((t) => t.kind === 'delim' && t.canOpen && t.char === mark && t.length === length)
-						)
-					: '';
+				const address = match ? trimAddress(match[0], (mark, length) => openers.has(mark + length)) : '';
 				const target = address ? safeUrl(address) : null;
 				if (target) {
 					push(linkNode(target, [{ type: 'text', text: address }]));
@@ -288,6 +287,7 @@ function tokenize(line: string, allowLinks: boolean, depth: number): Token[] {
 			if (canOpen || canClose) {
 				flush();
 				tokens.push({ kind: 'delim', char, length: run, canOpen, canClose });
+				if (canOpen) openers.add(char + run);
 			} else {
 				text += char.repeat(run);
 			}
@@ -413,7 +413,8 @@ export function parseCommentBody(body: string): Block[] {
 		state.open = null;
 	};
 
-	for (const raw of String(body ?? '').replace(/\r\n?/g, '\n').split('\n')) {
+	// Every kind of line break is one line break, so no pattern meets one inside a line.
+	for (const raw of String(body ?? '').replace(/\r\n?|[\u2028\u2029]/g, '\n').split('\n')) {
 		const line = raw.trimEnd();
 		if (!line.trim()) {
 			endParagraph();
@@ -428,16 +429,16 @@ export function parseCommentBody(body: string): Block[] {
 		}
 
 		const indent = /^\s*/.exec(line)![0].replace(/\t/g, '    ').length;
-		const ordered = ORDERED_LINE.exec(line);
-		const bullet = ordered ? null : BULLET_LINE.exec(line);
-		if (ordered || bullet) {
+		const ordered = ORDERED_MARK.exec(line);
+		const mark = ordered ?? BULLET_MARK.exec(line);
+		if (mark) {
 			endParagraph();
 			const isOrdered = ordered !== null;
 			// A new marker type at the top level starts a new list. End the open one first:
 			// ending it reads and clears the stored lines, and the new item's lines must stay.
 			if (state.open && indent < state.open.indent + 2 && state.open.block.ordered !== isOrdered) endList();
 			const item: ListItem = { value: ordered ? Number(ordered[2]) : null, children: [], lists: [] };
-			itemLines.set(item, [ordered ? ordered[3] : bullet![2]]);
+			itemLines.set(item, [line.slice(mark[0].length)]);
 
 			const list = state.open;
 			if (list && indent >= list.indent + 2) {
@@ -466,10 +467,10 @@ export function parseCommentBody(body: string): Block[] {
 		}
 		endList();
 
-		const heading = HEADING_LINE.exec(line);
+		const heading = HEADING_MARK.exec(line);
 		if (heading) {
 			endParagraph();
-			blocks.push({ type: 'label', children: parseInline(heading[1]) });
+			blocks.push({ type: 'label', children: parseInline(line.slice(heading[0].length)) });
 			continue;
 		}
 		if (isCapsLabel(line.trim())) {

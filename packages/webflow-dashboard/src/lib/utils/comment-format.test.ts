@@ -254,6 +254,11 @@ describe('blocks', () => {
 		expect(inline('Line one\nLine two')).toEqual([text('Line one\nLine two')]);
 	});
 
+	it('reads every kind of line break as a line break', () => {
+		expect(shown(parseCommentBody('One\r\nTwo\rThree\u2028Four\u2029Five'))).toEqual(['One\nTwo\nThree\nFour\nFive']);
+		expect(parseCommentBody('1. One\u20282. Two').map((block) => block.type)).toEqual(['list']);
+	});
+
 	it('leaves syntax it does not support as typed', () => {
 		const body = '> a quote\n| a | table |\n<b>tag</b> <script>alert(1)</script>\n```\ncode fence\n```\n- [ ] checkbox';
 		const blocks = parseCommentBody(body);
@@ -283,6 +288,12 @@ describe('large and hostile bodies', () => {
 			'# a' + ' '.repeat(19000) + 'b',
 			'1. a' + ' '.repeat(19000) + 'b',
 			'a' + ' '.repeat(19000) + 'b ' + '#'.repeat(900),
+			'1. ' + ' '.repeat(19900) + 'x\u2028y',
+			'- ' + ' '.repeat(19900) + 'x\u2029y',
+			'# ' + ' '.repeat(19900) + 'x\u2028y',
+			' '.repeat(19900) + '1.\u2028x',
+			'*a https://a.example/' + '*_'.repeat(9000),
+			'[' + 'a.'.repeat(480) + '](https://a.example/) '.repeat(20),
 			'_a '.repeat(6600) + 'z_',
 			'` a '.repeat(5000),
 			'**a *b ~~c __d '.repeat(1300)
