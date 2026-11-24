@@ -212,6 +212,9 @@ export function buildMarketplaceSnapshot({ sellers, assets, categories, snapshot
     if (hasSupply) for (const subcategory of subcategories) rollup(subcategory).listedTemplates++;
     add90(templateId, subcategories);
   }
+  // A 90-day seller with no asset record cannot be placed in a subcategory, but it
+  // was listed when it sold, so it still counts in the marketplace-wide supply.
+  const unplaced90 = [...sold90.keys()].filter((key) => !usedTemplates.has(key) && !others.has(key)).length;
   const categoryRows = [...rollups.values()];
   const categoryRanks = ranks(categoryRows, 'totalRevenue30d');
   const snapshot = {
@@ -224,7 +227,7 @@ export function buildMarketplaceSnapshot({ sellers, assets, categories, snapshot
       ...(hasFulfillment && {
         fulfillmentSales: rows.reduce((sum, r) => sum + r.fulfillmentSales30d, 0)
       }),
-      ...(hasSupply && { listedTemplates: rows.length + others.size }),
+      ...(hasSupply && { listedTemplates: rows.length + others.size + unplaced90 }),
       ...(has90 && {
         totalSales90d: [...sold90.values()].reduce((sum, r) => sum + r.sales, 0),
         totalRevenue90d: round([...sold90.values()].reduce((sum, r) => sum + r.revenue, 0)),
@@ -272,6 +275,8 @@ export function validateMarketplaceSnapshot(snapshot) {
   const has90 = summary.totalSales90d !== undefined;
   if ((summary.sellingTemplates90d !== undefined) !== has90 || (summary.totalRevenue90d !== undefined) !== has90)
     reject('partial 90-day summary');
+  if (has90 && hasSupply && summary.listedTemplates < summary.sellingTemplates90d)
+    reject('listed templates below selling templates');
   if (has90) {
     number(summary.totalRevenue90d, '90-day revenue');
     if (

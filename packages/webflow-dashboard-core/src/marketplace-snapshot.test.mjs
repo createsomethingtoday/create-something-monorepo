@@ -283,6 +283,8 @@ test('90-day sellers add a longer window and leave the 30-day numbers unchanged'
     [snapshot.summary.totalSales90d, snapshot.summary.sellingTemplates90d, snapshot.summary.totalRevenue90d],
     [12, 3, 600]
   );
+  // Listed supply: a, e and f have asset records; the unplaced 90-day seller counts too.
+  assert.equal(snapshot.summary.listedTemplates, 4);
   assert.deepEqual(
     [row(snapshot, 'Agency').templatesWithSales90d, row(snapshot, 'Agency').totalSales90d, row(snapshot, 'Agency').totalRevenue90d],
     [2, 11, 550]
@@ -314,6 +316,10 @@ test('rejects wire snapshots with mixed or impossible supply and 90-day fields',
   assert.throws(() => snapshotFromFields(corrupt((s, c) => delete c[0].listedTemplates)), /mixed listed supply/);
   assert.throws(() => snapshotFromFields(corrupt((s, c) => (c[0].listedTemplates = 0))), /selling templates exceed listed/);
   assert.throws(() => snapshotFromFields(corrupt((s) => (s.listedTemplates = 0))), /listed templates below selling/);
+  assert.throws(
+    () => snapshotFromFields(corrupt((s) => (s.sellingTemplates90d = s.listedTemplates + 1))),
+    /listed templates below selling/
+  );
   assert.throws(() => snapshotFromFields(corrupt((s, c) => delete c[0].totalSales90d)), /mixed 90-day counts/);
   assert.throws(() => snapshotFromFields(corrupt((s, c) => (c[0].totalSales90d = 1))), /90-day sales below 30-day sales/);
   assert.throws(() => snapshotFromFields(corrupt((s) => delete s.sellingTemplates90d)), /partial 90-day summary/);

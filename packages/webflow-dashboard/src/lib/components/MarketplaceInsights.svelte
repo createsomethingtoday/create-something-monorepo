@@ -998,7 +998,8 @@
               <div class="category-metric">
                 <div class="metric-main">
                   <span class="metric-value">{@render cardMetricValue(category)}</span>
-                  {#if category.trend && category.changePercent !== undefined}
+                  <!-- The trend compares 30-day snapshots, so it shows with the 30-day numbers only. -->
+                  {#if activeWindow === '30d' && category.trend && category.changePercent !== undefined}
                     <!-- Trend indicator -->
                     <span class="trend-indicator trend-{category.trend}">
                       <span class="trend-glyph">
@@ -1008,7 +1009,7 @@
                         >{category.changePercent > 0 ? '+' : ''}{category.changePercent}%</span
                       >
                     </span>
-                  {:else}
+                  {:else if activeWindow === '30d'}
                     <span class="trend-unavailable">Trend unavailable</span>
                   {/if}
                 </div>
