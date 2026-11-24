@@ -90,7 +90,7 @@ function comment(overrides: Partial<ReviewComment>): ReviewComment {
 /** Records every call; `existing` seeds listVersion, `failWith` makes every call throw. */
 const counts = { written: 4, sent: 2, draft: 1, internal: 1, versions: 2, assets: 2, lastAt: '2026-11-11T09:30:00.000Z' };
 
-function fakeComments(options: { existing?: ReviewComment[]; failWith?: Error; nextCursor?: string; summary?: unknown } = {}) {
+function fakeComments(options: { existing?: ReviewComment[]; failWith?: Error; nextCursor?: string; summary?: unknown; events?: unknown[] } = {}) {
   const calls: Array<[string, ...unknown[]]> = [];
   const record = <T>(name: string, args: unknown[], value: T): Promise<T> => {
     calls.push([name, ...args]);
@@ -115,6 +115,7 @@ function fakeComments(options: { existing?: ReviewComment[]; failWith?: Error; n
     remove: (...args: unknown[]) => record('remove', args, { deleted: args[0] }),
     release: (...args: unknown[]) => record('release', args, { released: 2 }),
     resolve: (...args: unknown[]) => record('resolve', args, comment({ resolution: args[2] as 'resolved' })),
+    listEvents: (...args: unknown[]) => record('listEvents', args, options.events ?? []),
     getSummary: (...args: unknown[]) => record('getSummary', args, options.summary ?? null),
   } as unknown as ReviewCommentsClient;
   return { client, calls };
@@ -782,6 +783,46 @@ test('list_comments returns the decision summary, and survives a failed summary 
   assert.equal(failed.data.decision_summary, null);
   assert.match(failed.data.decision_summary_error, /did not respond/);
   assert.equal(failed.data.comments.length, 1);
+});
+
+test('list_comments returns what the creator was told about the review, and survives a failed events read', async () => {
+  const started = { id: 'e1', versionRef: VERSION_ID, assetRef: ASSET_ID, kind: 'review_started', occurredAt: '2026-11-24T20:00:00.000Z', email: 'sent', emailSentAt: '2026-11-24T20:00:00.000Z' };
+  const ok = fakeComments({ events: [started] });
+  const first = harness();
+  registerTools(first.server, () => fakeAirtable().client, () => reviewer, { getReviewCommentsClient: () => ok.client });
+  const result = payload(await first.handlers.get('template_review_list_comments')?.({ version_id: VERSION_ID }));
+  assert.deepEqual(result.data.events, [started]);
+  assert.equal(result.data.events_error, undefined);
+  assert.ok(ok.calls.some((call) => call[0] === 'listEvents' && call[1] === VERSION_ID && call[2] === 'Reviewer@Example.com'));
+
+  const broken = {
+    listVersion: async () => [comment({})],
+    getSummary: async () => null,
+    listEvents: async () => {
+      throw new ReviewCommentsClientError('REVIEW_COMMENTS_UNREACHABLE', 'Review comments service did not respond: down', 503);
+    },
+  } as unknown as ReviewCommentsClient;
+  const failing = harness();
+  registerTools(failing.server, () => fakeAirtable().client, () => reviewer, { getReviewCommentsClient: () => broken });
+  const failed = payload(await failing.handlers.get('template_review_list_comments')?.({ version_id: VERSION_ID }));
+  assert.equal(failed.ok, true);
+  assert.deepEqual(failed.data.events, []);
+  assert.match(failed.data.events_error, /did not respond/);
+  assert.equal(failed.data.comments.length, 1);
+});
+
+test('the client reads the events of a version with GET', async () => {
+  const seen: Array<{ url: string; method?: string }> = [];
+  const client = new ReviewCommentsClient({
+    baseUrl: 'https://comments.test',
+    apiKey: 'k',
+    fetch: (async (url: string, init?: RequestInit) => {
+      seen.push({ url, method: init?.method });
+      return new Response(JSON.stringify({ success: true, data: [] }), { status: 200 });
+    }) as unknown as typeof fetch,
+  });
+  assert.deepEqual(await client.listEvents('v1', 'a@example.com'), []);
+  assert.deepEqual(seen, [{ url: 'https://comments.test/v1/versions/v1/events', method: 'GET' }]);
 });
 
 test('the client sends summary on release and reads and sets it with GET and PUT', async () => {

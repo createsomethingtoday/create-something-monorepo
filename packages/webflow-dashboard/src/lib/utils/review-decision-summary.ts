@@ -1,4 +1,4 @@
-import type { DecisionSummary, ReviewComment } from '$lib/server/review-comments';
+import type { DecisionSummary, ReviewComment, ReviewEvent } from '$lib/server/review-comments';
 import { isSilencedReviewStatus } from './review-status';
 
 export interface TextSegment {
@@ -45,8 +45,9 @@ export function splitLinks(text: string, links: Array<{ phrase: string; url: str
 export function visibleThread(
 	rounds: Array<{ id: string; rawStatus: string }>,
 	comments: ReviewComment[],
-	summaries: DecisionSummary[]
-): { comments: ReviewComment[]; summaries: DecisionSummary[] } {
+	summaries: DecisionSummary[],
+	events: ReviewEvent[] = []
+): { comments: ReviewComment[]; summaries: DecisionSummary[]; events: ReviewEvent[] } {
 	const silent = new Set(
 		rounds.filter((round) => isSilencedReviewStatus(round.rawStatus)).map((round) => round.id)
 	);
@@ -59,6 +60,13 @@ export function visibleThread(
 				known.has(summary.versionRef) &&
 				!silent.has(summary.versionRef) &&
 				summaries.findIndex((other) => other.versionRef === summary.versionRef) === index
+		),
+		// One event of each kind per round, and only for rounds of this asset.
+		events: events.filter(
+			(event, index) =>
+				known.has(event.versionRef) &&
+				!silent.has(event.versionRef) &&
+				events.findIndex((other) => other.versionRef === event.versionRef && other.kind === event.kind) === index
 		)
 	};
 }
