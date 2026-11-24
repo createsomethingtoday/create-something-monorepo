@@ -74,6 +74,11 @@
 		);
 	}
 
+	// The creator-facing label of a round the review team has not decided yet.
+	// The "working on this version" note shows only then: a round that was
+	// approved with no comments keeps its start date, not the in-progress note.
+	const IN_REVIEW = 'In Review';
+
 	const STATUS_TONES: Record<string, string> = {
 		'Changes Requested': 'attention',
 		Rejected: 'negative',
@@ -226,7 +231,7 @@
 
 					{#if group.comments.length === 0 && index === 0}
 						<p class="thread-note">
-							{#if group.startedAt}
+							{#if group.startedAt && group.round.status === IN_REVIEW}
 								The review team is working on this version. No action required at the moment. When
 								the feedback is ready, we will email you and show it here.
 							{:else}
