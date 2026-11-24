@@ -61,7 +61,7 @@ const MAX_URL = 2048;
 const MAX_DEPTH = 6;
 
 const RULE_LINE = /^\s*([-*_])\1{2,}\s*$/;
-const HEADING_LINE = /^\s{0,3}#{1,6}\s+(.*?)\s*#*\s*$/;
+const HEADING_LINE = /^\s{0,3}#{1,6}\s+(\S.*)$/;
 const ORDERED_LINE = /^(\s*)(\d{1,9})[.)]\s+(.*)$/;
 const BULLET_LINE = /^(\s*)[-*+\u2022]\s+(.*)$/;
 const CAPS_LABEL_LINE = /^[A-Z0-9 &/():,'-]+:?$/;
@@ -119,13 +119,22 @@ function closingBracket(text: string, open: number, openChar: string, closeChar:
 
 /** Sentence punctuation and an unpaired closing bracket at the end of a bare address are not part of it. */
 function trimAddress(address: string): string {
-	let out = address;
-	for (;;) {
-		const last = out[out.length - 1];
-		if (".,;:!?*~_'".includes(last)) out = out.slice(0, -1);
-		else if (last === ')' && out.split(')').length > out.split('(').length) out = out.slice(0, -1);
-		else return out;
+	let opened = 0;
+	let closed = 0;
+	for (const char of address) {
+		if (char === '(') opened++;
+		else if (char === ')') closed++;
 	}
+	let end = address.length;
+	while (end > 0) {
+		const last = address[end - 1];
+		if (".,;:!?*~_'".includes(last)) end--;
+		else if (last === ')' && closed > opened) {
+			end--;
+			closed--;
+		} else break;
+	}
+	return address.slice(0, end);
 }
 
 function linkNode(target: { url: string; host: string }, children: Inline[]): Inline {
@@ -438,7 +447,7 @@ export function parseCommentBody(body: string): Block[] {
 		endList();
 
 		const heading = HEADING_LINE.exec(line);
-		if (heading && heading[1]) {
+		if (heading) {
 			endParagraph();
 			blocks.push({ type: 'label', children: parseInline(heading[1]) });
 			continue;

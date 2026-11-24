@@ -220,14 +220,22 @@ describe('large and hostile bodies', () => {
 			'`'.repeat(20000),
 			'a@'.repeat(10000),
 			'[a](https://example.com/'.repeat(800),
-			'1. item\n'.repeat(2500)
+			'1. item\n'.repeat(2500),
+			'https://a.example/' + ')'.repeat(19000),
+			'https://a.example/' + '.'.repeat(19000),
+			'# a' + ' '.repeat(19000) + 'b',
+			'1. a' + ' '.repeat(19000) + 'b',
+			'a' + ' '.repeat(19000) + 'b ' + '#'.repeat(900),
+			'_a '.repeat(6600) + 'z_',
+			'` a '.repeat(5000),
+			'**a *b ~~c __d '.repeat(1300)
 		];
 		const started = performance.now();
 		for (const body of bodies) {
 			const blocks = parseCommentBody(body);
 			expect(blocks.length).toBeGreaterThan(0);
 		}
-		expect(performance.now() - started).toBeLessThan(2000);
+		expect(performance.now() - started).toBeLessThan(1000);
 	});
 });
 
