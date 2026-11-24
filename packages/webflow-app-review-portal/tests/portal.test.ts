@@ -455,6 +455,45 @@ test('review-service feedback and developer replies render without a Zendesk tic
   );
   assert.match(unavailable, /Service unavailable/);
 });
+test('review comments show their formatting and never become markup', () => {
+  const html = renderToStaticMarkup(
+    React.createElement(ReviewConversation, {
+      thread: {
+        thread: null,
+        review_comments: [
+          {
+            id: 'review',
+            body: 'BLOCKING\n1. **Fix** the install URL ([screenshot](https://www.loom.com/i/abc123))\n2. ~~Add scopes~~',
+            authorEmail: 'reviewer@example.test',
+            authorRole: 'reviewer'
+          },
+          {
+            id: 'reply',
+            body: '<img src=x onerror=alert(1)> [x](javascript:alert(1)) https://example.test/fixed.',
+            authorEmail: 'developer@example.test',
+            authorRole: 'creator'
+          }
+        ]
+      }
+    })
+  );
+  assert.match(html, /<p class="portal-comment-text portal-comment-label">BLOCKING<\/p>/);
+  assert.match(html, /<ol><li value="1"><span class="portal-comment-text"><strong>Fix<\/strong> the install URL \(/);
+  assert.match(
+    html,
+    /<a href="https:\/\/www\.loom\.com\/i\/abc123" title="www\.loom\.com" target="_blank" rel="noopener noreferrer nofollow">screenshot<\/a>/
+  );
+  assert.match(html, /<s>Add scopes<\/s>/);
+  assert.match(html, /&lt;img src=x onerror=alert\(1\)&gt; \[x\]\(javascript:alert\(1\)\) <a href="https:\/\/example\.test\/fixed"/);
+  assert.doesNotMatch(html, /<img|href="javascript/);
+});
+test('the comment formatter is the same file as the Asset Dashboard copy', () => {
+  const read = (path: string) => readFileSync(new URL(path, import.meta.url), 'utf8');
+  assert.equal(
+    read('../lib/comment-format.ts'),
+    read('../../webflow-dashboard/src/lib/utils/comment-format.ts')
+  );
+});
 test('confirmation shows all draft text and delivery recovery remains visible', () => {
   const html = renderToStaticMarkup(
     React.createElement(PendingFeedback, {
