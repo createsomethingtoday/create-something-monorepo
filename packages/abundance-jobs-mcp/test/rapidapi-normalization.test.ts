@@ -174,6 +174,7 @@ test('ChatGPT public tool list excludes write-capable funnel action', () => {
     'list_public_jobs',
     'search_public_jobs',
     'get_job',
+    'summarize_job_markets',
   ]);
   assert.equal(listAbundanceJobToolNames().includes('send_job_to_funnel'), true);
 });

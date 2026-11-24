@@ -1,7 +1,9 @@
+import { US_STATE_CODES } from './us-states.js';
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 import { jsonContent } from '@create-something/mcp-core';
 import { z } from 'zod';
+import { parseJobsQuery, queryJobsBrowser } from './job-markets.js';
 
 export const SERVER_NAME = 'abundance-jobs-mcp';
 export const SERVER_VERSION = '1.0.0';
@@ -17,64 +19,10 @@ export const EXPIRED_ENDPOINT = '/active-ats-expired';
 
 const ACTIVE_ENDPOINTS = ['/active-ats-7d', '/modified-ats-24h'] as const;
 const DEFAULT_REFRESH_ENDPOINTS = ['/modified-ats-24h'] as const satisfies readonly RapidApiActiveJobsEndpoint[];
-const READ_ONLY_TOOL_NAMES = ['search', 'fetch', 'list_public_jobs', 'search_public_jobs', 'get_job'] as const;
+const READ_ONLY_TOOL_NAMES = ['search', 'fetch', 'list_public_jobs', 'search_public_jobs', 'get_job', 'summarize_job_markets'] as const;
 const FUNNEL_TOOL_NAME = 'send_job_to_funnel' as const;
 const TOOL_NAMES = [...READ_ONLY_TOOL_NAMES, FUNNEL_TOOL_NAME] as const;
 const NORMALIZED_STATUSES = ['open', 'closed', 'expired', 'unknown'] as const;
-const US_STATE_CODES = [
-  ['district of columbia', 'DC'],
-  ['washington dc', 'DC'],
-  ['alabama', 'AL'],
-  ['alaska', 'AK'],
-  ['arizona', 'AZ'],
-  ['arkansas', 'AR'],
-  ['california', 'CA'],
-  ['colorado', 'CO'],
-  ['connecticut', 'CT'],
-  ['delaware', 'DE'],
-  ['florida', 'FL'],
-  ['georgia', 'GA'],
-  ['hawaii', 'HI'],
-  ['idaho', 'ID'],
-  ['illinois', 'IL'],
-  ['indiana', 'IN'],
-  ['iowa', 'IA'],
-  ['kansas', 'KS'],
-  ['kentucky', 'KY'],
-  ['louisiana', 'LA'],
-  ['maine', 'ME'],
-  ['maryland', 'MD'],
-  ['massachusetts', 'MA'],
-  ['michigan', 'MI'],
-  ['minnesota', 'MN'],
-  ['mississippi', 'MS'],
-  ['missouri', 'MO'],
-  ['montana', 'MT'],
-  ['nebraska', 'NE'],
-  ['nevada', 'NV'],
-  ['new hampshire', 'NH'],
-  ['new jersey', 'NJ'],
-  ['new mexico', 'NM'],
-  ['new york', 'NY'],
-  ['north carolina', 'NC'],
-  ['north dakota', 'ND'],
-  ['ohio', 'OH'],
-  ['oklahoma', 'OK'],
-  ['oregon', 'OR'],
-  ['pennsylvania', 'PA'],
-  ['rhode island', 'RI'],
-  ['south carolina', 'SC'],
-  ['south dakota', 'SD'],
-  ['tennessee', 'TN'],
-  ['texas', 'TX'],
-  ['utah', 'UT'],
-  ['vermont', 'VT'],
-  ['virginia', 'VA'],
-  ['washington', 'WA'],
-  ['west virginia', 'WV'],
-  ['wisconsin', 'WI'],
-  ['wyoming', 'WY'],
-] as const;
 const METRO_LOCATION_FALLBACKS = [
   {
     id: 'dfw',
@@ -492,6 +440,22 @@ export function registerAbundanceJobsTools(
     getJobSchema,
     readOnlyAnnotations,
     async (input) => executeDb(options.getDb(), (db) => getPublicJob(db, normalizeInput(input))),
+  );
+
+  server.tool(
+    'summarize_job_markets',
+    'Count stored job listings by state for the NPG Jobs map. Includes the latest observation date. Counts describe the stored inventory and may include old listings.',
+    {
+      q: z.string().trim().max(120).optional().describe('Title, employer, city, or specialty text.'),
+      specialty: z.string().trim().max(120).optional(),
+      status: z.enum(['open', 'closed', 'expired', 'unknown', 'all']).default('open'),
+    },
+    readOnlyAnnotations,
+    async ({ q, specialty, status }) => executeDb(options.getDb(), async (db) => {
+      const query = parseJobsQuery(new URLSearchParams({ q: q ?? '', specialty: specialty ?? '', status, limit: '1' }));
+      const { total, states, freshness } = await queryJobsBrowser(db, query);
+      return jsonContent({ total, states, freshness });
+    }),
   );
 
   if (toolOptions.includeFunnelTool !== false) {
