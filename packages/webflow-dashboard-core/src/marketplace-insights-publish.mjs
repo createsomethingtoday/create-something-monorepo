@@ -34,6 +34,8 @@ const F = {
   assetCategories: 'fldBv3YTf6Bd5HDXN',
   assetType: 'fldmfcD7pebc82EuN',
   assetCreator: 'fldGDWo2VfnTbSUiL',
+  // 🚀Marketplace Status. An asset is listed when its status names "Published".
+  assetStatus: 'fld51CeQNGDgW9b0D',
   creatorEmail: 'fld5AtQoz6Af7jdos'
 };
 const TEMPLATE_ASSET_TYPE = 'recA2YsPEHSuAHOLD';
@@ -159,16 +161,22 @@ export async function readSellersFromAirtable(rest, windowEnd) {
  * Builds the complete snapshot for `sellers` from Airtable taxonomy and assets.
  * Returns the snapshot plus the source-data substitutions it had to make.
  */
-export async function buildSnapshotFromAirtable(rest, { sellers, snapshotAt }) {
+export async function buildSnapshotFromAirtable(rest, { sellers, snapshotAt, sellers90 }) {
   const categoryRecords = await rest.listAll(CATEGORIES_TABLE, [F.categoryName, F.categoryGroups]);
   const assetRecords = await rest.listAll(ASSETS_TABLE, [
     F.assetMrpId,
     F.assetCreatorEmail,
     F.assetCategories,
     F.assetType,
-    F.assetCreator
+    F.assetCreator,
+    F.assetStatus
   ]);
   const publishedAssets = assetRecords.filter((r) => values(r.fields[F.assetType]).includes(TEMPLATE_ASSET_TYPE));
+  // Listed supply needs the status field. When no record carries it (the field
+  // was renamed or the key cannot read it), the snapshot has no supply at all,
+  // which is honest; counting every asset as unlisted would not be.
+  const hasStatus = publishedAssets.some((r) => r.fields[F.assetStatus] !== undefined);
+  const isListed = (r) => /published/i.test(values(r.fields[F.assetStatus])[0] ?? '');
 
   // Taxonomy tolerance. The category table is edited by hand; three shapes
   // appear in practice and none should stop the weekly snapshot:
@@ -230,7 +238,7 @@ export async function buildSnapshotFromAirtable(rest, { sellers, snapshotAt }) {
   const assetEmails = new Map();
   for (const r of publishedAssets) assetEmails.set(r.id, await creatorEmailFor(r));
 
-  const snapshot = buildMarketplaceSnapshot({
+  const input = {
     snapshotAt,
     sellers,
     categories: [...taxonomy].map(([name, group]) => ({ name, group })),
@@ -239,12 +247,25 @@ export async function buildSnapshotFromAirtable(rest, { sellers, snapshotAt }) {
         value.split(',').map((templateId) => ({
           templateId: templateId.trim(),
           creatorEmail: assetEmails.get(r.id),
-          categories: values(r.fields[F.assetCategories])
+          categories: values(r.fields[F.assetCategories]),
+          ...(hasStatus && { listed: isListed(r) })
         }))
       )
     )
-  });
-  return { snapshot, taxonomyNotes, creatorEmailNotes };
+  };
+  // The 90-day window is an extra. A source that fails its checks is left out
+  // and named in the receipt; it never stops the weekly 30-day snapshot.
+  const windowNotes = [];
+  let snapshot;
+  if (sellers90) {
+    try {
+      snapshot = buildMarketplaceSnapshot({ ...input, sellers90 });
+    } catch (error) {
+      windowNotes.push({ kind: '90-day-source-left-out', reason: String(error?.message ?? error) });
+    }
+  }
+  snapshot ??= buildMarketplaceSnapshot(input);
+  return { snapshot, taxonomyNotes, creatorEmailNotes, windowNotes };
 }
 
 /** Upserts one snapshot record (KEY = window end) and verifies the readback. */

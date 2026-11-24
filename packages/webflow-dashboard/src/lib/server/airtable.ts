@@ -2784,6 +2784,12 @@ export function getAirtableClient(env: AirtableEnv | undefined) {
 				totalRevenue30d: number;
 				avgRevenuePerTemplate: number;
 				revenueRank: number;
+				fulfillmentSales30d?: number;
+				listedTemplates?: number;
+				templatesWithSales90d?: number;
+				totalSales90d?: number;
+				totalRevenue90d?: number;
+				fulfillmentSales90d?: number;
 			}>;
 			freshness: MarketplaceFreshnessMetadata;
       marketplaceSummary?: MarketplaceSnapshot['summary'];

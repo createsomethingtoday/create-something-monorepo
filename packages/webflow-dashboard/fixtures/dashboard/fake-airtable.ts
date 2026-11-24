@@ -12,6 +12,7 @@ import type {
 	Creator
 } from '../../src/lib/server/airtable';
 import { FIXTURE_ASSETS, FIXTURE_CREATOR, FIXTURE_VERSIONS } from './data';
+import { fixtureCategoryPerformance, fixtureLeaderboard } from './insights';
 
 const assets: Asset[] = structuredClone(FIXTURE_ASSETS);
 
@@ -67,10 +68,10 @@ const client = {
 		return { success: true };
 	},
 	async getLeaderboard() {
-		return { records: [], freshness: { timestamp: null, source: 'none' as const } };
+		return fixtureLeaderboard();
 	},
 	async getCategoryPerformance() {
-		return { records: [], freshness: { timestamp: null, source: 'none' as const } };
+		return fixtureCategoryPerformance();
 	}
 };
 

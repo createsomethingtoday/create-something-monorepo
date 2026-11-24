@@ -5,18 +5,34 @@
   import { Badge } from './ui';
   import Sparkline from './Sparkline.svelte';
   import KineticNumber from './KineticNumber.svelte';
-  import { HelpCircle } from 'lucide-svelte';
+  import { HelpCircle, Info } from 'lucide-svelte';
   import { trackEvent } from '$lib/utils/analytics';
   import {
     filterMarketplaceCategories,
     getCompetitionClass,
     getExpandedUserCategorySet,
-    getCompetitionIndicator,
+    getCategoryCompetition,
     getUserCategorySet,
     isCompetitionFilter,
     type CompetitionFilter,
     type UserCategoryFilter
   } from '$lib/utils/marketplace-insights-filters';
+  import {
+    ESTIMATE_SHARE,
+    THIN_SELLERS,
+    assumedRevenueShare,
+    formatShare,
+    formatWholeShare,
+    hasNinetyDays,
+    hasSupply,
+    isThin,
+    revenuePerSeller,
+    segmentRevenue,
+    segmentSales,
+    sellThrough,
+    sellingTemplates,
+    type SegmentWindow
+  } from '$lib/utils/marketplace-segments';
   import type {
     CategoryEntry,
     Insight,
@@ -38,7 +54,9 @@
 
   type CategorySortKey =
     | 'revenueRank'
+    | 'listedTemplates'
     | 'templatesInSubcategory'
+    | 'sellThrough'
     | 'totalSales30d'
     | 'avgRevenuePerTemplate'
     | 'category'
@@ -49,6 +67,7 @@
     sortKey: CategorySortKey;
     sortDirection: 'asc' | 'desc';
     viewMode: 'table' | 'grid';
+    segmentWindow?: SegmentWindow;
     searchQuery: string;
     categoryFilter: string;
     competitionFilter: CompetitionFilter;
@@ -58,7 +77,9 @@
   const CATEGORY_PREFERENCES_STORAGE_KEY = 'webflow-dashboard.marketplace-insights.preferences.v1';
   const validSortKeys: CategorySortKey[] = [
     'revenueRank',
+    'listedTemplates',
     'templatesInSubcategory',
+    'sellThrough',
     'totalSales30d',
     'avgRevenuePerTemplate',
     'category',
@@ -89,6 +110,59 @@
   let competitionFilter = $state<CompetitionFilter>('all');
   let userCategoryFilter = $state<UserCategoryFilter>('all');
   let tableViewport = $state<'unknown' | 'mobile' | 'desktop'>('unknown');
+  // Listed supply and the 90-day window are optional in the snapshot. The
+  // columns and the window switch show only when the data is there.
+  let segmentWindow = $state<SegmentWindow>('30d');
+  const supplyAvailable = $derived(hasSupply(categories));
+  const ninetyAvailable = $derived(hasNinetyDays(categories));
+  const activeWindow = $derived<SegmentWindow>(ninetyAvailable ? segmentWindow : '30d');
+  const windowDays = $derived(activeWindow === '90d' ? 90 : 30);
+  // The snapshot ranks rows by 30-day revenue. The 90-day view ranks by its own revenue.
+  const windowRanks = $derived.by(() => {
+    const ranks = new Map<CategoryEntry, number>();
+    if (activeWindow === '30d') return ranks;
+    const sorted = [...categories].sort(
+      (a, b) => segmentRevenue(b, '90d') - segmentRevenue(a, '90d')
+    );
+    sorted.forEach((entry, index) => {
+      const previous = sorted[index - 1];
+      ranks.set(
+        entry,
+        previous && segmentRevenue(previous, '90d') === segmentRevenue(entry, '90d')
+          ? (ranks.get(previous) ?? index + 1)
+          : index + 1
+      );
+    });
+    return ranks;
+  });
+  const getRank = (entry: CategoryEntry) => windowRanks.get(entry) ?? entry.revenueRank;
+  const marketSellThrough = $derived.by(() => {
+    const listed = summary.segments?.listedTemplates;
+    const selling = summary.segments?.sellingTemplates;
+    return listed && typeof selling === 'number' ? selling / listed : null;
+  });
+
+  function setSegmentWindow(next: SegmentWindow) {
+    if (next === segmentWindow) return;
+    trackEvent('marketplace_segment_window_changed', { segment_window: next });
+    segmentWindow = next;
+  }
+
+  /** Share of assumed revenue when it is large enough that the row's revenue reads as an estimate. */
+  function getEstimateShare(entry: CategoryEntry): number | null {
+    const share = assumedRevenueShare(entry, activeWindow);
+    return share !== null && share >= ESTIMATE_SHARE ? share : null;
+  }
+
+  /** Some templates sold, but too few for the rate to be steady. */
+  function isThinRow(entry: CategoryEntry): boolean {
+    return sellingTemplates(entry, activeWindow) > 0 && isThin(entry, activeWindow);
+  }
+
+  function getEstimateTitle(share: number): string {
+    return `${formatWholeShare(share)} of these sales went through fulfillment links. The buyer paid the creator off-platform, so this revenue is assumed at list price.`;
+  }
+
   const ownedUserCategorySet = $derived.by(() => {
     const categoryEntries =
       userCategories.length > 0 ? userCategories.map((category) => ({ category })) : userTemplates;
@@ -101,21 +175,53 @@
   const shouldRenderMobileTable = $derived(tableViewport !== 'desktop');
   const shouldRenderDesktopTable = $derived(tableViewport !== 'mobile');
 
-  const gridSortOptions: Array<{ key: CategorySortKey; label: string }> = [
+  const gridSortOptions = $derived<Array<{ key: CategorySortKey; label: string }>>([
     { key: 'revenueRank', label: 'Rank' },
     { key: 'avgRevenuePerTemplate', label: 'Avg Revenue' },
-    { key: 'totalSales30d', label: 'Sales (30d)' },
-    { key: 'templatesInSubcategory', label: 'Active Templates' },
+    { key: 'totalSales30d', label: `Sales (${windowDays}d)` },
+    ...(supplyAvailable
+      ? ([
+          { key: 'sellThrough', label: 'Sell-through' },
+          { key: 'listedTemplates', label: 'Listed Templates' }
+        ] as const)
+      : []),
+    { key: 'templatesInSubcategory', label: 'Selling Templates' },
     { key: 'competition', label: 'Competition' },
     { key: 'category', label: 'Category' },
     { key: 'subcategory', label: 'Subcategory' }
-  ];
+  ]);
   const tableSortableKeys: CategorySortKey[] = [
     'revenueRank',
+    'listedTemplates',
     'templatesInSubcategory',
+    'sellThrough',
     'totalSales30d',
     'avgRevenuePerTemplate'
   ];
+
+  /** Sort value of a row for the active window. Missing supply sorts last in both directions. */
+  function getSortValue(entry: CategoryEntry, key: CategorySortKey): number | string {
+    switch (key) {
+      case 'revenueRank':
+        return getRank(entry);
+      case 'listedTemplates':
+        return entry.listedTemplates ?? -1;
+      case 'templatesInSubcategory':
+        return sellingTemplates(entry, activeWindow);
+      case 'sellThrough':
+        return sellThrough(entry, activeWindow) ?? -1;
+      case 'totalSales30d':
+        return segmentSales(entry, activeWindow);
+      case 'avgRevenuePerTemplate':
+        return revenuePerSeller(entry, activeWindow);
+      case 'category':
+        return entry.category;
+      case 'subcategory':
+        return entry.subcategory;
+      default:
+        return 0;
+    }
+  }
   let preferencesLoaded = $state(false);
 
   const availableCategoryFilters = $derived.by(() => {
@@ -145,15 +251,13 @@
           High: 2,
           'Very High': 3
         };
-        const aCompetition =
-          competitionOrder[getCompetitionIndicator(a.templatesInSubcategory).level] ?? 99;
-        const bCompetition =
-          competitionOrder[getCompetitionIndicator(b.templatesInSubcategory).level] ?? 99;
+        const aCompetition = competitionOrder[getCategoryCompetition(a).level] ?? 99;
+        const bCompetition = competitionOrder[getCategoryCompetition(b).level] ?? 99;
         return (aCompetition - bCompetition) * multiplier;
       }
 
-      const aVal = a[currentSortKey];
-      const bVal = b[currentSortKey];
+      const aVal = getSortValue(a, currentSortKey);
+      const bVal = getSortValue(b, currentSortKey);
 
       if (typeof aVal === 'string' && typeof bVal === 'string') {
         return aVal.localeCompare(bVal) * multiplier;
@@ -230,6 +334,8 @@
         if (parsed.sortDirection === 'asc' || parsed.sortDirection === 'desc')
           sortDirection = parsed.sortDirection;
         if (parsed.viewMode === 'table' || parsed.viewMode === 'grid') viewMode = parsed.viewMode;
+        if (parsed.segmentWindow === '30d' || parsed.segmentWindow === '90d')
+          segmentWindow = parsed.segmentWindow;
         if (typeof parsed.searchQuery === 'string') searchQuery = parsed.searchQuery;
         if (typeof parsed.categoryFilter === 'string') categoryFilter = parsed.categoryFilter;
         if (isCompetitionFilter(parsed.competitionFilter)) {
@@ -258,6 +364,7 @@
       sortKey,
       sortDirection,
       viewMode,
+      segmentWindow,
       searchQuery,
       categoryFilter,
       competitionFilter,
@@ -342,6 +449,71 @@
   });
 </script>
 
+{#snippet cardMetricValue(category: CategoryEntry)}
+  {@const estimateShare = getEstimateShare(category)}
+  {#if sellingTemplates(category, activeWindow) === 0}
+    -
+  {:else}
+    ${Math.round(revenuePerSeller(category, activeWindow)).toLocaleString()}
+  {/if}
+{/snippet}
+
+{#snippet cardMetricLabel(category: CategoryEntry)}
+  {@const estimateShare = getEstimateShare(category)}
+  revenue per sold template
+  {#if estimateShare !== null}
+    <span class="data-chip chip-estimate" title={getEstimateTitle(estimateShare)}>est.</span>
+  {/if}
+{/snippet}
+
+<!-- The four numbers of a segment, in reading order: supply, sellers, the rate, then sales. -->
+{#snippet cardStats(category: CategoryEntry, variant: 'mobile' | 'grid')}
+  {@const rate = sellThrough(category, activeWindow)}
+  {@const thin = isThinRow(category)}
+  {@const sellers = sellingTemplates(category, activeWindow)}
+  <div
+    class:mobile-card-stats={variant === 'mobile'}
+    class:category-stats={variant === 'grid'}
+    class:with-supply={supplyAvailable}
+  >
+    {#if supplyAvailable}
+      <div class="stat">
+        <span class="stat-label">Listed</span>
+        <span class="stat-value">{(category.listedTemplates ?? 0).toLocaleString()}</span>
+      </div>
+    {/if}
+    <div class="stat">
+      <span
+        class="stat-label stat-label-with-tooltip"
+        title="Templates with at least one sale in the {windowDays}-day window"
+      >
+        Templates sold
+        <HelpCircle size={10} />
+      </span>
+      <span class="stat-value">{sellers.toLocaleString()}</span>
+    </div>
+    {#if supplyAvailable}
+      <div class="stat">
+        <span class="stat-label">Sell-through</span>
+        <span class="stat-value stat-value-rate" class:is-soft={thin || sellers === 0}>
+          {rate === null ? '-' : formatShare(rate)}
+          {#if thin}
+            <span
+              class="data-chip chip-thin"
+              title="Fewer than {THIN_SELLERS} templates sold in the window. Read the rate as a hint."
+              >few sold</span
+            >
+          {/if}
+        </span>
+      </div>
+    {/if}
+    <div class="stat">
+      <span class="stat-label">Sales ({windowDays}d)</span>
+      <span class="stat-value">{segmentSales(category, activeWindow).toLocaleString()}</span>
+    </div>
+  </div>
+{/snippet}
+
 <div class="marketplace-insights">
   <!-- Summary Stats: high data-ink ratio, direct labels, minimal ornament -->
   {#if visibleSummaryItemCount() > 0}
@@ -370,6 +542,27 @@
         </div>
       {/if}
 
+      {#if categories.length > 0}
+        {#if marketSellThrough !== null && summary.segments}
+          <div class="summary-item">
+            <dt class="summary-term">Sell-through (30d)</dt>
+            <dd class="summary-value">{formatShare(marketSellThrough)}</dd>
+            <dd class="summary-support">
+              {(summary.segments.sellingTemplates ?? 0).toLocaleString()} of
+              {(summary.segments.listedTemplates ?? 0).toLocaleString()} listed templates sold
+            </dd>
+            <dd class="summary-meta">at least one sale in 30 days</dd>
+          </div>
+        {:else}
+          <div class="summary-item">
+            <dt class="summary-term">Categories Tracked</dt>
+            <dd class="summary-value"><KineticNumber value={categories.length} /></dd>
+            <dd class="summary-support">with recent sales</dd>
+            <dd class="summary-meta">active categories</dd>
+          </div>
+        {/if}
+      {/if}
+
       {#if hasUserSummaryData()}
         <div class="summary-item">
           <dt class="summary-term">Your Best Rank</dt>
@@ -390,14 +583,6 @@
         </div>
       {/if}
 
-      {#if categories.length > 0}
-        <div class="summary-item">
-          <dt class="summary-term">Categories Tracked</dt>
-          <dd class="summary-value"><KineticNumber value={categories.length} /></dd>
-          <dd class="summary-support">with recent sales</dd>
-          <dd class="summary-meta">active categories</dd>
-        </div>
-      {/if}
     </dl>
   {/if}
 
@@ -405,22 +590,49 @@
   {#if categories.length > 0}
     <section class="categories-section">
       <div class="categories-header">
-        <h3 class="section-title">Category Performance (30-Day Window)</h3>
-        <div class="view-toggle">
-          <button
-            class="toggle-btn"
-            class:active={viewMode === 'table'}
-            onclick={() => setViewMode('table')}
-          >
-            Table
-          </button>
-          <button
-            class="toggle-btn"
-            class:active={viewMode === 'grid'}
-            onclick={() => setViewMode('grid')}
-          >
-            Grid
-          </button>
+        <h3 class="section-title">
+          Category Performance{ninetyAvailable ? '' : ` (${windowDays}-Day Window)`}
+        </h3>
+        <div class="header-controls">
+          {#if ninetyAvailable}
+            <span class="toggle-label" id="segment-window-label">Sales window</span>
+            <div class="view-toggle" role="group" aria-labelledby="segment-window-label">
+              <button
+                type="button"
+                aria-pressed={activeWindow === '30d'}
+                class="toggle-btn"
+                class:active={activeWindow === '30d'}
+                onclick={() => setSegmentWindow('30d')}
+              >
+                30 days
+              </button>
+              <button
+                type="button"
+                aria-pressed={activeWindow === '90d'}
+                class="toggle-btn"
+                class:active={activeWindow === '90d'}
+                onclick={() => setSegmentWindow('90d')}
+              >
+                90 days
+              </button>
+            </div>
+          {/if}
+          <div class="view-toggle">
+            <button
+              class="toggle-btn"
+              class:active={viewMode === 'table'}
+              onclick={() => setViewMode('table')}
+            >
+              Table
+            </button>
+            <button
+              class="toggle-btn"
+              class:active={viewMode === 'grid'}
+              onclick={() => setViewMode('grid')}
+            >
+              Grid
+            </button>
+          </div>
         </div>
       </div>
 
@@ -504,6 +716,31 @@
       <p class="categories-meta">
         Showing {sortedCategories.length} of {categories.length} category rows
       </p>
+      {#if supplyAvailable}
+        <details class="segments-key" open={tableViewport !== 'mobile'}>
+          <summary>How to read this</summary>
+          <ul>
+            <li>
+              <Info size={13} aria-hidden="true" />
+              <span>
+                <strong>Rows overlap.</strong> A template counts in every subcategory it belongs
+                to, so rows do not add up.
+              </span>
+            </li>
+            <li>
+              <span class="data-chip chip-thin">few sold</span>
+              <span>Fewer than {THIN_SELLERS} templates sold. Read the rate as a hint.</span>
+            </li>
+            <li>
+              <span class="data-chip chip-estimate">est.</span>
+              <span>
+                {formatWholeShare(ESTIMATE_SHARE)} or more of the sales went through fulfillment
+                links. That revenue is assumed at list price.
+              </span>
+            </li>
+          </ul>
+        </details>
+      {/if}
 
       {#if sortedCategories.length === 0}
         <div class="categories-empty">
@@ -519,7 +756,7 @@
         {#if shouldRenderMobileTable}
           <div class="table-mobile-cards">
             {#each sortedCategories as category, index (getCategoryRowKey(category, index))}
-              {@const competition = getCompetitionIndicator(category.templatesInSubcategory)}
+              {@const competition = getCategoryCompetition(category)}
               {@const isUserCategory =
                 ownedUserCategorySet.has(category.category) ||
                 ownedUserCategorySet.has(category.subcategory)}
@@ -532,30 +769,13 @@
                       <span class="user-indicator">Your template category</span>
                     {/if}
                   </div>
-                  <span class="rank-pill">#{category.revenueRank}</span>
+                  <span class="rank-pill">#{getRank(category)}</span>
                 </div>
                 <div class="mobile-card-metric">
-                  <span class="metric-value"
-                    >${Math.round(category.avgRevenuePerTemplate).toLocaleString()}</span
-                  >
-                  <span class="metric-label">avg revenue</span>
+                  <span class="metric-value">{@render cardMetricValue(category)}</span>
+                  <span class="metric-label">{@render cardMetricLabel(category)}</span>
                 </div>
-                <div class="mobile-card-stats">
-                  <div class="mobile-stat">
-                    <span class="stat-label">Sales (30d)</span>
-                    <span class="stat-value">{category.totalSales30d.toLocaleString()}</span>
-                  </div>
-                  <div class="mobile-stat">
-                    <span
-                      class="stat-label stat-label-with-tooltip"
-                      title="Templates with sales in 30-day window"
-                    >
-                      Active Templates
-                      <HelpCircle size={10} />
-                    </span>
-                    <span class="stat-value">{category.templatesInSubcategory}</span>
-                  </div>
-                </div>
+                {@render cardStats(category, 'mobile')}
                 <Badge
                   variant={competition.color === 'success'
                     ? 'success'
@@ -575,11 +795,13 @@
         <!-- Desktop Table Layout -->
         {#if shouldRenderDesktopTable}
         <div class="table-container table-desktop">
-          <table class="data-table">
+          <table class="data-table" class:has-supply={supplyAvailable}>
             <colgroup>
               <col class="category-col" />
               <col class="rank-col" />
+              {#if supplyAvailable}<col class="listed-col" />{/if}
               <col class="active-col" />
+              {#if supplyAvailable}<col class="sell-through-col" />{/if}
               <col class="sales-col" />
               <col class="revenue-col" />
               <col class="competition-col" />
@@ -593,12 +815,34 @@
                     class="table-sort-button"
                     onclick={() => handleSort('revenueRank')}
                   >
-                    Rank
+                    <span title="By revenue in the {windowDays}-day window">Rank</span>
                     {#if sortKey === 'revenueRank'}
                       <span class="sort-icon">{sortDirection === 'asc' ? '↑' : '↓'}</span>
                     {/if}
                   </button>
                 </th>
+                {#if supplyAvailable}
+                  <th scope="col" class="right-head" aria-sort={getAriaSort('listedTemplates')}>
+                    <button
+                      type="button"
+                      class="table-sort-button"
+                      onclick={() => handleSort('listedTemplates')}
+                    >
+                      <span class="th-with-tooltip">
+                        Listed
+                        <span
+                          class="tooltip-trigger"
+                          title="Templates listed in this subcategory now, or sold in the window"
+                        >
+                          <HelpCircle size={12} />
+                        </span>
+                      </span>
+                      {#if sortKey === 'listedTemplates'}
+                        <span class="sort-icon">{sortDirection === 'asc' ? '↑' : '↓'}</span>
+                      {/if}
+                    </button>
+                  </th>
+                {/if}
                 <th
                   scope="col"
                   class="right-head"
@@ -610,10 +854,10 @@
                     onclick={() => handleSort('templatesInSubcategory')}
                   >
                     <span class="th-with-tooltip">
-                      Active
+                      Templates sold
                       <span
                         class="tooltip-trigger"
-                        title="Templates with sales in 30-day window (not total marketplace inventory)"
+                        title="Templates with at least one sale in the {windowDays}-day window"
                       >
                         <HelpCircle size={12} />
                       </span>
@@ -623,6 +867,28 @@
                     {/if}
                   </button>
                 </th>
+                {#if supplyAvailable}
+                  <th scope="col" class="right-head" aria-sort={getAriaSort('sellThrough')}>
+                    <button
+                      type="button"
+                      class="table-sort-button"
+                      onclick={() => handleSort('sellThrough')}
+                    >
+                      <span class="th-with-tooltip">
+                        Sell-through
+                        <span
+                          class="tooltip-trigger"
+                          title="Templates with sales divided by listed templates"
+                        >
+                          <HelpCircle size={12} />
+                        </span>
+                      </span>
+                      {#if sortKey === 'sellThrough'}
+                        <span class="sort-icon">{sortDirection === 'asc' ? '↑' : '↓'}</span>
+                      {/if}
+                    </button>
+                  </th>
+                {/if}
                 <th
                   scope="col"
                   class="right-head"
@@ -633,7 +899,7 @@
                     class="table-sort-button"
                     onclick={() => handleSort('totalSales30d')}
                   >
-                    Sales (30d)
+                    Sales ({windowDays}d)
                     {#if sortKey === 'totalSales30d'}
                       <span class="sort-icon">{sortDirection === 'asc' ? '↑' : '↓'}</span>
                     {/if}
@@ -649,18 +915,37 @@
                     class="table-sort-button"
                     onclick={() => handleSort('avgRevenuePerTemplate')}
                   >
-                    Avg / Template
+                    <span
+                      title="Revenue per template that sold. Fulfillment-link sales count at list price, because the buyer pays the creator off-platform."
+                      >Revenue / sold template</span
+                    >
                     {#if sortKey === 'avgRevenuePerTemplate'}
                       <span class="sort-icon">{sortDirection === 'asc' ? '↑' : '↓'}</span>
                     {/if}
                   </button>
                 </th>
-                <th scope="col" class="competition-head">Competition</th>
+                <th scope="col" class="competition-head">
+                  <span class="th-with-tooltip">
+                    Competition
+                    {#if supplyAvailable}
+                      <span
+                        class="tooltip-trigger"
+                        title="By listed templates: low under 50, medium under 150, high under 400, very high from 400"
+                      >
+                        <HelpCircle size={12} />
+                      </span>
+                    {/if}
+                  </span>
+                </th>
               </tr>
             </thead>
             <tbody>
               {#each sortedCategories as category, index (getCategoryRowKey(category, index))}
-                {@const competition = getCompetitionIndicator(category.templatesInSubcategory)}
+                {@const competition = getCategoryCompetition(category)}
+                {@const rate = sellThrough(category, activeWindow)}
+                {@const thin = isThinRow(category)}
+                {@const estimateShare = getEstimateShare(category)}
+                {@const sellers = sellingTemplates(category, activeWindow)}
                 {@const isUserCategory =
                   ownedUserCategorySet.has(category.category) ||
                   ownedUserCategorySet.has(category.subcategory)}
@@ -675,20 +960,64 @@
                     {/if}
                   </td>
                   <td class="right rank-cell">
-                    <span class="rank-value">#{category.revenueRank}</span>
+                    <span class="rank-value">#{getRank(category)}</span>
                   </td>
-                  <td class="right">{category.templatesInSubcategory}</td>
-                  <td class="right">{category.totalSales30d.toLocaleString()}</td>
+                  {#if supplyAvailable}
+                    <td class="right">{(category.listedTemplates ?? 0).toLocaleString()}</td>
+                  {/if}
+                  <td class="right" class:is-zero={sellers === 0}>{sellers.toLocaleString()}</td>
+                  {#if supplyAvailable}
+                    <td class="right sell-through-cell">
+                      {#if rate === null}
+                        <span class="cell-empty">-</span>
+                      {:else}
+                        <span class="marked-value">
+                          <span class="marker-slot">
+                            {#if thin}
+                              <span
+                                class="data-chip chip-thin"
+                                title="Fewer than {THIN_SELLERS} templates sold in the window. Read the rate as a hint."
+                                >few sold</span
+                              >
+                            {/if}
+                          </span>
+                          <span class="sell-through-value" class:is-soft={thin || sellers === 0}>
+                            {formatShare(rate)}
+                          </span>
+                        </span>
+                      {/if}
+                    </td>
+                  {/if}
+                  <td class="right" class:is-zero={segmentSales(category, activeWindow) === 0}>
+                    {segmentSales(category, activeWindow).toLocaleString()}
+                  </td>
                   <td class="right">
-                    <span class="revenue"
-                      >${Math.round(category.avgRevenuePerTemplate).toLocaleString()}</span
-                    >
+                    {#if sellers === 0}
+                      <span class="cell-empty" title="No template sold in the window">-</span>
+                    {:else}
+                      <span class="marked-value">
+                        <span class="marker-slot">
+                          {#if estimateShare !== null}
+                            <span
+                              class="data-chip chip-estimate"
+                              title={getEstimateTitle(estimateShare)}>est.</span
+                            >
+                          {/if}
+                        </span>
+                        <span class="revenue" class:is-estimate={estimateShare !== null}
+                          >${Math.round(revenuePerSeller(category, activeWindow)).toLocaleString()}</span
+                        >
+                      </span>
+                    {/if}
                   </td>
                   <td class="competition-cell">
                     <span
                       class="competition-value competition-{getCompetitionClass(
                         competition.level
                       )}"
+                      title={category.listedTemplates === undefined
+                        ? `${category.templatesInSubcategory} templates with sales`
+                        : `${category.listedTemplates.toLocaleString()} listed templates`}
                     >
                       <span class="competition-dot"></span>
                       {competition.level}
@@ -703,7 +1032,7 @@
       {:else}
         <div class="categories-grid">
           {#each sortedCategories as category, index (getCategoryRowKey(category, index))}
-            {@const competition = getCompetitionIndicator(category.templatesInSubcategory)}
+            {@const competition = getCategoryCompetition(category)}
             {@const isUserCategory =
               ownedUserCategorySet.has(category.category) ||
               ownedUserCategorySet.has(category.subcategory)}
@@ -713,13 +1042,11 @@
                   <span class="category-parent">{category.category}</span>
                   <span class="category-name">{category.subcategory}</span>
                 </div>
-                <span class="rank-pill">#{category.revenueRank}</span>
+                <span class="rank-pill">#{getRank(category)}</span>
               </div>
               <div class="category-metric">
                 <div class="metric-main">
-                  <span class="metric-value"
-                    >${Math.round(category.avgRevenuePerTemplate).toLocaleString()}</span
-                  >
+                  <span class="metric-value">{@render cardMetricValue(category)}</span>
                   {#if category.trend && category.changePercent !== undefined}
                     <!-- Trend indicator -->
                     <span class="trend-indicator trend-{category.trend}">
@@ -734,24 +1061,9 @@
                     <span class="trend-unavailable">Trend unavailable</span>
                   {/if}
                 </div>
-                <span class="metric-label">avg per template</span>
+                <span class="metric-label">{@render cardMetricLabel(category)}</span>
               </div>
-              <div class="category-stats">
-                <div class="stat">
-                  <span class="stat-label">Sales (30d)</span>
-                  <span class="stat-value">{category.totalSales30d.toLocaleString()}</span>
-                </div>
-                <div class="stat">
-                  <span
-                    class="stat-label stat-label-with-tooltip"
-                    title="Templates with sales in 30-day window"
-                  >
-                    Active Templates
-                    <HelpCircle size={10} />
-                  </span>
-                  <span class="stat-value">{category.templatesInSubcategory}</span>
-                </div>
-              </div>
+              {@render cardStats(category, 'grid')}
               <div class="category-footer">
                 <Badge
                   variant={competition.color === 'success'
@@ -1962,17 +2274,17 @@
     gap: var(--space-sm);
   }
 
-  .mobile-stat {
+  .mobile-card-stats .stat {
     display: flex;
     flex-direction: column;
   }
 
-  .mobile-stat .stat-label {
+  .mobile-card-stats .stat-label {
     font-size: var(--text-caption);
     color: var(--color-fg-muted);
   }
 
-  .mobile-stat .stat-value {
+  .mobile-card-stats .stat-value {
     font-size: var(--text-body-sm);
     font-weight: var(--font-medium);
     color: var(--color-fg-primary);
@@ -2038,6 +2350,224 @@
   }
 
   /* Reduced motion support */
+  /* Segments: listed supply, sell-through and the sales window switch */
+  .header-controls {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: var(--space-sm);
+  }
+
+  .data-table.has-supply {
+    min-width: 68rem;
+  }
+
+  .data-table.has-supply col.category-col {
+    width: 24%;
+  }
+
+  .data-table.has-supply col.rank-col {
+    width: 6%;
+  }
+
+  .data-table.has-supply col.listed-col {
+    width: 8%;
+  }
+
+  .data-table.has-supply col.active-col {
+    width: 12%;
+  }
+
+  .data-table.has-supply col.sell-through-col {
+    width: 14%;
+  }
+
+  .data-table.has-supply col.sales-col {
+    width: 9%;
+  }
+
+  .data-table.has-supply col.revenue-col {
+    width: 15%;
+  }
+
+  .data-table.has-supply col.competition-col {
+    width: 12%;
+  }
+
+  .toggle-label {
+    font-size: var(--text-caption);
+    color: var(--color-fg-muted);
+  }
+
+  /* A number at the cell's right edge, with a fixed slot before it for a marker. */
+  .marked-value {
+    display: inline-grid;
+    grid-template-columns: 4.3rem auto;
+    align-items: baseline;
+    justify-items: end;
+    column-gap: 0.45rem;
+  }
+
+  .marker-slot {
+    display: inline-flex;
+    justify-content: flex-end;
+    width: 100%;
+  }
+
+  .marker-slot .data-chip {
+    margin: 0;
+  }
+
+
+
+  .sell-through-cell,
+  .data-table td.right {
+    white-space: nowrap;
+  }
+
+  .sell-through-value {
+    font-weight: var(--font-semibold);
+  }
+
+  .sell-through-value.is-soft,
+  .stat-value.is-soft {
+    color: var(--color-fg-muted);
+    font-weight: var(--font-regular, 400);
+  }
+
+  /* With supply on the page, sell-through is the one emphasised number in a row. */
+  .data-table.has-supply .rank-value {
+    color: var(--color-fg-secondary);
+    font-weight: var(--font-regular, 400);
+  }
+
+  .data-table.has-supply .revenue {
+    font-weight: var(--font-medium);
+  }
+
+  .revenue.is-estimate {
+    color: var(--color-fg-secondary);
+  }
+
+  /* A chip marks a number the reader must not take at face value. */
+  .data-chip {
+    display: inline-flex;
+    align-items: center;
+    margin-right: 0.4rem;
+    padding: 0.04rem 0.3rem;
+    border: 1px solid transparent;
+    border-radius: var(--radius-sm);
+    font-size: 0.6875rem;
+    font-weight: var(--font-medium);
+    line-height: 1.3;
+    white-space: nowrap;
+    vertical-align: 0.06em;
+    cursor: help;
+  }
+
+  .chip-thin {
+    border-color: color-mix(in srgb, var(--color-fg-muted) 50%, transparent);
+    border-style: dashed;
+    color: var(--color-fg-muted);
+  }
+
+  .chip-estimate {
+    border-color: color-mix(in srgb, var(--color-fg-muted) 50%, transparent);
+    background: color-mix(in srgb, var(--color-fg-muted) 14%, transparent);
+    color: var(--color-fg-secondary);
+  }
+
+  .stat-value .data-chip,
+  .metric-label .data-chip {
+    margin: 0 0 0 0.3rem;
+  }
+
+  .cell-empty,
+  .data-table td.is-zero {
+    color: var(--color-fg-muted);
+  }
+
+  .segments-key {
+    margin: 0 0 var(--space-sm);
+    font-size: var(--text-caption);
+    line-height: 1.45;
+    color: var(--color-fg-muted);
+  }
+
+  .segments-key summary {
+    display: none;
+    cursor: pointer;
+    color: var(--color-fg-secondary);
+  }
+
+  .segments-key ul {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem 1.6rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .segments-key li {
+    display: flex;
+    align-items: baseline;
+    gap: 0.4rem;
+  }
+
+  .segments-key li :global(svg) {
+    flex: none;
+    align-self: center;
+    color: var(--color-info-soft-text);
+  }
+
+  .segments-key .data-chip {
+    flex: none;
+    margin: 0;
+    cursor: default;
+  }
+
+  .segments-key strong {
+    color: var(--color-fg-secondary);
+    font-weight: var(--font-medium);
+  }
+
+  @media (max-width: 767px) {
+    .segments-key summary {
+      display: list-item;
+    }
+
+    .segments-key[open] summary {
+      margin-bottom: 0.4rem;
+    }
+
+    .segments-key ul {
+      flex-direction: column;
+    }
+  }
+
+  .stat-value-rate {
+    font-weight: var(--font-semibold);
+  }
+
+  .category-stats.with-supply,
+  .mobile-card-stats.with-supply {
+    row-gap: var(--space-xs);
+  }
+
+  @media (max-width: 640px) {
+    .categories-header {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+
+    .header-controls {
+      justify-content: flex-start;
+    }
+
+  }
+
   @media (prefers-reduced-motion: reduce) {
     .leaderboard-card,
     .category-card,

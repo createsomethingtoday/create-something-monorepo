@@ -71,6 +71,80 @@ describe('snapshot analytics API contracts', () => {
     expect(leaderboard.leaderboard[1]).not.toHaveProperty('totalRevenue30d');
     expect(leaderboard.leaderboard[1]).not.toHaveProperty('fulfillmentSales30d');
   });
+  it('passes listed supply, the 90-day window and their totals through, and words the insight from supply', async () => {
+    const id = (char: string) => char.repeat(24);
+    const input = {
+      snapshotAt: '2026-09-21T16:00:00.000Z',
+      sellers: [
+        { templateId: id('a'), mrpId: id('b'), name: 'One', sales: 3, revenue: 150, fulfillmentSales: 1 },
+        { templateId: id('c'), mrpId: id('d'), name: 'Two', sales: 2, revenue: 80, fulfillmentSales: 0 }
+      ],
+      assets: [
+        { templateId: id('a'), creatorEmail: 'owner@example.test', categories: ['Agency'], listed: true },
+        { templateId: id('c'), creatorEmail: 'other@example.test', categories: ['Agency'], listed: true },
+        { templateId: id('e'), creatorEmail: 'third@example.test', categories: ['Agency', 'Events'], listed: true }
+      ],
+      categories: [
+        { name: 'Agency', group: 'Business' },
+        { name: 'Events', group: 'Community' }
+      ]
+    };
+    const serve = (snapshot: ReturnType<typeof buildMarketplaceSnapshot>) =>
+      mocks.client.mockReturnValue({
+        getCategoryPerformance: async () => ({
+          records: snapshot.categories,
+          marketplaceSummary: snapshot.summary,
+          freshness: { timestamp: snapshot.snapshotAt, source: 'field', fieldName: 'SNAPSHOT_AT' }
+        })
+      });
+    type Body = {
+      categories: Array<Record<string, unknown>>;
+      insights: Array<{ type: string; message: string }>;
+      summary: { segments: Record<string, unknown> };
+    };
+
+    serve(
+      buildMarketplaceSnapshot({
+        ...input,
+        sellers90: [
+          { templateId: id('a'), sales: 9, revenue: 450, fulfillmentSales: 2 },
+          { templateId: id('c'), sales: 2, revenue: 80, fulfillmentSales: 0 },
+          { templateId: id('e'), sales: 1, revenue: 40, fulfillmentSales: 0 }
+        ]
+      })
+    );
+    const body = (await (await categoriesGET(event('owner@example.test'))).json()) as Body;
+    expect(body.summary.segments).toEqual({
+      listedTemplates: 3,
+      sellingTemplates: 2,
+      fulfillmentSales: 1,
+      totalSales90d: 12,
+      sellingTemplates90d: 3
+    });
+    expect(body.categories.find((row) => row.subcategory === 'Agency')).toMatchObject({
+      listedTemplates: 3,
+      templatesInSubcategory: 2,
+      fulfillmentSales30d: 1,
+      templatesWithSales90d: 3,
+      totalSales90d: 12,
+      fulfillmentSales90d: 2
+    });
+    expect(body.categories.find((row) => row.subcategory === 'Events')).toMatchObject({
+      listedTemplates: 1,
+      templatesInSubcategory: 0,
+      totalSales30d: 0
+    });
+    expect(body.insights.find((insight) => insight.type === 'opportunity')?.message).toBe(
+      '"Agency" has 3 listed templates, and 2 of them sold in the last 30 days.'
+    );
+
+    // A snapshot from before supply existed: no supply totals, and the older wording.
+    serve(buildMarketplaceSnapshot({ ...input, assets: input.assets.map(({ listed: _listed, ...asset }) => asset) }));
+    const legacy = (await (await categoriesGET(event('owner@example.test'))).json()) as Body;
+    expect(legacy.summary.segments).toMatchObject({ listedTemplates: null, totalSales90d: null, sellingTemplates: 2 });
+    expect(legacy.categories.every((row) => row.listedTemplates === undefined)).toBe(true);
+    expect(legacy.insights.find((insight) => insight.type === 'opportunity')?.message).toContain('low competition with 2 templates');
+  });
   it('denies anonymous requests before reading any source', async () => {
     await expect(categoriesGET(event())).rejects.toMatchObject({ status: 401 });
     await expect(leaderboardGET(event())).rejects.toMatchObject({ status: 401 });
