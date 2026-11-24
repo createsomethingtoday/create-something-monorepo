@@ -3,12 +3,14 @@ on:
   pull_request:
     paths:
       - 'scripts/paperclip-delivery/**'
+      - 'scripts/paperclip-review-graph/**'
       - 'docs/guides/PAPERCLIP_AUTONOMOUS_DELIVERY.md'
       - '.github/workflows/paperclip-delivery.yml'
   push:
     branches: [main]
     paths:
       - 'scripts/paperclip-delivery/**'
+      - 'scripts/paperclip-review-graph/**'
       - 'docs/guides/PAPERCLIP_AUTONOMOUS_DELIVERY.md'
       - '.github/workflows/paperclip-delivery.yml'
 permissions:
@@ -27,5 +29,5 @@ jobs:
         with:
           node-version: '22'
           package-manager-cache: false
-      - run: node --test scripts/paperclip-delivery/*.test.mjs
+      - run: node --test scripts/paperclip-delivery/*.test.mjs scripts/paperclip-review-graph/*.test.mjs
       - run: node scripts/paperclip-delivery/cli.mjs verify-manifest scripts/paperclip-delivery scripts/paperclip-delivery/manifest.json

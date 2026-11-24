@@ -1,0 +1,67 @@
+{
+  "version": "create-something.paperclip-review-graph.v1",
+  "maxRepairAttempts": 3,
+  "events": {
+    "review": ["approved", "changes_requested"],
+    "ci": ["passed", "failed"],
+    "repair": ["dispatched", "completed"]
+  },
+  "steps": [
+    {
+      "action": "hold",
+      "role": "coordinator",
+      "dependsOn": [],
+      "eligibility": {
+        "any": ["repairLimitReached", "repairedCurrentRevision"]
+      },
+      "input": ["caseId", "sha", "receiptIds", "repairReceiptIds"],
+      "output": "operator_resolution_or_new_revision"
+    },
+    {
+      "action": "run_cook_repair",
+      "role": "engineering",
+      "dependsOn": [],
+      "eligibility": {
+        "all": ["hasFailure", "repairAllowed"]
+      },
+      "input": ["caseId", "sha", "receiptIds", "repairAttempt", "repairLimit"],
+      "output": "new_revision_and_repair_receipt"
+    },
+    {
+      "action": "request_independent_review",
+      "role": "independent_reviewer",
+      "dependsOn": [],
+      "eligibility": {
+        "all": ["noFailure", "missingReview"]
+      },
+      "input": ["caseId", "sha"],
+      "output": "independent_review_receipt"
+    },
+    {
+      "action": "run_ci",
+      "role": "ci",
+      "dependsOn": [],
+      "eligibility": {
+        "all": ["noFailure", "missingCi"]
+      },
+      "input": ["caseId", "sha"],
+      "output": "ci_receipt"
+    },
+    {
+      "action": "assess_release_readiness",
+      "role": "release_reviewer",
+      "dependsOn": ["reviewPassed", "ciPassed"],
+      "eligibility": {
+        "all": ["noFailure", "reviewPassed", "ciPassed"]
+      },
+      "input": ["caseId", "sha", "receiptIds"],
+      "output": "readiness_assessment_requiring_explicit_release_authority"
+    }
+  ],
+  "rules": {
+    "reviewApprovalRequiresIndependent": true,
+    "staleReceipts": "ignored for revision gates; dispatched/completed repair receipts count distinct source SHAs against the case repair budget",
+    "failure": "review change requests are sticky at this SHA; only a strictly newer identified CI run may supersede a CI failure",
+    "releaseAuthority": "explicit owning assignment or operator authority required; this graph never grants it"
+  }
+}
