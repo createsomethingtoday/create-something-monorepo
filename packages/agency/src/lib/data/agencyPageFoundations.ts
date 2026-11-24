@@ -178,7 +178,7 @@ const foundations: Record<string, AgencyPageFoundation> = {
     chapter('first-gesture', 'The first hop', 'Hop', 'Meet the graphite companion.'),
     chapter('material-title', 'Finding the material', 'Felt', 'See how wool changed the face.'),
     chapter('gestures-title', 'Six gestures', 'Gestures', 'Read the gesture sheet.'),
-    chapter('repair-title', 'Repairing the sleeve', 'Repair', 'Look closely at the paper-holding hand.')
+    chapter('rig-title', 'The walkthrough rig', 'Rig', 'See how Canon directs attention in a walkthrough.')
   ]),
   '/about': foundation('About the work', 'GOOD TOOLS. PEOPLE.', [
     chapter('about-letter', 'A note from Micah', 'The note', 'Read the approach behind CREATE SOMETHING.')

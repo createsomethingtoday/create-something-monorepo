@@ -250,6 +250,51 @@
     </div>
   </section>
 
+  <section class="rig-chapter" aria-labelledby="rig-title">
+    <div class="section-index"><span>Canon in motion</span><span>November 2026</span></div>
+    <div class="rig-intro">
+      <div>
+        <h2 id="rig-title" data-scroll-behavior="instant">Where should<br />Canon look?</h2>
+        <p>
+          At the workbench, Canon can point with a mitten. In the corner of a walkthrough, there’s
+          only room for a face. A glance toward the footage has to do the pointing.
+        </p>
+        <p>
+          We built a pencil-drawn version of Canon with an animation rig. A director can choose from
+          100 expressions, adjust the gaze, then decide how strongly a reaction reads, how long it
+          holds and when it fades.
+        </p>
+        <a href="https://canon-expression-studio.pages.dev/">Try the expression studio</a>
+      </div>
+      <figure>
+        <img
+          src={art + 'rig-look.webp'}
+          width="460"
+          height="253"
+          loading="lazy"
+          alt="Canon’s pencilled portrait with both pupils turned to the left."
+        />
+        <figcaption>“Look here”, held in the expression studio.</figcaption>
+      </figure>
+    </div>
+    <figure class="rig-demo">
+      <img
+        src={art + 'walkthrough-rig.webp'}
+        width="1440"
+        height="812"
+        loading="lazy"
+        alt="An editing lesson with a cup in the preview, two clips on the timeline and Canon’s small drawn face beside the title instruction."
+      />
+      <figcaption>
+        In the 18-second editing lesson, Canon stays beside the captions as the viewer trims the
+        opening, adds a title and finishes the edit. <a
+          href="https://canon-expression-studio.pages.dev/walkthrough"
+          >Play the captioned walkthrough</a
+        >
+      </figcaption>
+    </figure>
+  </section>
+
   <footer class="story-ending">
     <h2>Back to your side<br />of the workbench.</h2>
     <p>
@@ -413,6 +458,57 @@
     .film-notes a {
       display: inline-block;
       min-height: 32px;
+    }
+  }
+  .rig-chapter {
+    background: #edece7;
+    color: #171815;
+    padding: clamp(3rem, 7vw, 7rem) clamp(1.25rem, 6vw, 6rem);
+  }
+  .rig-chapter .section-index,
+  .rig-chapter figcaption {
+    color: #54554e;
+  }
+  .rig-intro {
+    max-width: 72rem;
+    margin: 3rem auto;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    align-items: center;
+    gap: clamp(2rem, 7vw, 7rem);
+  }
+  .rig-intro p {
+    margin: 1.2rem 0;
+    max-width: 34rem;
+    line-height: 1.75;
+  }
+  .rig-intro a,
+  .rig-demo a {
+    text-decoration: underline;
+  }
+  .rig-chapter a:focus-visible {
+    outline: 2px solid #345a72;
+    outline-offset: 3px;
+  }
+  .rig-intro img,
+  .rig-demo img {
+    width: 100%;
+    height: auto;
+  }
+  .rig-demo {
+    max-width: 60rem;
+    margin: 3rem auto 0;
+  }
+  .rig-chapter figcaption {
+    font-size: 0.82rem;
+    line-height: 1.65;
+  }
+  @media (max-width: 760px) {
+    .rig-intro {
+      grid-template-columns: 1fr;
+    }
+    .rig-intro figure {
+      max-width: 29rem;
     }
   }
   .canon-story {

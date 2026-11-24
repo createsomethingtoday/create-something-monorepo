@@ -52,3 +52,5 @@ The November 13 material study is a historical concept sheet. The left, center a
 The two sleeve details are matching 422 × 304 crops at (1096, 478) from `hero-wide-v1.webp` and `hero-wide-v2.webp`. The social card is a 1200 × 630 JPEG derived from the repaired wide illustration. The article uses these illustrations to describe design decisions.
 
 The October images are historical plates from Micah Johnson’s public posts. `october-hop-film.jpg` shows the pivot frame of the October 1 film (`https://lnkd.in/p/gcJJte39`). `october-slate-workshop.jpg` shows the setting from the October workshop post (`https://lnkd.in/p/ghJtuwbw`). Both captures are confined to the published media. The full original posts are linked from the article.
+
+The expression-rig chapter uses original rendered captures of the public Canon Expression Studio and its captioned walkthrough. The studio portrait shows the held “Look here” preset. The walkthrough frame shows the title cue at approximately 7.5 seconds. Both are WebP exports; the live controls and lesson are linked alongside.
