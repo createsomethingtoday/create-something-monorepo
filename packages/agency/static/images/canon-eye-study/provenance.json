@@ -1,0 +1,8 @@
+{
+  "source": "packages/canon-animation/studies/ink/face-render.mjs + felt-head.mjs",
+  "renderer": "r68 stitched felt",
+  "generated": "2026-11-24",
+  "poses": 27,
+  "bytes": 196700,
+  "notes": "Unmodified engine output; fixed material/sketch phase. feltPortraitStudy:true selects stitched felt; gaze and wink channels only. Rebuild with scripts/canon-eye-study/build.mjs <engine studies/ink directory>."
+}

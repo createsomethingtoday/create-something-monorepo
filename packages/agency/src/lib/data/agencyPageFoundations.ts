@@ -174,6 +174,12 @@ const foundations: Record<string, AgencyPageFoundation> = {
   '/use-cases/enterprise': foundation('Enterprise workflows', 'MAKE THE SYSTEM CLEAR.', [
     chapter('enterprise-control-story', 'The operating model', 'Operate', 'Read the enterprise workflow and control path.')
   ]),
+  '/canon': foundation('How Canon took shape', 'Character history', [
+    chapter('first-gesture', 'The first hop', 'Hop', 'Meet the graphite companion.'),
+    chapter('material-title', 'Finding the material', 'Felt', 'See how wool changed the face.'),
+    chapter('gestures-title', 'Six gestures', 'Gestures', 'Read the gesture sheet.'),
+    chapter('rig-title', 'The walkthrough rig', 'Rig', 'See how Canon directs attention in a walkthrough.')
+  ]),
   '/about': foundation('About the work', 'GOOD TOOLS. PEOPLE.', [
     chapter('about-letter', 'A note from Micah', 'The note', 'Read the approach behind CREATE SOMETHING.')
   ]),
