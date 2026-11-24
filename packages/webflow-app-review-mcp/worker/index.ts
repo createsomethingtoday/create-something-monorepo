@@ -67,6 +67,8 @@ interface Env {
   MARKETPLACE_ZENDESK_GROUP_ID?: string;
   /** Kill switch for developer-facing hold notices + 7-day reminders ("1" disables). */
   HOLD_NOTICES_DISABLED?: string;
+  /** Kill switch for the Webflow account email CC on review tickets, CRE-2567 ("1" disables). */
+  TICKET_ACCOUNT_CC_DISABLED?: string;
   /** Review comments service (repo webflow/marketplace-review-comments). Both unset = the comment tools are not registered. */
   REVIEW_COMMENTS_URL?: string;
   /** This MCP's reviewer key for that Worker, scope "app" (secret via `wrangler secret put`). */
@@ -147,6 +149,10 @@ function buildZendesk(env: Env): ZendeskClient | null {
 
 function holdNoticesEnabled(env: Env): boolean {
   return env.HOLD_NOTICES_DISABLED?.trim() !== '1';
+}
+
+function ticketAccountCcEnabled(env: Env): boolean {
+  return env.TICKET_ACCOUNT_CC_DISABLED?.trim() !== '1';
 }
 
 const CORS_HEADERS: Record<string, string> = {
@@ -253,6 +259,7 @@ function buildWebhookLeg(env: Env): WebhookLeg | { missing: string[] } {
 
   const zendesk = holdNoticesEnabled(env) ? buildZendesk(env) : null;
   const holdNotices = holdNoticesEnabled(env) ? createD1HoldNoticeStore(env.TELEMETRY_DB!) : null;
+  const ticketCcZendesk = ticketAccountCcEnabled(env) ? buildZendesk(env) : null;
 
   return {
     webhookApi,
@@ -267,6 +274,7 @@ function buildWebhookLeg(env: Env): WebhookLeg | { missing: string[] } {
       kb,
       zendesk,
       holdNotices,
+      ticketAccountCc: ticketCcZendesk ? { zendesk: ticketCcZendesk } : null,
       logger: (message) => console.log(message),
     },
   };
@@ -466,6 +474,10 @@ export default {
               enabled: holdNoticesEnabled(env),
               zendeskConfigured: buildZendesk(env) !== null,
               reminderIntervalDays: 7,
+            },
+            ticketAccountCc: {
+              enabled: ticketAccountCcEnabled(env),
+              zendeskConfigured: buildZendesk(env) !== null,
             },
             tables: {
               assets: 'tblRwzpWoLgE9MrUm',

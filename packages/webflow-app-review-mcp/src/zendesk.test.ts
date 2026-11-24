@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import { ZendeskClient, ZendeskClientError, renderCreatorFacingHtml } from './zendesk.js';
+import { DEFAULT_MARKETPLACE_GROUP_ID, ZendeskClient, ZendeskClientError, renderCreatorFacingHtml } from './zendesk.js';
 
 describe('renderCreatorFacingHtml', () => {
   it('escapes raw HTML tags so they render as visible text', () => {
@@ -299,5 +299,62 @@ describe('ZendeskClient.updateTicketStatus', () => {
       client.updateTicketStatus('1188879', { status: 'closed' as never, expectedStatus: 'pending' }),
     ).rejects.toMatchObject({ code: 'INVALID_TICKET_STATUS' });
     expect(calls).toHaveLength(0);
+  });
+});
+
+describe('ZendeskClient email CCs (CRE-2567)', () => {
+  const client = (fetchFn: unknown) =>
+    new ZendeskClient({
+      subdomain: 'webflow2579',
+      email: 'reviewer@example.com',
+      apiToken: 'secret',
+      fetchFn: fetchFn as typeof fetch,
+    });
+
+  it('PUTs email_ccs with no comment', async () => {
+    const fetchFn = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      expect(String(input)).toBe('https://webflow2579.zendesk.com/api/v2/tickets/1000001.json');
+      expect(init?.method).toBe('PUT');
+      expect(JSON.parse(String(init?.body))).toEqual({
+        ticket: { email_ccs: [{ user_email: 'account@acme.example', action: 'put' }] },
+      });
+      return new Response(JSON.stringify({ audit: { id: 77 }, ticket: { status: 'hold' } }), { status: 200 });
+    });
+
+    const result = await client(fetchFn).addTicketEmailCcs('1000001', ['account@acme.example']);
+
+    expect(result).toEqual({ ticketId: '1000001', emails: ['account@acme.example'], auditId: 77 });
+  });
+
+  it('rejects a ticket ID that is not numeric and an empty list, with no request', async () => {
+    const fetchFn = vi.fn();
+    await expect(client(fetchFn).addTicketEmailCcs('12a', ['a@b.example'])).rejects.toMatchObject({
+      code: 'INVALID_TICKET_ID',
+    });
+    await expect(client(fetchFn).addTicketEmailCcs('1000001', [])).rejects.toMatchObject({
+      code: 'INVALID_EMAIL_CCS',
+    });
+    expect(fetchFn).not.toHaveBeenCalled();
+  });
+
+  it('reads the current email CCs in the ticket summary', async () => {
+    const fetchFn = vi.fn(async () =>
+      new Response(
+        JSON.stringify({
+          ticket: { status: 'hold', group_id: DEFAULT_MARKETPLACE_GROUP_ID, requester_id: 11, email_cc_ids: [12] },
+          users: [
+            { id: 11, email: 'support@acme.example' },
+            { id: 12, email: 'account@acme.example' },
+            { id: 13, email: 'agent@example.com' },
+          ],
+        }),
+        { status: 200 },
+      ),
+    );
+
+    const summary = await client(fetchFn).getTicketSummary('1000001');
+
+    expect(summary.requesterEmail).toBe('support@acme.example');
+    expect(summary.emailCcEmails).toEqual(['account@acme.example']);
   });
 });

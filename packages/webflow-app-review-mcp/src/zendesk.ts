@@ -202,6 +202,14 @@ export interface TicketSummary {
   externalId: string | null;
   requesterId: number | null;
   requesterEmail: string | null;
+  /** Emails of the ticket's current email CCs, when Zendesk sideloads those users. */
+  emailCcEmails: string[];
+}
+
+export interface TicketEmailCcResult {
+  ticketId: string;
+  emails: string[];
+  auditId?: number;
 }
 
 export interface OutboundTicketResult {
@@ -415,11 +423,15 @@ export class ZendeskClient {
     });
     if (!res.ok) await this.failFrom(res, 'ticket read', ticketId);
     const payload = (await res.json()) as {
-      ticket?: { status?: string; group_id?: number | null; brand_id?: number | null; tags?: string[]; external_id?: string | null; requester_id?: number | null };
+      ticket?: { status?: string; group_id?: number | null; brand_id?: number | null; tags?: string[]; external_id?: string | null; requester_id?: number | null; email_cc_ids?: number[] };
       users?: Array<{ id?: number; email?: string }>;
     };
     const t = payload.ticket ?? {};
     const requester = (payload.users ?? []).find((u) => u.id === t.requester_id);
+    const ccIds = new Set(t.email_cc_ids ?? []);
+    const emailCcEmails = (payload.users ?? [])
+      .filter((u) => u.id !== undefined && ccIds.has(u.id) && typeof u.email === 'string')
+      .map((u) => u.email as string);
     return {
       ticketId,
       status: t.status ?? null,
@@ -429,7 +441,32 @@ export class ZendeskClient {
       externalId: t.external_id ?? null,
       requesterId: t.requester_id ?? null,
       requesterEmail: requester?.email ?? null,
+      emailCcEmails,
     };
+  }
+
+  /**
+   * Add end-user email CCs to a ticket (CRE-2567). The update has no comment,
+   * so Zendesk sends no email now; the CC addresses get the public comments
+   * that follow. `action: 'put'` keeps an address that is already on the ticket.
+   */
+  async addTicketEmailCcs(ticketId: string, emails: readonly string[]): Promise<TicketEmailCcResult> {
+    if (!/^\d+$/.test(ticketId)) {
+      throw new ZendeskClientError('INVALID_TICKET_ID', 'Zendesk ticket ID must be numeric.', 400, { ticketId });
+    }
+    if (emails.length === 0) {
+      throw new ZendeskClientError('INVALID_EMAIL_CCS', 'At least one CC email is required.', 400, { ticketId });
+    }
+    const res = await this.fetchFn(`${this.baseUrl}/tickets/${ticketId}.json`, {
+      method: 'PUT',
+      headers: { Authorization: this.authHeader, Accept: 'application/json', 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        ticket: { email_ccs: emails.map((email) => ({ user_email: email, action: 'put' })) },
+      }),
+    });
+    if (!res.ok) await this.failFrom(res, 'ticket CC update', ticketId);
+    const payload = (await res.json()) as { audit?: { id?: number } };
+    return { ticketId, emails: [...emails], auditId: payload.audit?.id };
   }
 
   /** Find a ticket previously created with this external_id (idempotency key), if any. */

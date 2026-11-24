@@ -45,6 +45,9 @@ export const FIELD_IDS = {
     /** Linked 🎨Creator's email (rollup) and the 👀 Override that wins when set — requester for outbound tickets. */
     creatorEmail: 'fldHhxmfSNMp117SP',
     creatorEmailOverride: 'fldjCdCvHOy7dVwss',
+    /** Linked 🎨Creator's Webflow account email (lookup) and the 👀 Override that wins when set. CC for the review ticket (CRE-2567). */
+    creatorWfAccountEmail: 'fldYhLsUwL8FJUM5b',
+    creatorWfAccountEmailOverride: 'fldo7ei39ETI7Cjp2',
     creatorName: 'fldbkU8CKmDPtf83d',
     previewSiteUrl: 'fldROrXCnuZyKNCxW',
     promoVideoUrl: 'fldXlxAN7Afc8vUYS',
