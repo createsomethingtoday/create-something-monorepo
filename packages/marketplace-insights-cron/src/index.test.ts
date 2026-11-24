@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import { test } from 'node:test';
-import { captureSnapshot, publishInsights } from './index.ts';
+import { DAILY_SNAPSHOT_CRON, captureSnapshot, publishInsights } from './index.ts';
 
 const env = { DASHBOARD_URL: 'https://dashboard.test', CRON_SECRET: 'cron-secret' };
 
@@ -49,4 +50,18 @@ test('a successful capture with zero leaderboard rows still fails the run', asyn
     captureSnapshot(env, (async () => Response.json({ success: true, marketplace: { success: true, leaderboard: { captured: 0 } } })) as typeof fetch),
     /wrote 0 rows/
   );
+});
+
+/** Cloudflare counts cron weekdays from 1 = Sunday to 7 = Saturday (standard cron: 0 = Sunday). */
+const CLOUDFLARE_WEEKDAYS = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
+const cloudflareWeekday = (field: string) =>
+  /^[1-7]$/.test(field) ? CLOUDFLARE_WEEKDAYS[Number(field) - 1] : field.toUpperCase();
+
+test('the weekly publication crons fire on Tuesday, after the window closes on Monday 16:00 UTC', () => {
+  const config = readFileSync(new URL('../wrangler.jsonc', import.meta.url), 'utf8');
+  const crons = [...config.matchAll(/^\s*"([^"]+)",?\s*$/gm)].map((match) => match[1]);
+  assert.ok(crons.includes(DAILY_SNAPSHOT_CRON), 'daily snapshot cron is configured');
+  const weekly = crons.filter((cron) => cron !== DAILY_SNAPSHOT_CRON);
+  assert.equal(weekly.length, 2);
+  for (const cron of weekly) assert.equal(cloudflareWeekday(cron.split(' ')[4]), 'TUE', cron);
 });
