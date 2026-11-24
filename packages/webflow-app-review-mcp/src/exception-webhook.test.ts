@@ -14,7 +14,7 @@ import {
 import type { HoldNoticeRecord, HoldNoticeStore } from './hold-notices.js';
 import { FIELD_IDS, TABLE_IDS } from './schema.js';
 import { SlackClient } from './slack.js';
-import { ZendeskClient } from './zendesk.js';
+import { DEFAULT_MARKETPLACE_GROUP_ID, ZendeskClient } from './zendesk.js';
 
 function jsonResponse(body: unknown, status = 200) {
   return new Response(JSON.stringify(body), {
@@ -129,6 +129,8 @@ function buildFetchStub(options: {
   payloadsByWebhook: Record<string, AirtableWebhookPayload[]>;
   versionResponse?: () => Response;
   itemResponse?: () => Response;
+  assetResponse?: () => Response;
+  ticketResponse?: () => Response;
 }) {
   const slackCalls: Array<Record<string, unknown>> = [];
   const airtableWrites: Array<{ url: string; body: Record<string, unknown> }> = [];
@@ -167,6 +169,14 @@ function buildFetchStub(options: {
       return (options.itemResponse ?? (() => jsonResponse({ id: 'recItem1', fields: {} })))();
     }
 
+    if (url.includes(`/${encodeURIComponent(TABLE_IDS.assets)}/recAsset1`)) {
+      return (options.assetResponse ?? (() => jsonResponse({ id: 'recAsset1', fields: {} })))();
+    }
+
+    if (url.includes('.zendesk.com/api/v2/tickets/') && (init?.method ?? 'GET') === 'GET') {
+      return (options.ticketResponse ?? (() => jsonResponse({ ticket: {} })))();
+    }
+
     if (url.includes('.zendesk.com/api/v2/tickets/') && init?.method === 'PUT') {
       zendeskCalls.push({ url, body: JSON.parse(String(init.body)) as Record<string, unknown> });
       return jsonResponse({ audit: { id: 9001 }, ticket: { status: 'open' } });
@@ -186,7 +196,7 @@ function buildFetchStub(options: {
 function buildDeps(
   fetchFn: typeof fetch,
   store: WebhookLegStateStore,
-  extras: Partial<Pick<ExceptionWebhookProcessorDeps, 'zendesk' | 'holdNotices'>> = {},
+  extras: Partial<Pick<ExceptionWebhookProcessorDeps, 'zendesk' | 'holdNotices' | 'ticketAccountCc'>> = {},
 ): ExceptionWebhookProcessorDeps {
   return {
     airtable: new AirtableClient({ apiKey: 'at-token', fetchFn }),
@@ -256,7 +266,7 @@ describe('registerExceptionWebhooks', () => {
     );
     expect(specs[0]).toMatchObject({
       recordChangeScope: TABLE_IDS.assetVersions,
-      watchDataInFieldIds: [V.exceptionStatus, V.holdReason],
+      watchDataInFieldIds: [V.exceptionStatus, V.holdReason, V.zendeskTicketId],
     });
     expect(specs[1]).toMatchObject({
       recordChangeScope: TABLE_IDS.exceptions,
@@ -1055,5 +1065,213 @@ describe('createD1WebhookStateStore', () => {
     await store.markPending();
     expect(await store.consumePending()).toBe(true);
     expect(await store.consumePending()).toBe(false);
+  });
+});
+
+describe('review-ticket account CC (CRE-2567)', () => {
+  const A = FIELD_IDS.assets;
+
+  const ticketIdPayload = (ticketId: string | null): AirtableWebhookPayload => ({
+    actionMetadata: { source: 'publicApi' },
+    changedTablesById: {
+      [TABLE_IDS.assetVersions]: {
+        changedRecordsById: {
+          recVersion1: { current: { cellValuesByFieldId: { [V.zendeskTicketId]: ticketId } } },
+        },
+      },
+    },
+  });
+
+  const appAsset = (fields: Record<string, unknown> = {}) => () =>
+    jsonResponse({
+      id: 'recAsset1',
+      fields: { [A.clientId]: 'client-123', [A.creatorWfAccountEmail]: ['account@acme.example'], ...fields },
+    });
+
+  const reviewTicket = (requesterEmail: string) => () =>
+    jsonResponse({
+      ticket: { status: 'hold', group_id: DEFAULT_MARKETPLACE_GROUP_ID, requester_id: 11, email_cc_ids: [] },
+      users: [{ id: 11, email: requesterEmail }],
+    });
+
+  const linkedVersion = () =>
+    versionRecordResponse({ [V.assetLink]: ['recAsset1'], [V.zendeskTicketId]: '1000001' });
+
+  function zendeskClient(fetchFn: unknown) {
+    return new ZendeskClient({
+      subdomain: 'webflow2579',
+      email: 'bot@example.com',
+      apiToken: 'zd',
+      fetchFn: fetchFn as typeof fetch,
+    });
+  }
+
+  it('adds the Webflow account email as a CC when the Zap writes the ticket ID', async () => {
+    const { fetchFn, zendeskCalls, slackCalls } = buildFetchStub({
+      payloadsByWebhook: { achVersions: [ticketIdPayload('1000001')] },
+      versionResponse: linkedVersion,
+      assetResponse: appAsset(),
+      ticketResponse: reviewTicket('support@acme.example'),
+    });
+    const store = memoryStore(baseState());
+
+    const result = await processExceptionWebhookPayloads(
+      buildDeps(fetchFn as unknown as typeof fetch, store, { ticketAccountCc: { zendesk: zendeskClient(fetchFn) } }),
+    );
+
+    expect(result.errors).toEqual([]);
+    expect(result.actions).toContain('ticket-cc recVersion1 ticket 1000001 added 1');
+    expect(zendeskCalls).toHaveLength(1);
+    expect(zendeskCalls[0]?.url).toContain('/tickets/1000001.json');
+    // CC only: no comment, so Zendesk sends no email for this update.
+    expect(zendeskCalls[0]?.body).toEqual({
+      ticket: { email_ccs: [{ user_email: 'account@acme.example', action: 'put' }] },
+    });
+    expect(slackCalls).toHaveLength(0);
+    // The action log and the stored retry state carry no address.
+    expect(JSON.stringify(result.actions)).not.toContain('@');
+    expect(JSON.stringify(store.state)).not.toContain('@');
+  });
+
+  it('adds no CC when the account email is the ticket requester', async () => {
+    const { fetchFn, zendeskCalls } = buildFetchStub({
+      payloadsByWebhook: { achVersions: [ticketIdPayload('1000001')] },
+      versionResponse: linkedVersion,
+      assetResponse: appAsset(),
+      ticketResponse: reviewTicket('Account@Acme.example'),
+    });
+
+    const result = await processExceptionWebhookPayloads(
+      buildDeps(fetchFn as unknown as typeof fetch, memoryStore(baseState()), {
+        ticketAccountCc: { zendesk: zendeskClient(fetchFn) },
+      }),
+    );
+
+    expect(result.errors).toEqual([]);
+    expect(result.actions).toContain('ticket-cc recVersion1 skipped: nothing-to-add');
+    expect(zendeskCalls).toHaveLength(0);
+  });
+
+  it('adds no CC for a version whose asset is not an app', async () => {
+    const { fetchFn, zendeskCalls } = buildFetchStub({
+      payloadsByWebhook: { achVersions: [ticketIdPayload('1000001')] },
+      versionResponse: linkedVersion,
+      assetResponse: () =>
+        jsonResponse({ id: 'recAsset1', fields: { [A.creatorWfAccountEmail]: ['account@acme.example'] } }),
+    });
+
+    const result = await processExceptionWebhookPayloads(
+      buildDeps(fetchFn as unknown as typeof fetch, memoryStore(baseState()), {
+        ticketAccountCc: { zendesk: zendeskClient(fetchFn) },
+      }),
+    );
+
+    expect(result.errors).toEqual([]);
+    expect(result.actions).toContain('ticket-cc recVersion1 skipped: not-an-app');
+    expect(zendeskCalls).toHaveLength(0);
+  });
+
+  it('records a Zendesk failure and still completes the payload', async () => {
+    const holdAndTicket: AirtableWebhookPayload = {
+      actionMetadata: { source: 'publicApi' },
+      changedTablesById: {
+        [TABLE_IDS.assetVersions]: {
+          changedRecordsById: {
+            recVersion1: {
+              current: {
+                cellValuesByFieldId: {
+                  [V.holdReason]: { id: 'sel', name: 'Awaiting Creator Response' },
+                  [V.zendeskTicketId]: '1000001',
+                },
+              },
+            },
+          },
+        },
+      },
+    };
+    const { fetchFn, zendeskCalls, slackCalls } = buildFetchStub({
+      payloadsByWebhook: { achVersions: [holdAndTicket] },
+      versionResponse: () =>
+        versionRecordResponse({
+          [V.assetLink]: ['recAsset1'],
+          [V.zendeskTicketId]: '1000001',
+          [V.exceptionSlackTs]: '1786000000.000900',
+        }),
+      assetResponse: appAsset(),
+      ticketResponse: () => jsonResponse({ error: 'ServerError' }, 500),
+    });
+    const store = memoryStore(baseState());
+
+    const result = await processExceptionWebhookPayloads(
+      buildDeps(fetchFn as unknown as typeof fetch, store, { ticketAccountCc: { zendesk: zendeskClient(fetchFn) } }),
+    );
+
+    expect(result.errors).toEqual(['ticket-cc recVersion1 failed: ZENDESK_REQUEST_FAILED']);
+    expect(zendeskCalls).toHaveLength(0);
+    // The hold handler in the same payload ran, and the payload is done: no retry, no dead letter.
+    expect(result.actions).toContain('hold recVersion1');
+    expect(slackCalls).toHaveLength(1);
+    const versions = store.state?.webhooks.find((w) => w.id === 'achVersions');
+    expect(versions?.cursor).toBe(2);
+    expect(versions?.retry).toBeUndefined();
+    expect(store.state?.failedPayloads ?? []).toEqual([]);
+  });
+
+  it('writes the CC once when the same ticket ID arrives two times', async () => {
+    let ccOnTicket = false;
+    const { fetchFn, zendeskCalls } = buildFetchStub({
+      payloadsByWebhook: { achVersions: [ticketIdPayload('1000001'), ticketIdPayload('1000001')] },
+      versionResponse: linkedVersion,
+      assetResponse: appAsset(),
+      ticketResponse: () => {
+        const response = jsonResponse({
+          ticket: {
+            status: 'hold',
+            group_id: DEFAULT_MARKETPLACE_GROUP_ID,
+            requester_id: 11,
+            email_cc_ids: ccOnTicket ? [12] : [],
+          },
+          users: [
+            { id: 11, email: 'support@acme.example' },
+            ...(ccOnTicket ? [{ id: 12, email: 'account@acme.example' }] : []),
+          ],
+        });
+        ccOnTicket = true; // the first pass adds the CC before the second payload is read
+        return response;
+      },
+    });
+
+    const result = await processExceptionWebhookPayloads(
+      buildDeps(fetchFn as unknown as typeof fetch, memoryStore(baseState()), {
+        ticketAccountCc: { zendesk: zendeskClient(fetchFn) },
+      }),
+    );
+
+    expect(result.errors).toEqual([]);
+    expect(zendeskCalls).toHaveLength(1);
+    expect(result.actions).toEqual([
+      'ticket-cc recVersion1 ticket 1000001 added 1',
+      'ticket-cc recVersion1 skipped: nothing-to-add',
+    ]);
+  });
+
+  it('does nothing when the feature is off or the ticket ID was cleared', async () => {
+    const off = buildFetchStub({ payloadsByWebhook: { achVersions: [ticketIdPayload('1000001')] } });
+    const offResult = await processExceptionWebhookPayloads(
+      buildDeps(off.fetchFn as unknown as typeof fetch, memoryStore(baseState())),
+    );
+    expect(offResult.errors).toEqual([]);
+    expect(offResult.actions).toEqual([]);
+    expect(off.zendeskCalls).toHaveLength(0);
+
+    const cleared = buildFetchStub({ payloadsByWebhook: { achVersions: [ticketIdPayload(null)] } });
+    const clearedResult = await processExceptionWebhookPayloads(
+      buildDeps(cleared.fetchFn as unknown as typeof fetch, memoryStore(baseState()), {
+        ticketAccountCc: { zendesk: zendeskClient(cleared.fetchFn) },
+      }),
+    );
+    expect(clearedResult.errors).toEqual([]);
+    expect(clearedResult.actions).toEqual([]);
+    expect(cleared.zendeskCalls).toHaveLength(0);
   });
 });

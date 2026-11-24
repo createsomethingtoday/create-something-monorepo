@@ -417,6 +417,19 @@ Copy is creator-facing (greeting, sign-off, plain language, no "exception"/"Airt
 
 **Flowout (the case that surfaced this):** held 8/18 by hand, before the automation and before this leg — no notice record exists, so no auto-reminder will fire; the developer updates for Optibase v102 and Awesome Popups v5 are sent by hand via `app_review_send_ticket_followup`. Optibase item #9 was re-examined 9/16 and downgraded from "development build" to a webflow.json telemetry cleanup (row `recberK0eRiEM9AQ1` rewritten; see memory `optibase-v102-exceptions`).
 
+## Review-ticket CC for the Webflow account email (worker, CRE-2567)
+
+**Why:** all review email goes to the ticket requester, which is the "Review contact email" from the submission form. In October 2026 a developer entered a support inbox there and missed two rounds of feedback. Their monitored address was the Webflow account email.
+
+**What runs:** `src/ticket-account-cc.ts`, wired through the webhook leg. The versions subscription also watches 🧘ZD ID. When the Zap writes the ticket ID to an app version, the worker reads the asset's `🎨📧 Creator WF Account Email` (the 👀 Override wins) and adds it to the ticket as an email CC when it is not the requester. The update has no comment, so Zendesk sends nothing at that time. The CC address gets the later public comments.
+
+- **Limit:** the Zap posts the first "thank you" comment before it writes the ticket ID, so the CC address does not get that first email.
+- **Skips:** template and library versions, a ticket outside the Marketplace Review group, a closed ticket, an empty or invalid account email, and an address that is already the requester or a CC. The action log shows `ticket-cc <versionId> ...` with no address.
+- **Best effort:** an Airtable or Zendesk error in this step is recorded as `ticket-cc <versionId> failed: <code>` and the payload continues. It is not retried, so that a Zendesk problem cannot hold back exception and hold changes.
+- **Kill switch:** `TICKET_ACCOUNT_CC_DISABLED=1`. `/health` reports `ticketAccountCc.enabled` + `zendeskConfigured`.
+- **Go-live:** a subscription keeps the field list it was created with. After the deploy, run `POST /webhooks/airtable/register?force=1` (bearer-authenticated) so the versions subscription watches 🧘ZD ID.
+- **Not changed:** the review notification Zap and the Airtable notification scripts. Zapier blocks a publish of that Zap until its Zendesk steps move from app version 1.13.0 to 2.2.0 (deadline 2027-04-30). When that upgrade is done, the Create Ticket step can take the CC (`Email CC` field) and this leg can go.
+
 ## Not done / future
 
 - **Decision-chain retirement + AI-native pipeline (direction 9/10/2026)**: see the **Direction (9/10/2026)** section near the top. Greg's partner-lead lane ends, Adam & team decide directly, Daybreak Blue enters as an independent AI security reviewer, developer docs and skills go AI-native. Checklist there; nothing live changed yet.

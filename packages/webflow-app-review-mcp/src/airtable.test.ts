@@ -1488,3 +1488,68 @@ describe('setVersionZendeskTicket', () => {
     expect(result.previousTicketId).toBe('1188879');
   });
 });
+
+describe('AirtableClient.getVersionTicketCcContext (CRE-2567)', () => {
+  const V = FIELD_IDS.versions;
+  const A = FIELD_IDS.assets;
+
+  function clientFor(version: Record<string, unknown> | null, asset: Record<string, unknown> | null) {
+    const fetchFn = vi.fn(async (input: RequestInfo | URL) => {
+      const url = String(input);
+      if (url.includes(`/${TABLE_IDS.assetVersions}/recVersion1`)) {
+        return version ? jsonResponse({ id: 'recVersion1', fields: version }) : jsonResponse({ error: 'NOT_FOUND' }, 404);
+      }
+      if (url.includes(`/${TABLE_IDS.assets}/recAsset1`)) {
+        return asset ? jsonResponse({ id: 'recAsset1', fields: asset }) : jsonResponse({ error: 'NOT_FOUND' }, 404);
+      }
+      throw new Error(`Unexpected fetch: ${url}`);
+    });
+    return new AirtableClient({ apiKey: 'token', fetchFn: fetchFn as unknown as typeof fetch });
+  }
+
+  it('reads the ticket ID from the version and the account email from its app asset', async () => {
+    const client = clientFor(
+      { [V.assetLink]: ['recAsset1'], [V.zendeskTicketId]: '1000001' },
+      { [A.clientId]: 'client_123', [A.creatorWfAccountEmail]: ['account@acme.example'] },
+    );
+
+    expect(await client.getVersionTicketCcContext('recVersion1')).toEqual({
+      versionId: 'recVersion1',
+      assetId: 'recAsset1',
+      isApp: true,
+      zendeskTicketId: '1000001',
+      wfAccountEmails: ['account@acme.example'],
+    });
+  });
+
+  it('uses the override when it is set', async () => {
+    const client = clientFor(
+      { [V.assetLink]: ['recAsset1'], [V.zendeskTicketId]: '1000001' },
+      {
+        [A.clientId]: 'client_123',
+        [A.creatorWfAccountEmail]: ['account@acme.example'],
+        [A.creatorWfAccountEmailOverride]: 'owner@acme.example',
+      },
+    );
+
+    expect((await client.getVersionTicketCcContext('recVersion1'))?.wfAccountEmails).toEqual(['owner@acme.example']);
+  });
+
+  it('marks a template or library asset as not an app', async () => {
+    const client = clientFor(
+      { [V.assetLink]: ['recAsset1'], [V.zendeskTicketId]: '1000001' },
+      { [A.name]: 'A template', [A.creatorWfAccountEmail]: ['account@acme.example'] },
+    );
+
+    expect((await client.getVersionTicketCcContext('recVersion1'))?.isApp).toBe(false);
+  });
+
+  it('returns null for a missing version and no emails for a missing asset', async () => {
+    expect(await clientFor(null, null).getVersionTicketCcContext('recVersion1')).toBeNull();
+    expect(
+      await clientFor({ [V.assetLink]: ['recAsset1'], [V.zendeskTicketId]: '1000001' }, null).getVersionTicketCcContext(
+        'recVersion1',
+      ),
+    ).toEqual({ versionId: 'recVersion1', assetId: 'recAsset1', isApp: false, zendeskTicketId: '1000001', wfAccountEmails: [] });
+  });
+});

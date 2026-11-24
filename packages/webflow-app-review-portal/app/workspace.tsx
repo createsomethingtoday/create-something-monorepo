@@ -20,6 +20,7 @@ import {
 } from 'lucide-react';
 import { rejectionReasons } from '@/lib/review-contract';
 import { PendingFeedback, DeliveryWarning, ReviewConversation } from './review-evidence';
+import { CommentBody } from './comment-body';
 
 type View = 'queue' | 'bundles' | 'activity' | 'settings';
 type Session = {
@@ -634,13 +635,17 @@ export default function Workspace() {
                           <dd>{version?.zendeskTicketId || 'No linked ticket'}</dd>
                         </dl>
                         <h3>Review feedback</h3>
-                        <p className="portal-pre">
-                          {version?.reviewFeedback || 'No review feedback recorded.'}
-                        </p>
+                        {version?.reviewFeedback ? (
+                          <CommentBody body={version.reviewFeedback} />
+                        ) : (
+                          <p>No review feedback recorded.</p>
+                        )}
                         <h3>Rejection feedback</h3>
-                        <p className="portal-pre">
-                          {version?.rejectionFeedback || 'No rejection feedback recorded.'}
-                        </p>
+                        {version?.rejectionFeedback ? (
+                          <CommentBody body={version.rejectionFeedback} />
+                        ) : (
+                          <p>No rejection feedback recorded.</p>
+                        )}
                         <details>
                           <summary>Full submission data</summary>
                           <pre>
