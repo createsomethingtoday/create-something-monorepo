@@ -32,6 +32,7 @@ import { fetchPreviewSiteData, findUnusedStylesInSiteData, parsePreviewLink } fr
 import { fetchHTML, isPlatformManagedHeading, parseHTML } from '../utils/fetch-utils';
 import { analyzeHeadingSequence, extractDocumentOutline, visibleOutlineHeadings } from '../utils/document-outline';
 import { isWebflowGeneratedVideoPosterSource } from '../utils/asset-utils';
+import { hasTemplateTitleSuffix } from '../utils/template-title';
 import { imageSpaceReserved, loadPageStyles, type PageStyles, type StyledNode } from './image-reserved-space';
 import { auditFontLicenses } from './font-licenses';
 import {
@@ -1364,7 +1365,7 @@ function generateSEOIssues(pages: AnalyzedPage[]): ValidationIssue[] {
 					recommendedLength: '30-60 characters'
 				}
 			});
-		} else if (seo.titleLength > 60) {
+		} else if (seo.titleLength > 60 && !hasTemplateTitleSuffix(seo.title)) {
 			seoIssues.push({
 				id: `title-too-long-${generatePageId(page.url)}`,
 				category: 'Content & Accessibility',

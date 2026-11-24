@@ -8,6 +8,8 @@
  */
 
 import { DesignerData, ValidationIssue, VariableMode } from '../types';
+import { followsPageTitleFormat, hasTemplateTitleSuffix, parseHomeTitle } from '../utils/template-title';
+import { findStaticValuesMatchingVariables } from './static-style-values';
 
 export interface DesignerValidationResult {
   categories: CategoryResult[];
@@ -42,7 +44,7 @@ export async function validateDesignerData(designerData: DesignerData): Promise<
     categories.push(validateVariableModes(variables));
   }
   categories.push(validateComponents(components));
-  categories.push(validateStyles(styles, designerData.mediaQueries));
+  categories.push(validateStyles(styles, designerData.mediaQueries, variables));
   categories.push(validateRequiredPages(pages));
   categories.push(validatePageStructure(pages));
   categories.push(validatePageSEO(pages));
@@ -449,7 +451,8 @@ function validateComponents(components: DesignerData['components']): CategoryRes
 // --- Styles Validation ---
 function validateStyles(
   styles: DesignerData['styles'],
-  mediaQueries: DesignerData['mediaQueries']
+  mediaQueries: DesignerData['mediaQueries'],
+  variables: DesignerData['variables']
 ): CategoryResult {
   const issues: ValidationIssue[] = [];
   const totalClasses = styles.length;
@@ -518,6 +521,25 @@ function validateStyles(
       message: `${overflowing.length} classes set a fixed pixel width wider than a breakpoint, so content will overflow.`,
       details: { count: overflowing.length, sample: overflowing.slice(0, 5) },
       howToFix: 'At smaller breakpoints, use relative widths (%, vw) or a max-width of 100% instead of fixed px widths larger than the viewport.'
+    });
+  }
+
+  // A list for the creator: each value has a Variable with the same value.
+  const unlinked = findStaticValuesMatchingVariables(styles, variables);
+  if (unlinked.length > 0) {
+    const styleCount = new Set(unlinked.map((finding) => finding.style)).size;
+    issues.push({
+      id: 'styles.static-values-not-linked',
+      category: 'Styles',
+      severity: 'warning',
+      message: `${unlinked.length} static value(s) in ${styleCount} style(s) match a Variable but are not linked to it.`,
+      details: {
+        count: unlinked.length,
+        locations: unlinked
+          .slice(0, 10)
+          .map((finding) => `${finding.style}: ${finding.property} ${finding.value} (Variable "${finding.variable}")`)
+      },
+      howToFix: 'In the Style panel, link each listed value to the Variable that has the same value. A value that the template uses one time can stay static.'
     });
   }
 
@@ -748,10 +770,6 @@ function validateRequiredPages(pages: DesignerData['pages']): CategoryResult {
 }
 
 // --- Page SEO Validation (Designer API data — covers CMS template pages) ---
-// "{Template Name} - Webflow HTML website template" or the Ecommerce variant.
-// Case and the dash character are not judged; the template name must be present.
-const HOME_TITLE_FORMAT = /^\S.*\s[-–—]\s+webflow (html|ecommerce) website template$/i;
-
 function validatePageSEO(pages: DesignerData['pages']): CategoryResult {
   const issues: ValidationIssue[] = [];
   const eligiblePages = pages.filter(
@@ -853,8 +871,12 @@ function validatePageSEO(pages: DesignerData['pages']): CategoryResult {
     });
   }
 
-  // Length guidance stays advisory.
-  const longTitles = staticPages.filter(p => (p.seo?.title?.trim().length || 0) > 60);
+  // Length guidance stays advisory. A title in the required format is longer
+  // than other titles by its suffix, so the 60-character limit does not apply to it.
+  const longTitles = staticPages.filter(p => {
+    const title = p.seo?.title?.trim() || '';
+    return title.length > 60 && !hasTemplateTitleSuffix(title);
+  });
   if (longTitles.length > 0) {
     issues.push({
       id: 'seo.title-too-long',
@@ -910,7 +932,8 @@ function validatePageSEO(pages: DesignerData['pages']): CategoryResult {
   // The submission guidelines fix the home SEO title to the template name plus a
   // set suffix. An empty title is already reported as seo.missing-title.
   const homeTitle = homePage?.seo?.title?.trim();
-  if (homeTitle && !HOME_TITLE_FORMAT.test(homeTitle)) {
+  const homeTitleParts = homeTitle ? parseHomeTitle(homeTitle) : null;
+  if (homeTitle && !homeTitleParts) {
     issues.push({
       id: 'seo.home-title-format',
       category: 'SEO Metadata',
@@ -919,6 +942,31 @@ function validatePageSEO(pages: DesignerData['pages']): CategoryResult {
       details: { currentTitle: homeTitle },
       howToFix: 'Set the home page SEO title to "{Template Name} - Webflow HTML website template". Ecommerce templates use "{Template Name} - Webflow Ecommerce website template".'
     });
+  }
+
+  // Each other page puts its own name before the Home title. The template name
+  // comes from the Home title, so there is no finding until that title is in
+  // its format. An empty title is already reported as seo.missing-title.
+  if (homeTitleParts) {
+    const offFormat = publishedPages.filter(p => {
+      const title = p.seo?.title?.trim();
+      return p !== homePage && !!title && !followsPageTitleFormat(title, homeTitleParts.templateName);
+    });
+    if (offFormat.length > 0) {
+      issues.push({
+        id: 'seo.page-title-format',
+        category: 'SEO Metadata',
+        severity: 'warning',
+        message: `${offFormat.length} page(s) other than Home do not follow the SEO title format.`,
+        // A CMS field binding is a long token in the Designer data; the list shows it as "{CMS field}".
+        details: {
+          pages: offFormat
+            .slice(0, 10)
+            .map(p => `${label(p)}: "${(p.seo?.title || '').trim().replace(/\{\{wf\s[\s\S]*?\}\}/g, '{CMS field}')}"`)
+        },
+        howToFix: `Set the SEO title of each page other than Home to "{Page Name} - ${homeTitleParts.templateName} - ${homeTitleParts.suffix}". On a CMS template page, use the item name field as the page name.`
+      });
+    }
   }
 
   const cmsMissingOgImage = cmsTemplatePages.filter(p => !p.seo?.openGraphImage?.trim());
