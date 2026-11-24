@@ -12,6 +12,8 @@ const DASH = '\\s[-–—]\\s+';
 
 const HOME_TITLE_FORMAT = new RegExp(`^(\\S.*)${DASH}${SUFFIX}$`, 'i');
 const TITLE_SUFFIX = new RegExp(`${DASH}${SUFFIX}$`, 'i');
+/** A Home label and its separator: "Home - ", "Home One | ", "Home V1 - ". */
+const HOME_LABEL = /^home(page)?\b[^-–—|·:]*\s+[-–—|·:]\s+/i;
 
 export interface HomeTitle {
 	templateName: string;
@@ -22,13 +24,14 @@ export interface HomeTitle {
 /**
  * The parts of a Home title, or `null` when the title is not in the Home format.
  *
- * The Home format accepts text before the name ("Home | Acme - Webflow HTML
- * website template"), so the template name is the last part before the suffix.
+ * The Home format accepts a Home label before the name ("Home One | Acme -
+ * Webflow HTML website template"). The label is not part of the template name.
+ * All other text before the suffix is the name, with its separators ("Acme - Studio").
  */
 export function parseHomeTitle(title: string): HomeTitle | null {
 	const match = HOME_TITLE_FORMAT.exec(title.trim());
 	if (!match) return null;
-	const templateName = match[1].split(/\s+[-–—|·:]\s+/).pop()?.trim() || match[1].trim();
+	const templateName = match[1].replace(HOME_LABEL, '').trim() || match[1].trim();
 	const kind = match[2].toLowerCase() === 'ecommerce' ? 'Ecommerce' : 'HTML';
 	return { templateName, suffix: `Webflow ${kind} website template` };
 }

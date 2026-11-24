@@ -67,8 +67,8 @@ describe('SEO title format on pages other than Home', () => {
 		expect(ecommerce?.howToFix).toContain('"{Page Name} - Acme Store - Webflow Ecommerce website template"');
 	});
 
-	it('takes the template name from the last part of a Home title that has more text before it', async () => {
-		const prefixedHome = { ...HOME, seo: { ...HOME.seo, title: 'Home One | Acme - Webflow HTML website template' } };
+	it.each(['Home One | Acme', 'Home - Acme', 'Home V1 - Acme'])('does not put the Home label of "%s" in the template name', async (homeName) => {
+		const prefixedHome = { ...HOME, seo: { ...HOME.seo, title: `${homeName} - Webflow HTML website template` } };
 		const category = await seoCategory([
 			prefixedHome,
 			page('About', 'About - Acme - Webflow HTML website template'),
@@ -77,6 +77,18 @@ describe('SEO title format on pages other than Home', () => {
 		const issue = formatIssue(category);
 		expect(issue?.details?.pages).toEqual(['Contact (/contact): "Contact | Acme - Webflow HTML website template"']);
 		expect(issue?.howToFix).toContain('"{Page Name} - Acme - Webflow HTML website template"');
+	});
+
+	it('keeps a separator that is part of the template name', async () => {
+		const home = { ...HOME, seo: { ...HOME.seo, title: 'Acme - Studio - Webflow HTML website template' } };
+		const category = await seoCategory([
+			home,
+			page('About', 'About - Acme - Studio - Webflow HTML website template'),
+			page('Contact', 'Contact - Studio - Webflow HTML website template')
+		]);
+		const issue = formatIssue(category);
+		expect(issue?.details?.pages).toEqual(['Contact (/contact): "Contact - Studio - Webflow HTML website template"']);
+		expect(issue?.howToFix).toContain('"{Page Name} - Acme - Studio - Webflow HTML website template"');
 	});
 
 	it('judges CMS template pages, utility pages and the 404 page', async () => {

@@ -18,6 +18,7 @@
  */
 
 import type { StyleData, VariableData } from '../types';
+import { CSS_NAMED_COLORS } from '../utils/css-named-colors';
 
 export interface StaticValueFinding {
 	style: string;
@@ -56,11 +57,6 @@ for (const side of SIDES) {
 
 type Rgba = [number, number, number, number];
 
-const NAMED_COLORS: Record<string, Rgba> = {
-	white: [255, 255, 255, 1],
-	black: [0, 0, 0, 1],
-	transparent: [0, 0, 0, 0]
-};
 
 function alpha(value: string | undefined): number | null {
 	if (value === undefined) return 1;
@@ -79,13 +75,13 @@ function hslToRgb(h: number, s: number, l: number): [number, number, number] {
 	return [(r + m) * 255, (g + m) * 255, (b + m) * 255];
 }
 
-/** A color the Designer writes as hex, rgb(), hsl() or a basic name. Other names give `null`. */
+/** A color the Designer writes as hex, rgb(), hsl() or a CSS color name. Other values give `null`. */
 function parseColor(input: unknown): Rgba | null {
 	if (typeof input !== 'string') return null;
 	const value = input.trim().toLowerCase();
-	if (value in NAMED_COLORS) return NAMED_COLORS[value];
+	if (value === 'transparent') return [0, 0, 0, 0];
 
-	const hex = /^#([0-9a-f]{3,8})$/.exec(value)?.[1];
+	const hex = CSS_NAMED_COLORS.get(value) ?? /^#([0-9a-f]{3,8})$/.exec(value)?.[1];
 	if (hex && [3, 4, 6, 8].includes(hex.length)) {
 		const full = hex.length <= 4 ? [...hex].map((c) => c + c).join('') : hex;
 		const channel = (index: number) => Number.parseInt(full.slice(index, index + 2), 16);

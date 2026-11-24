@@ -74,6 +74,22 @@ describe('static values that match a Variable', () => {
 		).toEqual([]);
 	});
 
+	it('reads a CSS color name on the Variable and on the static value', () => {
+		const variables: VariableData = {
+			collections: [{ id: 'c1', name: 'Colors', variables: [{ id: 'variable-smoke', name: 'White Smoke', type: 'Color', value: 'whitesmoke' }] }]
+		};
+		expect(
+			find(
+				[
+					style('Band', { 'background-color': 'whitesmoke' }),
+					style('Panel', { 'background-color': 'hsla(0, 0.00%, 96.08%, 1.00)' }),
+					style('Note', { color: 'currentcolor', 'border-top-color': 'constructor' })
+				],
+				variables
+			)
+		).toEqual(['Band: background-color whitesmoke (White Smoke)', 'Panel: background-color hsla(0, 0.00%, 96.08%, 1.00) (White Smoke)']);
+	});
+
 	it('does not match a half-transparent color to an opaque Variable', () => {
 		expect(find([style('Overlay', { 'background-color': 'hsla(0, 0.00%, 100.00%, 0.50)' })])).toEqual([]);
 	});
