@@ -65,7 +65,7 @@
     "abundance-jobs-mcp": {
       "transport": "http",
       "url": "https://abundance-jobs-mcp.createsomething.workers.dev/mcp",
-      "description": "Abundance Jobs MCP for public healthcare and nursing job discovery, including list/search/read tools and a confirmation-gated funnel write action.",
+      "description": "Abundance Jobs MCP for public healthcare job discovery, nursing listings by state and a confirmation-gated funnel action.",
       "bearer_token_env_var": "ABUNDANCE_MCP_BEARER_TOKEN",
       "tags": [
         "client",
@@ -76,7 +76,7 @@
       ],
       "package_path": "packages/abundance-jobs-mcp",
       "catalog_exposure_mode": "direct",
-      "estimated_tool_count": 4,
+      "estimated_tool_count": 7,
       "setupNotes": "Source-controlled Worker reads from the normalized abundance_public_jobs table and refreshes RapidAPI Active Jobs through an authenticated admin endpoint. Uses the shared Abundance MCP bearer from prod:/mcp-hub/hubs."
     },
     "abundance-healthcare-mcp": {

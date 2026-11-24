@@ -28,6 +28,68 @@ const server = createServer(async (req, res) => {
       res.end(await readFile(file));
       return;
     }
+    if (url.pathname === '/api/abundance/healthcare-providers/jobs') {
+      res.setHeader('Content-Type', 'application/json');
+      const all = [
+        {
+          id: 'fixture-tx',
+          title: 'Nurse Practitioner, Primary Care',
+          employer: 'Synthetic Health Texas',
+          city: 'Austin',
+          state: 'TX',
+          specialty: 'Primary Care',
+          employment_type: 'Full time',
+          source_url: 'https://example.com/jobs/tx',
+          last_seen_at: new Date().toISOString(),
+          fetched_at: new Date().toISOString(),
+          posted_at: '2026-11-01T00:00:00Z',
+          status: 'open'
+        },
+        {
+          id: 'fixture-ca',
+          title: 'Nurse Practitioner, Behavioral Health',
+          employer: 'Synthetic Health California',
+          city: 'Sacramento',
+          state: 'CA',
+          specialty: 'Behavioral Health',
+          source_url: 'https://example.com/jobs/ca',
+          last_seen_at: '2025-01-01T00:00:00Z',
+          fetched_at: new Date().toISOString(),
+          status: 'open'
+        }
+      ];
+      const q = (url.searchParams.get('q') || '').toLowerCase();
+      const base = all.filter(
+        (job) =>
+          (!q || JSON.stringify(job).toLowerCase().includes(q)) &&
+          (!url.searchParams.get('specialty') ||
+            job.specialty === url.searchParams.get('specialty'))
+      );
+      const jobs = base.filter(
+        (job) => !url.searchParams.get('state') || job.state === url.searchParams.get('state')
+      );
+      res.end(
+        JSON.stringify({
+          success: true,
+          data: {
+            jobs,
+            total: jobs.length,
+            limit: 25,
+            offset: 0,
+            states: [...new Set(base.map((job) => job.state))].map((state) => ({
+              state,
+              count: base.filter((job) => job.state === state).length
+            })),
+            specialties: all.map((job) => ({ specialty: job.specialty, count: 1 })),
+            freshness: {
+              lastSeenAt: jobs[0]?.last_seen_at || null,
+              fetchedAt: jobs[0]?.fetched_at || null
+            }
+          }
+        })
+      );
+      return;
+    }
     if (url.pathname === '/__fixture/commands') {
       res.setHeader('Content-Type', 'application/json');
       res.end(JSON.stringify(state?.commands ?? []));

@@ -74,6 +74,20 @@ import { sourcesForMessage } from './turn-sources';
 import { MarketActivity } from './MarketActivity';
 import npgLogo from './assets/npg-logo.png';
 
+const Jobs = React.lazy(() =>
+  import('./Jobs')
+    .then(module => ({ default: module.Jobs }))
+    .catch(() => ({
+      default: ({ onBack }: { onBack: () => void }) => (
+        <VStack gap={3}>
+          <Banner status="error" title="Jobs could not load" description="Refresh to load the latest workspace." />
+          <Button label="Refresh workspace" onClick={() => window.location.reload()} />
+          <Button label="Back to analyst" variant="ghost" onClick={onBack} />
+        </VStack>
+      )
+    }))
+);
+
 const endpoint = '/delivery/abundance/healthcare-analyst/api';
 const examples = [
   {
@@ -841,6 +855,14 @@ export function Workspace({ bootstrap }: { bootstrap: NpgBootstrap }) {
   const [needsRefresh, setNeedsRefresh] = useState(false);
   const [submitted, setSubmitted] = useState('');
   const [marketsOpen, setMarketsOpen] = useState(false);
+  const [jobsOpen, setJobsOpenState] = useState(() => new URL(window.location.href).searchParams.get('view') === 'jobs');
+  const setJobsOpen = (open: boolean) => {
+    setJobsOpenState(open);
+    const location = new URL(window.location.href);
+    if (open) location.searchParams.set('view', 'jobs');
+    else if (location.searchParams.get('view') === 'jobs') location.searchParams.delete('view');
+    window.history.replaceState(window.history.state, '', location);
+  };
   const [navOpen, setNavOpen] = useState(false);
   const [resultsOpen, setResultsOpen] = useState(false);
   const resultsPreference = useRef<boolean | null>(
@@ -1787,18 +1809,33 @@ export function Workspace({ bootstrap }: { bootstrap: NpgBootstrap }) {
                 icon={<Icon icon={Plus} />}
                 label="New chat"
                 isDisabled={busy}
-                onClick={() => { setMarketsOpen(false); void create(); }}
+                onClick={() => { setMarketsOpen(false); setJobsOpen(false); void create(); }}
               />
               <Button
                 icon={<Icon icon={ChartColumn} />}
                 label="Market activity"
                 variant="ghost"
-                aria-current={marketsOpen ? 'page' : undefined}
+                aria-current={marketsOpen && !jobsOpen ? 'page' : undefined}
                 isDisabled={busy}
                 onClick={() => {
                   const drawer = document.querySelector('dialog[open]');
-                  if (drawer) drawer.addEventListener('close', () => setMarketsOpen(true), { once: true });
-                  else setMarketsOpen(true);
+                  const openMarket = () => { setJobsOpen(false); setMarketsOpen(true); };
+                  if (drawer) drawer.addEventListener('close', openMarket, { once: true });
+                  else openMarket();
+                  setNavOpen(false);
+                }}
+              />
+              <Button
+                icon={<Icon icon={MapPin} />}
+                label="Jobs"
+                variant="ghost"
+                aria-current={jobsOpen ? 'page' : undefined}
+                isDisabled={busy}
+                onClick={() => {
+                  const drawer = document.querySelector('dialog[open]');
+                  const openJobs = () => { setMarketsOpen(false); setJobsOpen(true); };
+                  if (drawer) drawer.addEventListener('close', openJobs, { once: true });
+                  else openJobs();
                   setNavOpen(false);
                 }}
               />
@@ -1849,9 +1886,9 @@ export function Workspace({ bootstrap }: { bootstrap: NpgBootstrap }) {
                     )}
                   </HStack>
                 }
-                isSelected={!marketsOpen && item.id === conversation?.id}
+                isSelected={!jobsOpen && !marketsOpen && item.id === conversation?.id}
                 isDisabled={busy}
-                onClick={() => { setMarketsOpen(false); void open(item.id, true); }}
+                onClick={() => { setMarketsOpen(false); setJobsOpen(false); void open(item.id, true); }}
               />
             ))
           ) : (
@@ -1868,7 +1905,10 @@ export function Workspace({ bootstrap }: { bootstrap: NpgBootstrap }) {
         </SideNav>
       }
     >
-      {marketsOpen ? <MarketActivity onResearch={(locale) => {
+      {jobsOpen ? <React.Suspense fallback={<Text role="status">Loading jobs workspace…</Text>}><Jobs onBack={() => {
+        setJobsOpen(false);
+        focusAfterNavigation(Boolean(conversation?.pending), 'restore');
+      }} /></React.Suspense> : marketsOpen ? <MarketActivity onResearch={(locale) => {
         setMarketsOpen(false);
         void create(`Find nurse practitioners in ${locale}. Show registry coverage and include the complete sourcing CSV.`);
       }} onBack={() => {
