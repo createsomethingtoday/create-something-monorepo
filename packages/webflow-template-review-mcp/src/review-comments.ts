@@ -103,6 +103,21 @@ export interface DecisionSummary extends SummaryInput {
   };
 }
 
+/**
+ * A dated fact about a version's review that the creator was told about, such
+ * as "the review started". The service records it once per version and sends
+ * at most one email for it; `email` says whether the creator got that email.
+ */
+export interface ReviewEvent {
+  id: string;
+  versionRef: string;
+  assetRef: string;
+  kind: 'review_started';
+  occurredAt: string;
+  email?: 'sent' | 'pending' | 'not_sent';
+  emailSentAt?: string | null;
+}
+
 const MAX_SUMMARY_RATING_CHARS = 80;
 const MAX_SUMMARY_AREAS = 20;
 const MAX_SUMMARY_AREA_CHARS = 200;
@@ -312,6 +327,11 @@ export class ReviewCommentsClient {
         ? { ...(notice ? { notify: notice } : {}), ...(expected ? { expected } : {}), ...(summary ? { summary } : {}) }
         : undefined,
     );
+  }
+
+  /** What the creator was told about the review of a version (for example "review started"), oldest first. */
+  listEvents(versionRef: string, actorEmail: string): Promise<ReviewEvent[]> {
+    return this.request('GET', `/v1/versions/${encodeURIComponent(versionRef)}/events`, actorEmail);
   }
 
   /** The decision summary of a version, or null when none is set. */

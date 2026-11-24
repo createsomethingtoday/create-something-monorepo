@@ -155,6 +155,30 @@ describe('GET /api/assets/[id]/comments', () => {
     );
   });
 
+  it('adds when the review of each round started, hides it for a "(No Notification)" round, and survives a failed read', async () => {
+    getReviewRounds.mockResolvedValue([
+      { id: 'recVer2', versionNumber: 2, reviewType: 'Asset Update', rawStatus: '📤Changes Requested (No Notification)' },
+      { id: 'recVer1', versionNumber: 1, reviewType: 'New Asset', rawStatus: '🏃🏾In Review' }
+    ]);
+    const started = (versionRef: string) => ({ id: `e-${versionRef}`, versionRef, assetRef: 'recAsset1', kind: 'review_started', occurredAt: '2026-11-24T20:00:00.000Z' });
+    workerFetch.mockImplementation(async (url: string) =>
+      String(url).endsWith('/events') ? workerReply([started('recVer2'), started('recVer1')]) : workerReply([])
+    );
+
+    const body = (await (await GET(event('GET'))).json()) as { events: unknown[] };
+    expect(body.events).toEqual([{ versionRef: 'recVer1', kind: 'review_started', occurredAt: '2026-11-24T20:00:00.000Z' }]);
+    expect(workerFetch.mock.calls.map(([url]) => url)).toContain('https://comments.example/v1/assets/recAsset1/events');
+
+    const log = vi.spyOn(console, 'error').mockImplementation(() => {});
+    workerFetch.mockImplementation(async (url: string) =>
+      String(url).endsWith('/events') ? workerReply('internal error', 500) : workerReply([])
+    );
+    const response = await GET(event('GET'));
+    expect(response.status).toBe(200);
+    expect(((await response.json()) as { events: unknown[] }).events).toEqual([]);
+    log.mockRestore();
+  });
+
   it('keeps the thread when the summaries call fails', async () => {
     const log = vi.spyOn(console, 'error').mockImplementation(() => {});
     workerFetch.mockImplementation(async (url: string) =>
