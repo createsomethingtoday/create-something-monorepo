@@ -89,6 +89,19 @@ describe('visibleThread', () => {
 		expect(result.summaries.map((s) => s.versionRef)).toEqual(['recVer3', 'recVer1']);
 	});
 
+	it('keeps one "review started" event per round and hides it for a "(No Notification)" round', () => {
+		const started = (versionRef: string, occurredAt = '2026-11-24T20:00:00.000Z') =>
+			({ versionRef, kind: 'review_started', occurredAt }) as const;
+		const result = visibleThread(
+			rounds,
+			[],
+			[],
+			[started('recVer3'), started('recVer3', '2026-11-25T20:00:00.000Z'), started('recVer2'), started('recOther'), started('recVer1')]
+		);
+		expect(result.events).toEqual([started('recVer3'), started('recVer1')]);
+		expect(visibleThread(rounds, [], []).events).toEqual([]);
+	});
+
 	it('drops summaries for versions that are not rounds of the asset, and duplicates', () => {
 		const result = visibleThread(rounds, [], [summary('recOther'), summary('recVer3'), summary('recVer3')]);
 		expect(result.summaries.map((s) => s.versionRef)).toEqual(['recVer3']);

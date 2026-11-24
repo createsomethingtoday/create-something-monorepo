@@ -44,6 +44,16 @@ export interface DecisionSummary {
 	};
 }
 
+/**
+ * A dated fact about a round that the review team told the creator by email,
+ * such as "the review started". Only its kind and time reach the dashboard.
+ */
+export interface ReviewEvent {
+	versionRef: string;
+	kind: 'review_started';
+	occurredAt: string;
+}
+
 export class ReviewCommentsError extends Error {
 	constructor(
 		readonly status: number,
@@ -100,6 +110,22 @@ function releasedOnly(comments: ReviewComment[]): ReviewComment[] {
 
 const strings = (value: unknown): string[] =>
 	Array.isArray(value) ? value.filter((item): item is string => typeof item === 'string') : [];
+
+const EVENT_KINDS: ReadonlyArray<ReviewEvent['kind']> = ['review_started'];
+
+// Only well-formed events of a known kind reach the browser, with these fields only.
+function toCreatorEvents(events: unknown): ReviewEvent[] {
+	if (!Array.isArray(events)) return [];
+	return events.flatMap((event: Partial<ReviewEvent> | null) =>
+		event &&
+		typeof event.versionRef === 'string' &&
+		EVENT_KINDS.includes(event.kind as ReviewEvent['kind']) &&
+		typeof event.occurredAt === 'string' &&
+		!Number.isNaN(Date.parse(event.occurredAt))
+			? [{ versionRef: event.versionRef, kind: event.kind as ReviewEvent['kind'], occurredAt: event.occurredAt }]
+			: []
+	);
+}
 
 // Only the fields the card shows reach the browser. Trust level and asset type
 // stay on the server.
@@ -177,6 +203,26 @@ export function getReviewCommentsClient(env: ReviewCommentsEnv, fetcher: typeof 
 			} catch (err) {
 				console.error(
 					'[Review comments] Decision summaries unavailable:',
+					err instanceof ReviewCommentsError ? err.status : 'unknown',
+					err instanceof Error ? err.message : ''
+				);
+				return [];
+			}
+		},
+
+		/**
+		 * What the review team told the creator about each round outside the
+		 * comments, such as "the review started". A failure is not fatal: the
+		 * thread still shows its comments, so this returns [].
+		 */
+		async listEventsByAsset(assetId: string, creatorEmail: string): Promise<ReviewEvent[]> {
+			try {
+				return toCreatorEvents(
+					await call<unknown>(`/v1/assets/${encodeURIComponent(assetId)}/events`, creatorEmail)
+				);
+			} catch (err) {
+				console.error(
+					'[Review comments] Review events unavailable:',
 					err instanceof ReviewCommentsError ? err.status : 'unknown',
 					err instanceof Error ? err.message : ''
 				);
