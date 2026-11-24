@@ -9,9 +9,11 @@
     "crons": [
       // Tuesday 08:15 UTC: after the Fivetran sellers activation (Tue 07:05 UTC),
       // which itself waits for the daily orders load. Window = 30 days to Monday 16:00 UTC.
-      "15 8 * * 2",
+      // Use the day name: Cloudflare counts weekdays from 1 = Sunday, so a numeric 2
+      // is Monday and publishes each window about a week late.
+      "15 8 * * TUE",
       // Tuesday 14:15 UTC retry. Publishing a window again replaces its record.
-      "15 14 * * 2",
+      "15 14 * * TUE",
       // Daily 18:30 UTC: trend snapshots (/api/cron/snapshot). Idempotent per day.
       "30 18 * * *"
     ]
