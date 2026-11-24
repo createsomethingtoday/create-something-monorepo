@@ -6,8 +6,9 @@
 	 * round with a creator-safe status. Only released reviewer feedback reaches
 	 * this card (the Worker filters by role). The creator replies on the newest
 	 * round the review team has commented on; the review team opens each thread.
-	 * Bodies and decision summaries render as plain text, never HTML; link
-	 * phrases in a summary become anchors by splitting the text, not by markup.
+	 * Bodies and decision summaries never render as HTML. A body shows its
+	 * formatting through ReviewCommentBody, which builds elements from a parsed
+	 * tree; link phrases in a summary become anchors by splitting the text.
 	 */
 	import { onMount } from 'svelte';
 	import type { DecisionSummary, ReviewComment } from '$lib/server/review-comments';
@@ -15,6 +16,7 @@
 	import { ratingLabel, splitAtFirstReply, splitLinks } from '$lib/utils/review-decision-summary';
 	import { toast } from '$lib/stores/toast';
 	import { Card, CardHeader, CardTitle, CardContent, Button, Textarea } from './ui';
+	import ReviewCommentBody from './ReviewCommentBody.svelte';
 	import { MessageSquare } from 'lucide-svelte';
 
 	interface Props {
@@ -141,7 +143,7 @@
 							<span class="thread-badge">Resolved</span>
 						{/if}
 					</div>
-					<p class="thread-body">{comment.body}</p>
+					<ReviewCommentBody body={comment.body} />
 				</li>
 			{/each}
 		</ol>
@@ -245,8 +247,13 @@
 								bind:value={draft}
 								maxlength={20000}
 								placeholder="Describe what you changed or ask the review team a question"
+								aria-describedby="review-reply-format"
 								disabled={sending}
 							/>
+							<p class="thread-reply-hint" id="review-reply-format">
+								Formatting: **bold**, *italic*, `code`, [link text](https://example.com), and lists
+								on lines that start with - or 1.
+							</p>
 							<div class="thread-reply-actions">
 								<Button type="submit" size="sm" disabled={sending || !draft.trim()}>
 									{sending ? 'Sending…' : 'Send reply'}
@@ -435,14 +442,6 @@
 		padding: 1px var(--space-xs);
 	}
 
-	.thread-body {
-		margin: 0;
-		font-size: var(--text-body-sm);
-		color: var(--color-fg-primary);
-		line-height: 1.6;
-		white-space: pre-wrap;
-		overflow-wrap: anywhere;
-	}
 
 	.thread-reply {
 		margin-top: var(--space-sm);
@@ -457,6 +456,13 @@
 		font-size: var(--text-body-sm);
 		font-weight: var(--font-medium);
 		color: var(--color-fg-primary);
+	}
+
+	.thread-reply-hint {
+		margin: 0;
+		font-size: var(--text-caption);
+		color: var(--color-fg-muted);
+		line-height: 1.5;
 	}
 
 	.thread-reply-actions {

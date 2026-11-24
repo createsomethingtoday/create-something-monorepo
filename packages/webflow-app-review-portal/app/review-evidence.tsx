@@ -1,4 +1,5 @@
 import React from 'react';
+import { CommentBody } from './comment-body';
 
 export function PendingFeedback({ preview }: { preview: any }) {
   if (!preview?.enabled) return null;
@@ -10,7 +11,7 @@ export function PendingFeedback({ preview }: { preview: any }) {
         preview.drafts.map((comment: any) => (
           <article className="portal-activity" key={comment.id}>
             <strong>{comment.authorEmail}</strong>
-            <p className="portal-pre">{comment.body}</p>
+            <CommentBody body={comment.body} />
           </article>
         ))
       ) : (
@@ -31,7 +32,7 @@ export function DeliveryWarning({ warning }: { warning: any }) {
       {warning.submittedFeedback && (
         <details>
           <summary>Feedback from the saved decision</summary>
-          <p className="portal-pre">{warning.submittedFeedback}</p>
+          <CommentBody body={warning.submittedFeedback} />
         </details>
       )}
     </aside>
@@ -64,7 +65,7 @@ export function ReviewConversation({ thread }: { thread: any }) {
             {comment.createdAt ? new Date(comment.createdAt).toLocaleString() : ''}
             {comment.parentId ? ' · Reply in review conversation' : ''}
           </small>
-          <p className="portal-pre">{comment.body}</p>
+          <CommentBody body={comment.body} />
         </article>
       ))}
       {thread.review_comments_error && (
