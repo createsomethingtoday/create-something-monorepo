@@ -5,18 +5,30 @@
   import { Badge } from './ui';
   import Sparkline from './Sparkline.svelte';
   import KineticNumber from './KineticNumber.svelte';
-  import { HelpCircle } from 'lucide-svelte';
+  import { HelpCircle, Info } from 'lucide-svelte';
   import { trackEvent } from '$lib/utils/analytics';
   import {
     filterMarketplaceCategories,
     getCompetitionClass,
     getExpandedUserCategorySet,
-    getCompetitionIndicator,
+    getCategoryCompetition,
     getUserCategorySet,
     isCompetitionFilter,
     type CompetitionFilter,
     type UserCategoryFilter
   } from '$lib/utils/marketplace-insights-filters';
+  import {
+    ESTIMATE_SHARE,
+    assumedRevenueShare,
+    formatWholeShare,
+    hasNinetyDays,
+    hasSupply,
+    revenuePerSeller,
+    segmentRevenue,
+    segmentSales,
+    sellingTemplates,
+    type SegmentWindow
+  } from '$lib/utils/marketplace-segments';
   import type {
     CategoryEntry,
     Insight,
@@ -38,6 +50,7 @@
 
   type CategorySortKey =
     | 'revenueRank'
+    | 'listedTemplates'
     | 'templatesInSubcategory'
     | 'totalSales30d'
     | 'avgRevenuePerTemplate'
@@ -49,6 +62,7 @@
     sortKey: CategorySortKey;
     sortDirection: 'asc' | 'desc';
     viewMode: 'table' | 'grid';
+    segmentWindow?: SegmentWindow;
     searchQuery: string;
     categoryFilter: string;
     competitionFilter: CompetitionFilter;
@@ -58,6 +72,7 @@
   const CATEGORY_PREFERENCES_STORAGE_KEY = 'webflow-dashboard.marketplace-insights.preferences.v1';
   const validSortKeys: CategorySortKey[] = [
     'revenueRank',
+    'listedTemplates',
     'templatesInSubcategory',
     'totalSales30d',
     'avgRevenuePerTemplate',
@@ -89,6 +104,66 @@
   let competitionFilter = $state<CompetitionFilter>('all');
   let userCategoryFilter = $state<UserCategoryFilter>('all');
   let tableViewport = $state<'unknown' | 'mobile' | 'desktop'>('unknown');
+  // Listed supply and the 90-day window are optional in the snapshot. The
+  // columns and the window switch show only when the data is there.
+  let segmentWindow = $state<SegmentWindow>('30d');
+  const supplyAvailable = $derived(hasSupply(categories));
+  const ninetyAvailable = $derived(hasNinetyDays(categories));
+  const activeWindow = $derived<SegmentWindow>(ninetyAvailable ? segmentWindow : '30d');
+  const windowDays = $derived(activeWindow === '90d' ? 90 : 30);
+  // The snapshot ranks rows by 30-day revenue. The 90-day view ranks by its own revenue.
+  const windowRanks = $derived.by(() => {
+    const ranks = new Map<CategoryEntry, number>();
+    if (activeWindow === '30d') return ranks;
+    const sorted = [...categories].sort(
+      (a, b) => segmentRevenue(b, '90d') - segmentRevenue(a, '90d')
+    );
+    sorted.forEach((entry, index) => {
+      const previous = sorted[index - 1];
+      ranks.set(
+        entry,
+        previous && segmentRevenue(previous, '90d') === segmentRevenue(entry, '90d')
+          ? (ranks.get(previous) ?? index + 1)
+          : index + 1
+      );
+    });
+    return ranks;
+  });
+  const getRank = (entry: CategoryEntry) => windowRanks.get(entry) ?? entry.revenueRank;
+
+  /** Unique marketplace numbers for the active window: the one row that rows below can be read against. */
+  const totalsRow = $derived.by(() => {
+    const totals = summary.segments;
+    if (!totals || !totals.listedTemplates) return null;
+    const ninety = activeWindow === '90d';
+    const sold = ninety ? totals.sellingTemplates90d : totals.sellingTemplates;
+    const sales = ninety ? totals.totalSales90d : totals.totalSales;
+    const revenue = ninety ? totals.totalRevenue90d : totals.totalRevenue;
+    if (sold === null || sales === null) return null;
+    return {
+      listed: totals.listedTemplates,
+      sold,
+      sales,
+      revenuePerSold: revenue !== null && sold > 0 ? revenue / sold : null
+    };
+  });
+
+  function setSegmentWindow(next: SegmentWindow) {
+    if (next === segmentWindow) return;
+    trackEvent('marketplace_segment_window_changed', { segment_window: next });
+    segmentWindow = next;
+  }
+
+  /** Share of assumed revenue when it is large enough that the row's revenue reads as an estimate. */
+  function getEstimateShare(entry: CategoryEntry): number | null {
+    const share = assumedRevenueShare(entry, activeWindow);
+    return share !== null && share >= ESTIMATE_SHARE ? share : null;
+  }
+
+  function getEstimateTitle(share: number): string {
+    return `${formatWholeShare(share)} of these sales went through fulfillment links. The buyer paid the creator off-platform, so this revenue is assumed at list price.`;
+  }
+
   const ownedUserCategorySet = $derived.by(() => {
     const categoryEntries =
       userCategories.length > 0 ? userCategories.map((category) => ({ category })) : userTemplates;
@@ -101,21 +176,47 @@
   const shouldRenderMobileTable = $derived(tableViewport !== 'desktop');
   const shouldRenderDesktopTable = $derived(tableViewport !== 'mobile');
 
-  const gridSortOptions: Array<{ key: CategorySortKey; label: string }> = [
+  const gridSortOptions = $derived<Array<{ key: CategorySortKey; label: string }>>([
     { key: 'revenueRank', label: 'Rank' },
     { key: 'avgRevenuePerTemplate', label: 'Avg Revenue' },
-    { key: 'totalSales30d', label: 'Sales (30d)' },
-    { key: 'templatesInSubcategory', label: 'Active Templates' },
+    { key: 'totalSales30d', label: `Sales (${windowDays}d)` },
+    ...(supplyAvailable
+      ? ([{ key: 'listedTemplates', label: 'Listed Templates' }] as const)
+      : []),
+    { key: 'templatesInSubcategory', label: 'Selling Templates' },
     { key: 'competition', label: 'Competition' },
     { key: 'category', label: 'Category' },
     { key: 'subcategory', label: 'Subcategory' }
-  ];
+  ]);
   const tableSortableKeys: CategorySortKey[] = [
     'revenueRank',
+    'listedTemplates',
     'templatesInSubcategory',
     'totalSales30d',
     'avgRevenuePerTemplate'
   ];
+
+  /** Sort value of a row for the active window. Missing supply sorts last in both directions. */
+  function getSortValue(entry: CategoryEntry, key: CategorySortKey): number | string {
+    switch (key) {
+      case 'revenueRank':
+        return getRank(entry);
+      case 'listedTemplates':
+        return entry.listedTemplates ?? -1;
+      case 'templatesInSubcategory':
+        return sellingTemplates(entry, activeWindow);
+      case 'totalSales30d':
+        return segmentSales(entry, activeWindow);
+      case 'avgRevenuePerTemplate':
+        return revenuePerSeller(entry, activeWindow);
+      case 'category':
+        return entry.category;
+      case 'subcategory':
+        return entry.subcategory;
+      default:
+        return 0;
+    }
+  }
   let preferencesLoaded = $state(false);
 
   const availableCategoryFilters = $derived.by(() => {
@@ -145,15 +246,13 @@
           High: 2,
           'Very High': 3
         };
-        const aCompetition =
-          competitionOrder[getCompetitionIndicator(a.templatesInSubcategory).level] ?? 99;
-        const bCompetition =
-          competitionOrder[getCompetitionIndicator(b.templatesInSubcategory).level] ?? 99;
+        const aCompetition = competitionOrder[getCategoryCompetition(a).level] ?? 99;
+        const bCompetition = competitionOrder[getCategoryCompetition(b).level] ?? 99;
         return (aCompetition - bCompetition) * multiplier;
       }
 
-      const aVal = a[currentSortKey];
-      const bVal = b[currentSortKey];
+      const aVal = getSortValue(a, currentSortKey);
+      const bVal = getSortValue(b, currentSortKey);
 
       if (typeof aVal === 'string' && typeof bVal === 'string') {
         return aVal.localeCompare(bVal) * multiplier;
@@ -230,6 +329,8 @@
         if (parsed.sortDirection === 'asc' || parsed.sortDirection === 'desc')
           sortDirection = parsed.sortDirection;
         if (parsed.viewMode === 'table' || parsed.viewMode === 'grid') viewMode = parsed.viewMode;
+        if (parsed.segmentWindow === '30d' || parsed.segmentWindow === '90d')
+          segmentWindow = parsed.segmentWindow;
         if (typeof parsed.searchQuery === 'string') searchQuery = parsed.searchQuery;
         if (typeof parsed.categoryFilter === 'string') categoryFilter = parsed.categoryFilter;
         if (isCompetitionFilter(parsed.competitionFilter)) {
@@ -258,6 +359,7 @@
       sortKey,
       sortDirection,
       viewMode,
+      segmentWindow,
       searchQuery,
       categoryFilter,
       competitionFilter,
@@ -342,6 +444,54 @@
   });
 </script>
 
+{#snippet cardMetricValue(category: CategoryEntry)}
+  {@const estimateShare = getEstimateShare(category)}
+  {#if sellingTemplates(category, activeWindow) === 0}
+    <span class="metric-empty">No sales</span>
+  {:else}
+    ${Math.round(revenuePerSeller(category, activeWindow)).toLocaleString()}{#if estimateShare !== null}<span
+        class="mark mark-hero"
+        title={getEstimateTitle(estimateShare)}>est.</span
+      >{/if}
+  {/if}
+{/snippet}
+
+{#snippet cardMetricLabel(category: CategoryEntry)}
+  {sellingTemplates(category, activeWindow) === 0
+    ? `in the ${windowDays}-day window`
+    : 'revenue per sold template'}
+{/snippet}
+
+<!-- The numbers of a segment, in reading order: supply, sellers, then sales. -->
+{#snippet cardStats(category: CategoryEntry, variant: 'mobile' | 'grid')}
+  <div
+    class:mobile-card-stats={variant === 'mobile'}
+    class:category-stats={variant === 'grid'}
+    class:with-supply={supplyAvailable}
+  >
+    {#if supplyAvailable}
+      <div class="stat">
+        <span class="stat-label">Listed</span>
+        <span class="stat-value">{(category.listedTemplates ?? 0).toLocaleString()}</span>
+      </div>
+    {/if}
+    <div class="stat">
+      <span
+        class="stat-label stat-label-with-tooltip"
+        title="Templates with at least one sale in the {windowDays}-day window"
+      >
+        Templates sold
+        <HelpCircle size={10} />
+      </span>
+      <span class="stat-value">{sellingTemplates(category, activeWindow).toLocaleString()}</span>
+    </div>
+    <div class="stat">
+      <span class="stat-label">Sales ({windowDays}d)</span>
+      <span class="stat-value">{segmentSales(category, activeWindow).toLocaleString()}</span>
+    </div>
+  </div>
+{/snippet}
+
 <div class="marketplace-insights">
   <!-- Summary Stats: high data-ink ratio, direct labels, minimal ornament -->
   {#if visibleSummaryItemCount() > 0}
@@ -370,6 +520,28 @@
         </div>
       {/if}
 
+      {#if categories.length > 0}
+        {#if summary.segments?.listedTemplates}
+          <div class="summary-item">
+            <dt class="summary-term">Listed Templates</dt>
+            <dd class="summary-value">
+              <KineticNumber value={summary.segments.listedTemplates} />
+            </dd>
+            <dd class="summary-support">
+              {(summary.segments.sellingTemplates ?? 0).toLocaleString()} sold at least once
+            </dd>
+            <dd class="summary-meta">30-day window</dd>
+          </div>
+        {:else}
+          <div class="summary-item">
+            <dt class="summary-term">Categories Tracked</dt>
+            <dd class="summary-value"><KineticNumber value={categories.length} /></dd>
+            <dd class="summary-support">with recent sales</dd>
+            <dd class="summary-meta">active categories</dd>
+          </div>
+        {/if}
+      {/if}
+
       {#if hasUserSummaryData()}
         <div class="summary-item">
           <dt class="summary-term">Your Best Rank</dt>
@@ -390,14 +562,6 @@
         </div>
       {/if}
 
-      {#if categories.length > 0}
-        <div class="summary-item">
-          <dt class="summary-term">Categories Tracked</dt>
-          <dd class="summary-value"><KineticNumber value={categories.length} /></dd>
-          <dd class="summary-support">with recent sales</dd>
-          <dd class="summary-meta">active categories</dd>
-        </div>
-      {/if}
     </dl>
   {/if}
 
@@ -405,22 +569,47 @@
   {#if categories.length > 0}
     <section class="categories-section">
       <div class="categories-header">
-        <h3 class="section-title">Category Performance (30-Day Window)</h3>
-        <div class="view-toggle">
-          <button
-            class="toggle-btn"
-            class:active={viewMode === 'table'}
-            onclick={() => setViewMode('table')}
-          >
-            Table
-          </button>
-          <button
-            class="toggle-btn"
-            class:active={viewMode === 'grid'}
-            onclick={() => setViewMode('grid')}
-          >
-            Grid
-          </button>
+        <h3 class="section-title">Category Performance ({windowDays}-Day Window)</h3>
+        <div class="header-controls">
+          {#if ninetyAvailable}
+            <span class="toggle-label" id="segment-window-label">Sales window</span>
+            <div class="view-toggle" role="group" aria-labelledby="segment-window-label">
+              <button
+                type="button"
+                aria-pressed={activeWindow === '30d'}
+                class="toggle-btn"
+                class:active={activeWindow === '30d'}
+                onclick={() => setSegmentWindow('30d')}
+              >
+                30 days
+              </button>
+              <button
+                type="button"
+                aria-pressed={activeWindow === '90d'}
+                class="toggle-btn"
+                class:active={activeWindow === '90d'}
+                onclick={() => setSegmentWindow('90d')}
+              >
+                90 days
+              </button>
+            </div>
+          {/if}
+          <div class="view-toggle">
+            <button
+              class="toggle-btn"
+              class:active={viewMode === 'table'}
+              onclick={() => setViewMode('table')}
+            >
+              Table
+            </button>
+            <button
+              class="toggle-btn"
+              class:active={viewMode === 'grid'}
+              onclick={() => setViewMode('grid')}
+            >
+              Grid
+            </button>
+          </div>
         </div>
       </div>
 
@@ -504,6 +693,27 @@
       <p class="categories-meta">
         Showing {sortedCategories.length} of {categories.length} category rows
       </p>
+      {#if supplyAvailable}
+        <ul class="segments-key" aria-label="How to read the rows">
+          <li>
+            <Info size={13} aria-hidden="true" />
+            <span>
+              <strong>Rows overlap.</strong> A template counts in every subcategory it is in.
+              {viewMode === 'table' && tableViewport !== 'mobile'
+                ? 'Read totals from the first row.'
+                : 'Read totals from the summary at the top.'}
+            </span>
+          </li>
+          <li>
+            <span class="mark" aria-hidden="true">est.</span>
+            <span>
+              <strong>Estimate.</strong>
+              {formatWholeShare(ESTIMATE_SHARE)} or more of the sales used fulfillment links. That
+              revenue is assumed at list price.
+            </span>
+          </li>
+        </ul>
+      {/if}
 
       {#if sortedCategories.length === 0}
         <div class="categories-empty">
@@ -519,7 +729,7 @@
         {#if shouldRenderMobileTable}
           <div class="table-mobile-cards">
             {#each sortedCategories as category, index (getCategoryRowKey(category, index))}
-              {@const competition = getCompetitionIndicator(category.templatesInSubcategory)}
+              {@const competition = getCategoryCompetition(category)}
               {@const isUserCategory =
                 ownedUserCategorySet.has(category.category) ||
                 ownedUserCategorySet.has(category.subcategory)}
@@ -532,30 +742,13 @@
                       <span class="user-indicator">Your template category</span>
                     {/if}
                   </div>
-                  <span class="rank-pill">#{category.revenueRank}</span>
+                  <span class="rank-pill">#{getRank(category)}</span>
                 </div>
                 <div class="mobile-card-metric">
-                  <span class="metric-value"
-                    >${Math.round(category.avgRevenuePerTemplate).toLocaleString()}</span
-                  >
-                  <span class="metric-label">avg revenue</span>
+                  <span class="metric-value">{@render cardMetricValue(category)}</span>
+                  <span class="metric-label">{@render cardMetricLabel(category)}</span>
                 </div>
-                <div class="mobile-card-stats">
-                  <div class="mobile-stat">
-                    <span class="stat-label">Sales (30d)</span>
-                    <span class="stat-value">{category.totalSales30d.toLocaleString()}</span>
-                  </div>
-                  <div class="mobile-stat">
-                    <span
-                      class="stat-label stat-label-with-tooltip"
-                      title="Templates with sales in 30-day window"
-                    >
-                      Active Templates
-                      <HelpCircle size={10} />
-                    </span>
-                    <span class="stat-value">{category.templatesInSubcategory}</span>
-                  </div>
-                </div>
+                {@render cardStats(category, 'mobile')}
                 <Badge
                   variant={competition.color === 'success'
                     ? 'success'
@@ -575,10 +768,11 @@
         <!-- Desktop Table Layout -->
         {#if shouldRenderDesktopTable}
         <div class="table-container table-desktop">
-          <table class="data-table">
+          <table class="data-table" class:has-supply={supplyAvailable}>
             <colgroup>
               <col class="category-col" />
               <col class="rank-col" />
+              {#if supplyAvailable}<col class="listed-col" />{/if}
               <col class="active-col" />
               <col class="sales-col" />
               <col class="revenue-col" />
@@ -593,12 +787,34 @@
                     class="table-sort-button"
                     onclick={() => handleSort('revenueRank')}
                   >
-                    Rank
+                    <span title="By revenue in the {windowDays}-day window">Rank</span>
                     {#if sortKey === 'revenueRank'}
                       <span class="sort-icon">{sortDirection === 'asc' ? '↑' : '↓'}</span>
                     {/if}
                   </button>
                 </th>
+                {#if supplyAvailable}
+                  <th scope="col" class="right-head" aria-sort={getAriaSort('listedTemplates')}>
+                    <button
+                      type="button"
+                      class="table-sort-button"
+                      onclick={() => handleSort('listedTemplates')}
+                    >
+                      <span class="th-with-tooltip">
+                        Listed
+                        <span
+                          class="tooltip-trigger"
+                          title="Templates listed in this subcategory now, or sold in the window"
+                        >
+                          <HelpCircle size={12} />
+                        </span>
+                      </span>
+                      {#if sortKey === 'listedTemplates'}
+                        <span class="sort-icon">{sortDirection === 'asc' ? '↑' : '↓'}</span>
+                      {/if}
+                    </button>
+                  </th>
+                {/if}
                 <th
                   scope="col"
                   class="right-head"
@@ -610,10 +826,10 @@
                     onclick={() => handleSort('templatesInSubcategory')}
                   >
                     <span class="th-with-tooltip">
-                      Active
+                      Templates sold
                       <span
                         class="tooltip-trigger"
-                        title="Templates with sales in 30-day window (not total marketplace inventory)"
+                        title="Templates with at least one sale in the {windowDays}-day window"
                       >
                         <HelpCircle size={12} />
                       </span>
@@ -633,7 +849,7 @@
                     class="table-sort-button"
                     onclick={() => handleSort('totalSales30d')}
                   >
-                    Sales (30d)
+                    Sales ({windowDays}d)
                     {#if sortKey === 'totalSales30d'}
                       <span class="sort-icon">{sortDirection === 'asc' ? '↑' : '↓'}</span>
                     {/if}
@@ -641,7 +857,7 @@
                 </th>
                 <th
                   scope="col"
-                  class="right-head"
+                  class="right-head marked-head"
                   aria-sort={getAriaSort('avgRevenuePerTemplate')}
                 >
                   <button
@@ -649,18 +865,60 @@
                     class="table-sort-button"
                     onclick={() => handleSort('avgRevenuePerTemplate')}
                   >
-                    Avg / Template
+                    <span
+                      title="Revenue per template that sold. Fulfillment-link sales count at list price, because the buyer pays the creator off-platform."
+                      >Revenue / sold template</span
+                    >
                     {#if sortKey === 'avgRevenuePerTemplate'}
                       <span class="sort-icon">{sortDirection === 'asc' ? '↑' : '↓'}</span>
                     {/if}
                   </button>
                 </th>
-                <th scope="col" class="competition-head">Competition</th>
+                <th scope="col" class="competition-head">
+                  <span class="th-with-tooltip">
+                    Competition
+                    {#if supplyAvailable}
+                      <span
+                        class="tooltip-trigger"
+                        title="By listed templates: low under 50, medium under 150, high under 400, very high from 400"
+                      >
+                        <HelpCircle size={12} />
+                      </span>
+                    {/if}
+                  </span>
+                </th>
               </tr>
             </thead>
             <tbody>
+              {#if supplyAvailable && totalsRow}
+                <tr class="total-row">
+                  <td>
+                    <span class="category-stack">
+                      <span class="category-name">Marketplace total</span>
+                    </span>
+                    <span class="total-note">all templates, each counted once</span>
+                  </td>
+                  <td class="right"></td>
+                  <td class="right">{totalsRow.listed.toLocaleString()}</td>
+                  <td class="right">{totalsRow.sold.toLocaleString()}</td>
+                  <td class="right">{totalsRow.sales.toLocaleString()}</td>
+                  <td class="right">
+                    <span class="marked-value">
+                      <span class="revenue"
+                        >{totalsRow.revenuePerSold === null
+                          ? '-'
+                          : `$${Math.round(totalsRow.revenuePerSold).toLocaleString()}`}</span
+                      >
+                      <span class="mark-slot"></span>
+                    </span>
+                  </td>
+                  <td class="competition-cell"></td>
+                </tr>
+              {/if}
               {#each sortedCategories as category, index (getCategoryRowKey(category, index))}
-                {@const competition = getCompetitionIndicator(category.templatesInSubcategory)}
+                {@const competition = getCategoryCompetition(category)}
+                {@const estimateShare = getEstimateShare(category)}
+                {@const sellers = sellingTemplates(category, activeWindow)}
                 {@const isUserCategory =
                   ownedUserCategorySet.has(category.category) ||
                   ownedUserCategorySet.has(category.subcategory)}
@@ -675,20 +933,42 @@
                     {/if}
                   </td>
                   <td class="right rank-cell">
-                    <span class="rank-value">#{category.revenueRank}</span>
+                    <span class="rank-value">#{getRank(category)}</span>
                   </td>
-                  <td class="right">{category.templatesInSubcategory}</td>
-                  <td class="right">{category.totalSales30d.toLocaleString()}</td>
+                  {#if supplyAvailable}
+                    <td class="right">{(category.listedTemplates ?? 0).toLocaleString()}</td>
+                  {/if}
+                  <td class="right" class:is-zero={sellers === 0}>{sellers.toLocaleString()}</td>
+                  <td class="right" class:is-zero={segmentSales(category, activeWindow) === 0}>
+                    {segmentSales(category, activeWindow).toLocaleString()}
+                  </td>
                   <td class="right">
-                    <span class="revenue"
-                      >${Math.round(category.avgRevenuePerTemplate).toLocaleString()}</span
-                    >
+                    {#if sellers === 0}
+                      <span class="marked-value">
+                        <span class="cell-empty" title="No template sold in the window">-</span>
+                        <span class="mark-slot"></span>
+                      </span>
+                    {:else}
+                      <span class="marked-value">
+                        <span class="revenue"
+                          >${Math.round(revenuePerSeller(category, activeWindow)).toLocaleString()}</span
+                        >
+                        <span class="mark-slot">
+                          {#if estimateShare !== null}
+                            <span class="mark" title={getEstimateTitle(estimateShare)}>est.</span>
+                          {/if}
+                        </span>
+                      </span>
+                    {/if}
                   </td>
                   <td class="competition-cell">
                     <span
                       class="competition-value competition-{getCompetitionClass(
                         competition.level
                       )}"
+                      title={category.listedTemplates === undefined
+                        ? `${category.templatesInSubcategory} templates with sales`
+                        : `${category.listedTemplates.toLocaleString()} listed templates`}
                     >
                       <span class="competition-dot"></span>
                       {competition.level}
@@ -703,7 +983,7 @@
       {:else}
         <div class="categories-grid">
           {#each sortedCategories as category, index (getCategoryRowKey(category, index))}
-            {@const competition = getCompetitionIndicator(category.templatesInSubcategory)}
+            {@const competition = getCategoryCompetition(category)}
             {@const isUserCategory =
               ownedUserCategorySet.has(category.category) ||
               ownedUserCategorySet.has(category.subcategory)}
@@ -713,14 +993,13 @@
                   <span class="category-parent">{category.category}</span>
                   <span class="category-name">{category.subcategory}</span>
                 </div>
-                <span class="rank-pill">#{category.revenueRank}</span>
+                <span class="rank-pill">#{getRank(category)}</span>
               </div>
               <div class="category-metric">
                 <div class="metric-main">
-                  <span class="metric-value"
-                    >${Math.round(category.avgRevenuePerTemplate).toLocaleString()}</span
-                  >
-                  {#if category.trend && category.changePercent !== undefined}
+                  <span class="metric-value">{@render cardMetricValue(category)}</span>
+                  <!-- The trend compares 30-day snapshots, so it shows with the 30-day numbers only. -->
+                  {#if activeWindow === '30d' && category.trend && category.changePercent !== undefined}
                     <!-- Trend indicator -->
                     <span class="trend-indicator trend-{category.trend}">
                       <span class="trend-glyph">
@@ -730,28 +1009,13 @@
                         >{category.changePercent > 0 ? '+' : ''}{category.changePercent}%</span
                       >
                     </span>
-                  {:else}
+                  {:else if activeWindow === '30d'}
                     <span class="trend-unavailable">Trend unavailable</span>
                   {/if}
                 </div>
-                <span class="metric-label">avg per template</span>
+                <span class="metric-label">{@render cardMetricLabel(category)}</span>
               </div>
-              <div class="category-stats">
-                <div class="stat">
-                  <span class="stat-label">Sales (30d)</span>
-                  <span class="stat-value">{category.totalSales30d.toLocaleString()}</span>
-                </div>
-                <div class="stat">
-                  <span
-                    class="stat-label stat-label-with-tooltip"
-                    title="Templates with sales in 30-day window"
-                  >
-                    Active Templates
-                    <HelpCircle size={10} />
-                  </span>
-                  <span class="stat-value">{category.templatesInSubcategory}</span>
-                </div>
-              </div>
+              {@render cardStats(category, 'grid')}
               <div class="category-footer">
                 <Badge
                   variant={competition.color === 'success'
@@ -1962,17 +2226,17 @@
     gap: var(--space-sm);
   }
 
-  .mobile-stat {
+  .mobile-card-stats .stat {
     display: flex;
     flex-direction: column;
   }
 
-  .mobile-stat .stat-label {
+  .mobile-card-stats .stat-label {
     font-size: var(--text-caption);
     color: var(--color-fg-muted);
   }
 
-  .mobile-stat .stat-value {
+  .mobile-card-stats .stat-value {
     font-size: var(--text-body-sm);
     font-weight: var(--font-medium);
     color: var(--color-fg-primary);
@@ -2038,6 +2302,184 @@
   }
 
   /* Reduced motion support */
+  /* Segments: listed supply, the totals row and the sales window switch */
+  .header-controls {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: var(--space-sm);
+  }
+
+  .data-table.has-supply {
+    min-width: 64rem;
+  }
+
+  .data-table.has-supply col.category-col {
+    width: 30%;
+  }
+
+  .data-table.has-supply col.rank-col {
+    width: 7%;
+  }
+
+  .data-table.has-supply col.listed-col {
+    width: 9%;
+  }
+
+  .data-table.has-supply col.active-col {
+    width: 12%;
+  }
+
+  .data-table.has-supply col.sales-col {
+    width: 10%;
+  }
+
+  .data-table.has-supply col.revenue-col {
+    width: 18%;
+  }
+
+  .data-table.has-supply col.competition-col {
+    width: 14%;
+  }
+
+  .toggle-label {
+    font-size: var(--text-caption);
+    color: var(--color-fg-muted);
+  }
+
+  /* A number with a fixed slot after it for a footnote mark, so every number in a column ends at the same place. */
+  .marked-value {
+    display: inline-grid;
+    grid-template-columns: auto 1.55rem;
+    align-items: baseline;
+    column-gap: 0.25rem;
+  }
+
+  .mark-slot {
+    text-align: left;
+  }
+
+  .mark {
+    color: var(--color-info-soft-text);
+    font-size: 0.78em;
+    font-weight: var(--font-medium);
+    line-height: 1;
+    cursor: help;
+  }
+
+  .mark-hero {
+    margin-left: 0.3rem;
+    font-size: 0.5em;
+  }
+
+  /* Headers of marked columns end where their numbers end. */
+  .data-table th.marked-head .table-sort-button {
+    padding-right: 1.8rem;
+  }
+
+  .data-table tr.total-row td,
+  .data-table tr.total-row td:first-child {
+    background: color-mix(in srgb, var(--color-info-soft-wash) 70%, var(--color-bg-surface));
+    border-bottom: 2px solid var(--color-info-soft-border);
+    font-weight: var(--font-semibold);
+  }
+
+  .data-table tr.total-row .category-name {
+    font-weight: var(--font-semibold);
+  }
+
+  .data-table tr.total-row .revenue {
+    font-weight: var(--font-semibold);
+  }
+
+  .total-note {
+    display: block;
+    margin-top: 1px;
+    font-size: var(--text-caption);
+    color: var(--color-fg-muted);
+  }
+
+  .metric-empty {
+    color: var(--color-fg-muted);
+    font-size: 0.7em;
+    font-weight: var(--font-medium);
+  }
+
+  .data-table td.right {
+    white-space: nowrap;
+  }
+
+  .cell-empty,
+  .data-table td.is-zero {
+    color: var(--color-fg-muted);
+  }
+
+  .segments-key {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.4rem var(--space-lg);
+    margin: 0 0 var(--space-sm);
+    padding: 0;
+    list-style: none;
+    font-size: var(--text-caption);
+    line-height: 1.45;
+    color: var(--color-fg-muted);
+  }
+
+  .segments-key li {
+    display: grid;
+    grid-template-columns: 1.6rem 1fr;
+    align-items: baseline;
+    column-gap: 0.35rem;
+    padding-right: 0.5rem;
+  }
+
+  .segments-key li :global(svg) {
+    align-self: start;
+    margin-top: 0.18rem;
+    color: var(--color-info-soft-text);
+  }
+
+  .segments-key .mark {
+    font-size: 1em;
+    cursor: default;
+  }
+
+  .segments-key strong {
+    color: var(--color-fg-secondary);
+    font-weight: var(--font-medium);
+  }
+
+  @media (max-width: 900px) {
+    .segments-key {
+      grid-template-columns: 1fr;
+    }
+  }
+
+
+  .category-stats.with-supply,
+  .mobile-card-stats.with-supply {
+    row-gap: var(--space-xs);
+  }
+
+  @media (max-width: 640px) {
+    .categories-header {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+
+    .header-controls {
+      justify-content: flex-start;
+    }
+
+    /* The section title names the window, so both switches fit on one row. */
+    .toggle-label {
+      display: none;
+    }
+
+  }
+
   @media (prefers-reduced-motion: reduce) {
     .leaderboard-card,
     .category-card,

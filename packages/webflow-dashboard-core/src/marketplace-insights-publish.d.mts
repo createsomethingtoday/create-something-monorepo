@@ -42,8 +42,18 @@ export function createAirtableRest(options: {
 export function readSellersFromAirtable(rest: AirtableRest, windowEnd: Date): Promise<Seller[]>;
 export function buildSnapshotFromAirtable(
   rest: AirtableRest,
-  input: { sellers: Seller[]; snapshotAt: string }
-): Promise<{ snapshot: MarketplaceSnapshot; taxonomyNotes: unknown[]; creatorEmailNotes: unknown[] }>;
+  input: {
+    sellers: Seller[];
+    snapshotAt: string;
+    /** Every template with a delivered sale in the 90 days to snapshotAt. Optional; left out when it fails its checks. */
+    sellers90?: Array<{ templateId: string; sales: number; revenue: number; fulfillmentSales?: number }>;
+  }
+): Promise<{
+  snapshot: MarketplaceSnapshot;
+  taxonomyNotes: unknown[];
+  creatorEmailNotes: unknown[];
+  windowNotes: unknown[];
+}>;
 export function publishSnapshot(rest: AirtableRest, snapshotTable: string | undefined, snapshot: MarketplaceSnapshot): Promise<string>;
 export function publishMarketplaceInsights(
   rest: AirtableRest,
