@@ -54,7 +54,10 @@ const WEB_ADDRESS = /https?:\/\/[^\s<>"`[\]\u200e\u200f\u202a-\u202e\u2066-\u206
 const AUTOLINK = /<(https?:\/\/[^\s<>]+)>/iy;
 const EMAIL = /[A-Za-z0-9][A-Za-z0-9._%+-]{0,63}@[A-Za-z0-9-]{1,63}(?:\.[A-Za-z0-9-]{1,63}){0,8}\.[A-Za-z]{2,24}/y;
 const EMAIL_PART = /[A-Za-z0-9._%+@/:-]/;
-const URL_LIKE_LABEL = /^\s*(?:https?:\/\/|www\.)\S+\s*$|^\s*[a-z0-9-]+(?:\.[a-z0-9-]+)+(?:\/\S*)?\s*$/i;
+/** A host name anywhere in a link label: "webflow.com", "www.example.org", also inside an address. */
+const HOST_IN_LABEL = /(?:[a-z0-9-]+\.)+[a-z]{2,}/g;
+/** Characters with no width: they can split a host name in the source and not on screen. */
+const INVISIBLE = /[\u00ad\u200b-\u200d\u2060\ufeff]/g;
 
 const MAX_LABEL = 1000;
 const MAX_URL = 2048;
@@ -85,16 +88,19 @@ function plainText(nodes: Inline[]): string {
 	return nodes.map((node) => ('text' in node ? node.text : plainText(node.children))).join('');
 }
 
-/** True when a label reads as a web address on another host than the one the link opens. */
+/**
+ * True when a label names a host that the link does not open. The label may
+ * name the host the link opens or a parent of it ("webflow.com" for
+ * "university.webflow.com"). For an email link the host is the part after "@".
+ */
 function labelNamesOtherHost(label: string, host: string): boolean {
-	if (!URL_LIKE_LABEL.test(label)) return false;
-	const text = label.trim();
 	const bare = (name: string) => name.replace(/^www\./, '');
-	try {
-		return bare(new URL(/^https?:\/\//i.test(text) ? text : `https://${text}`).hostname) !== bare(host);
-	} catch {
-		return true;
+	const target = bare(host.slice(host.lastIndexOf('@') + 1).toLowerCase());
+	for (const match of label.replace(INVISIBLE, '').toLowerCase().matchAll(HOST_IN_LABEL)) {
+		const named = bare(match[0]);
+		if (target !== named && !target.endsWith(`.${named}`)) return true;
 	}
+	return false;
 }
 
 type Token =

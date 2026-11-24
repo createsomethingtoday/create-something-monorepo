@@ -113,17 +113,34 @@ describe('links', () => {
 			'[**https://webflow.com/login**](https://example.net/login)',
 			'[`https://webflow.com/login`](https://example.net/login)',
 			'[~~webflow.com~~](https://example.net/login)',
-			'[*webflow*.com](https://example.net/login)'
+			'[*webflow*.com](https://example.net/login)',
+			'[webflow.com?x=1](https://example.net/login)',
+			'[webflow.com:443#top](https://example.net/login)',
+			'[Sign in at webflow.com now](https://example.net/login)',
+			'[web\u200bflow.com](https://example.net/login)',
+			'[help@webflow.com](mailto:help@example.net)'
 		]) {
 			// No link shows a webflow.com label and opens example.net.
 			const hidden = (nodes: Inline[]): boolean =>
 				nodes.some(
 					(node) =>
-						(node.type === 'link' && node.host === 'example.net' && /webflow/.test(inlineText(node.children))) ||
+						(node.type === 'link' && /example\.net/.test(node.host) && /flow/.test(inlineText(node.children))) ||
 						('children' in node && hidden(node.children))
 				);
 			expect(hidden(inline(body))).toBe(false);
-			expect(links(inline(body))).toContain('https://example.net/login');
+		}
+	});
+
+	it('links a label that names the host the link opens, or a parent of it', () => {
+		for (const [body, url] of [
+			['[webflow.com/templates](https://webflow.com/templates)', 'https://webflow.com/templates'],
+			['[Read it on webflow.com](https://university.webflow.com/lesson)', 'https://university.webflow.com/lesson'],
+			['[help@example.com](mailto:help@example.com)', 'mailto:help@example.com'],
+			['[the 2.0 release notes](https://example.com/notes)', 'https://example.com/notes']
+		]) {
+			const nodes = inline(body);
+			expect(nodes).toHaveLength(1);
+			expect(links(nodes)).toEqual([url]);
 		}
 	});
 
