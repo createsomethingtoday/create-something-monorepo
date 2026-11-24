@@ -90,6 +90,32 @@ describe('static values that match a Variable', () => {
 		).toEqual(['Band: background-color whitesmoke (White Smoke)', 'Panel: background-color hsla(0, 0.00%, 96.08%, 1.00) (White Smoke)']);
 	});
 
+	it('reads percent channels in rgb() and gives no finding for a form that it does not know', () => {
+		const variables: VariableData = {
+			collections: [
+				{
+					id: 'c1',
+					name: 'Colors',
+					variables: [
+						{ id: 'variable-red', name: 'Red', type: 'Color', value: '#ff0000' },
+						{ id: 'variable-dark-red', name: 'Dark Red', type: 'Color', value: '#640000' }
+					]
+				}
+			]
+		};
+		expect(
+			find(
+				[
+					style('Alert', { color: 'rgb(100%, 0%, 0%)' }),
+					style('Chip', { color: 'rgb(100 0 0 / 100%)' }),
+					style('Badge', { color: 'hsl(0turn 100% 50%)' }),
+					style('Tag', { color: 'rgb(1e2, 0, 0)' })
+				],
+				variables
+			)
+		).toEqual(['Alert: color rgb(100%, 0%, 0%) (Red)', 'Chip: color rgb(100 0 0 / 100%) (Dark Red)']);
+	});
+
 	it('does not match a half-transparent color to an opaque Variable', () => {
 		expect(find([style('Overlay', { 'background-color': 'hsla(0, 0.00%, 100.00%, 0.50)' })])).toEqual([]);
 	});

@@ -60,9 +60,9 @@ type Rgba = [number, number, number, number];
 
 function alpha(value: string | undefined): number | null {
 	if (value === undefined) return 1;
-	const number = Number.parseFloat(value);
-	if (!Number.isFinite(number)) return null;
-	return value.endsWith('%') ? number / 100 : number;
+	const match = /^(\d*\.?\d+)(%)?$/.exec(value);
+	if (!match) return null;
+	return match[2] ? Number(match[1]) / 100 : Number(match[1]);
 }
 
 function hslToRgb(h: number, s: number, l: number): [number, number, number] {
@@ -92,10 +92,19 @@ function parseColor(input: unknown): Rgba | null {
 	if (!call) return null;
 	const parts = call[2].split(/[\s,/]+/).filter(Boolean);
 	if (parts.length < 3 || parts.length > 4) return null;
-	const numbers = parts.slice(0, 3).map((part) => Number.parseFloat(part));
+	const isRgb = call[1] === 'rgb';
+	// rgb(): a channel is 0-255, or a percent of 255. hsl(): the hue is in degrees, the other two are percents.
+	// A form that is not known gives NaN, then `null`: no finding is better than a finding for a different color.
+	const numbers = parts.slice(0, 3).map((part, index) => {
+		const match = /^(-?\d*\.?\d+)(%|deg)?$/.exec(part);
+		if (!match) return Number.NaN;
+		const [number, unit] = [Number(match[1]), match[2]];
+		if (isRgb) return unit === 'deg' ? Number.NaN : unit === '%' ? number * 2.55 : number;
+		return unit === (index === 0 ? '%' : 'deg') ? Number.NaN : number;
+	});
 	const a = alpha(parts[3]);
 	if (numbers.some((number) => !Number.isFinite(number)) || a === null) return null;
-	if (call[1] === 'rgb') return [numbers[0], numbers[1], numbers[2], a];
+	if (isRgb) return [numbers[0], numbers[1], numbers[2], a];
 	return [...hslToRgb(numbers[0], numbers[1] / 100, numbers[2] / 100), a];
 }
 
