@@ -6,12 +6,14 @@
 	 * round with a creator-safe status. Only released reviewer feedback reaches
 	 * this card (the Worker filters by role). The creator replies on the newest
 	 * round the review team has commented on; the review team opens each thread.
+	 * A round also shows when its review started, the same fact the creator
+	 * gets by email.
 	 * Bodies and decision summaries never render as HTML. A body shows its
 	 * formatting through ReviewCommentBody, which builds elements from a parsed
 	 * tree; link phrases in a summary become anchors by splitting the text.
 	 */
 	import { onMount } from 'svelte';
-	import type { DecisionSummary, ReviewComment } from '$lib/server/review-comments';
+	import type { DecisionSummary, ReviewComment, ReviewEvent } from '$lib/server/review-comments';
 	import { formatLongDate } from '$lib/utils/format';
 	import { ratingLabel, splitAtFirstReply, splitLinks } from '$lib/utils/review-decision-summary';
 	import { toast } from '$lib/stores/toast';
@@ -35,6 +37,7 @@
 
 	let comments = $state<ReviewComment[]>([]);
 	let summaries = $state<DecisionSummary[]>([]);
+	let events = $state<ReviewEvent[]>([]);
 	let rounds = $state<ReviewRound[]>([]);
 	let status = $state<'loading' | 'ready' | 'error'>('loading');
 	let draft = $state('');
@@ -49,7 +52,11 @@
 				comments: roundComments,
 				// The next steps sit after the opening run of review-team comments.
 				...splitAtFirstReply(roundComments),
-				summary: summaries.find((summary) => summary.versionRef === round.id) ?? null
+				summary: summaries.find((summary) => summary.versionRef === round.id) ?? null,
+				// When the review team started the review of this round, if they told the creator.
+				startedAt:
+					events.find((event) => event.versionRef === round.id && event.kind === 'review_started')
+						?.occurredAt ?? null
 			};
 		})
 	);
@@ -67,6 +74,11 @@
 		);
 	}
 
+	// The creator-facing label of a round the review team has not decided yet.
+	// The "working on this version" note shows only then: a round that was
+	// approved with no comments keeps its start date, not the in-progress note.
+	const IN_REVIEW = 'In Review';
+
 	const STATUS_TONES: Record<string, string> = {
 		'Changes Requested': 'attention',
 		Rejected: 'negative',
@@ -81,10 +93,12 @@
 			const data = (await response.json()) as {
 				comments: ReviewComment[];
 				summaries?: DecisionSummary[];
+				events?: ReviewEvent[];
 				versions: ReviewRound[];
 			};
 			comments = data.comments;
 			summaries = data.summaries ?? [];
+			events = data.events ?? [];
 			rounds = data.versions;
 			status = 'ready';
 		} catch {
@@ -184,8 +198,10 @@
 							{group.round.status}
 						</span>
 					</div>
-					{#if group.round.submittedAt}
-						<p class="thread-submitted">Submitted {formatLongDate(group.round.submittedAt)}</p>
+					{#if group.round.submittedAt || group.startedAt}
+						<p class="thread-submitted">
+							{#if group.round.submittedAt}Submitted {formatLongDate(group.round.submittedAt)}{/if}{#if group.round.submittedAt && group.startedAt}<span class="thread-dot" aria-hidden="true"> · </span>{/if}{#if group.startedAt}Review started {formatLongDate(group.startedAt)}{/if}
+						</p>
 					{/if}
 
 					{#if group.summary}
@@ -215,7 +231,13 @@
 
 					{#if group.comments.length === 0 && index === 0}
 						<p class="thread-note">
-							No feedback on this version yet. The review team's feedback appears here when they send it.
+							{#if group.startedAt && group.round.status === IN_REVIEW}
+								The review team is working on this version. No action required at the moment. When
+								the feedback is ready, we will email you and show it here.
+							{:else}
+								No feedback on this version yet. The review team's feedback appears here when they
+								send it.
+							{/if}
 						</p>
 					{/if}
 
@@ -335,7 +357,8 @@
 	.thread-submitted {
 		font-size: var(--text-caption);
 		color: var(--color-fg-muted);
-		margin-bottom: var(--space-xs);
+		/* The line holds two dates now; it needs room before the rating or the note. */
+		margin-bottom: var(--space-sm);
 	}
 
 	.thread-summary {

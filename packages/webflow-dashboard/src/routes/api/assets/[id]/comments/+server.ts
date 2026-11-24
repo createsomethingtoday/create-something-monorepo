@@ -68,19 +68,22 @@ export const GET: RequestHandler = async ({ params, locals, platform }) => {
 	);
 
 	try {
-		const [thread, summaries, rounds] = await Promise.all([
+		const [thread, summaries, events, rounds] = await Promise.all([
 			comments.listForAsset(params.id, email),
 			comments.listSummariesByAsset(params.id, email),
+			comments.listEventsByAsset(params.id, email),
 			airtable.getReviewRounds(params.id)
 		]);
 		// A round in a "(No Notification)" status is deliberately silent, even if
 		// feedback on it was released before the status changed. Its comments and
-		// decision summary stay hidden for as long as the round is silent.
-		const visible = visibleThread(rounds, thread, summaries);
+		// decision summary stay hidden for as long as the round is silent, and so
+		// does its "review started" line.
+		const visible = visibleThread(rounds, thread, summaries, events);
 		// Newest round first.
 		return json({
 			comments: visible.comments,
 			summaries: visible.summaries,
+			events: visible.events,
 			versions: rounds.map((round) => toCreatorRound(round))
 		});
 	} catch (err) {

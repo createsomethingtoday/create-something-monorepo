@@ -36,6 +36,7 @@ import {
   buildDecisionSummary,
   buildReleaseNotice,
   type DecisionSummary,
+  type ReviewEvent,
   ReviewCommentsClientError,
   type ReleaseNotice,
   type ReleaseNotification,
@@ -707,13 +708,21 @@ export function registerTools(
 
     server.tool(
       'template_review_list_comments',
-      'Read-only: every review comment on a template version (drafts, internal notes, released feedback, and creator replies), oldest first, plus decision_summary: the quality rating, improvement areas and next-step text the service sends to the creator with the feedback (null when none is set). Requires a mapped reviewer identity.',
+      'Read-only: every review comment on a template version (drafts, internal notes, released feedback, and creator replies), oldest first, plus decision_summary: the quality rating, improvement areas and next-step text the service sends to the creator with the feedback (null when none is set), plus events: what the service told the creator about the review outside the comments, such as review_started (the notice a creator gets the first time the version moves to In Review), each with its time and whether the email was sent. Requires a mapped reviewer identity.',
       { version_id: z.string().min(1) },
       async ({ version_id }) => {
         try {
           const actorEmail = requireReviewerEmail(getReviewer);
           const { version } = await getClient().getScopedVersion(version_id);
           const comments = await reviewComments.listVersion(version_id, actorEmail);
+          // A failed events read must not hide the comments.
+          let events: ReviewEvent[] = [];
+          let eventsError: string | undefined;
+          try {
+            events = await reviewComments.listEvents(version_id, actorEmail);
+          } catch (error) {
+            eventsError = error instanceof Error ? error.message : String(error);
+          }
           let decisionSummary: DecisionSummary | null = null;
           let decisionSummaryError: string | undefined;
           try {
@@ -727,6 +736,8 @@ export function registerTools(
             comments,
             decision_summary: decisionSummary,
             ...(decisionSummaryError ? { decision_summary_error: decisionSummaryError } : {}),
+            events,
+            ...(eventsError ? { events_error: eventsError } : {}),
           });
         } catch (error) {
           return asError(error);
