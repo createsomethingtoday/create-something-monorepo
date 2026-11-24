@@ -44,6 +44,10 @@ export interface StyledNode {
 type Property =
 	| 'width'
 	| 'height'
+	| 'min-width'
+	| 'max-width'
+	| 'min-height'
+	| 'max-height'
 	| 'aspect-ratio'
 	| 'position'
 	| 'display'
@@ -56,6 +60,10 @@ type Property =
 const PROPERTIES: ReadonlySet<string> = new Set([
 	'width',
 	'height',
+	'min-width',
+	'max-width',
+	'min-height',
+	'max-height',
 	'aspect-ratio',
 	'position',
 	'display',
@@ -109,7 +117,14 @@ const COMBINATORS = new Set(['descendant', 'child', 'sibling', 'adjacent', 'pare
 const NOT_DEFINITE = /^(auto|initial|inherit|unset|revert|revert-layer|none|normal|stretch|min-content|max-content|fit-content|-webkit-fill-available|-moz-available)$/;
 const SIZE_VALUE = /^(?:[+-]?\d*\.?\d+(?:px|r?em|v[wh]|vmin|vmax|[sld]v[wh]|ch|ex|cm|mm|in|pt|pc|%)|[+-]?0+(?:\.0+)?|(?:calc|min|max|clamp)\(.*\))$/;
 /** Logical sizes, read as their physical side: templates are horizontal. */
-const PROPERTY_ALIASES: Record<string, string> = { 'inline-size': 'width', 'block-size': 'height' };
+const PROPERTY_ALIASES: Record<string, string> = {
+	'inline-size': 'width', 'block-size': 'height',
+	'min-inline-size': 'min-width', 'max-inline-size': 'max-width',
+	'min-block-size': 'min-height', 'max-block-size': 'max-height'
+};
+/** These constraints can take their size from the image's pixels once it loads. */
+const INTRINSIC_SIZE = /\b(?:min-content|max-content|fit-content|content|contain)\b/i;
+const SIZE_CONSTRAINTS = ['min-width', 'max-width', 'min-height', 'max-height'] as const;
 const MAX_STYLESHEETS_PER_PAGE = 6;
 const MAX_STYLESHEET_BYTES = 4 * 1024 * 1024;
 const MAX_PERCENT_HEIGHT_DEPTH = 4;
@@ -195,6 +210,8 @@ function reservedIn(img: StyledNode, styles: PageStyles, active: ReadonlySet<str
 	if (style.all) return false;
 	const position = style.position?.trim().toLowerCase();
 	if (position === 'absolute' || position === 'fixed') return true;
+	// Definite preferred dimensions do not defeat intrinsic min/max constraints.
+	if (SIZE_CONSTRAINTS.some((property) => INTRINSIC_SIZE.test(style[property] ?? '') || /\bunresolved\b/.test(style[property] ?? ''))) return false;
 
 	const hasWidth = widthIsDefinite(img, style.width, styles, active);
 	const hasHeight = heightIsDefinite(img, style.height, styles, active, 0);
@@ -244,14 +261,19 @@ function containerWidthIsDefinite(
 	node: StyledNode | null | undefined,
 	styles: PageStyles,
 	active: ReadonlySet<string>,
-	depth: number
+	depth: number,
+	traversed = 0
 ): boolean {
-	if (!node || node.type !== 'tag' || node.name === 'body' || node.name === 'html') return true;
-	if (depth >= MAX_PERCENT_WIDTH_DEPTH) return false;
+	if (!node || node.type !== 'tag') return true;
+	if (traversed >= MAX_PERCENT_WIDTH_DEPTH + 2) return false;
+	const isPageRoot = node.name === 'body' || node.name === 'html';
+	// Root boxes still need inspection, but do not consume the ancestor budget.
+	if (!isPageRoot && depth >= MAX_PERCENT_WIDTH_DEPTH) return false;
 	const style = cascade(node, styles, active, false);
 	if (style.all) return false;
 	const kind = sizeKind(style.width);
 	if (kind === 'length') return true;
+	if (INTRINSIC_SIZE.test(style.width ?? '')) return false;
 
 	const position = keyword(style.position);
 	if (position === 'absolute' || position === 'fixed') return false;
@@ -270,7 +292,7 @@ function containerWidthIsDefinite(
 		// In a row, an item is as wide as its content unless it has a width or grows.
 		if (rowAxis && kind !== 'percent' && !flexGrows(style)) return false;
 	}
-	return containerWidthIsDefinite(parent, styles, active, depth + 1);
+	return containerWidthIsDefinite(parent, styles, active, depth + (isPageRoot ? 0 : 1), traversed + 1);
 }
 
 /** The display value, or the element's default when no rule sets one. */
@@ -358,7 +380,7 @@ function cascade(
 
 	const out: Partial<Record<Property, string>> = {};
 	for (const [property, winner] of Object.entries(winners)) {
-		out[property as Property] = resolveVariables(winner.value, styles, 0);
+		out[property as Property] = resolveVariables(winner.value, styles, 0, SIZE_CONSTRAINTS.includes(property as typeof SIZE_CONSTRAINTS[number]) ? 'unresolved' : 'auto');
 	}
 	return out;
 }
@@ -368,9 +390,9 @@ function cascade(
  * is not set there, or that is also set anywhere else (per element, per
  * variable mode, in a media query), leaves the value not definite: "auto".
  */
-function resolveVariables(value: string, styles: Pick<PageStyles, 'variables' | 'overriddenVariables'>, depth: number): string {
+function resolveVariables(value: string, styles: Pick<PageStyles, 'variables' | 'overriddenVariables'>, depth: number, unresolvedValue = 'auto'): string {
 	if (!value.includes('var(')) return value;
-	if (depth >= MAX_VARIABLE_DEPTH) return 'auto';
+	if (depth >= MAX_VARIABLE_DEPTH) return unresolvedValue;
 	let unresolved = false;
 	let out = '';
 	let index = 0;
@@ -393,7 +415,7 @@ function resolveVariables(value: string, styles: Pick<PageStyles, 'variables' | 
 				}
 			}
 		}
-		if (end === -1) return 'auto';
+		if (end === -1) return unresolvedValue;
 		const inner = value.slice(start + 4, end);
 		const comma = scanToWithBrackets(inner, 0);
 		const name = (comma === -1 ? inner : inner.slice(0, comma)).trim();
@@ -404,10 +426,10 @@ function resolveVariables(value: string, styles: Pick<PageStyles, 'variables' | 
 			unresolved = true;
 			break;
 		}
-		out += resolveVariables(found, styles, depth + 1);
+		out += resolveVariables(found, styles, depth + 1, unresolvedValue);
 		index = end + 1;
 	}
-	return unresolved ? 'auto' : out.trim();
+	return unresolved ? unresolvedValue : out.trim();
 }
 
 /**

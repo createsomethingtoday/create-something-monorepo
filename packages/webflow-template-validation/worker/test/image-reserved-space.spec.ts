@@ -192,6 +192,93 @@ describe('image space reserved by CSS', () => {
 		expect(await verdicts(body, css)).toEqual([true, false, true, true, true, false, false, false, true]);
 	});
 
+	it('rejects intrinsic min/max constraints that can change an image after loading', async () => {
+		const constraints = [
+			'min-width: min-content', 'max-width: max-content',
+			'min-height: max-content', 'max-height: min-content',
+			'max-width: fit-content(300px)', 'min-inline-size: min-content',
+			'max-inline-size: max-content', 'min-block-size: max-content',
+			'max-block-size: min-content'
+		];
+		const body = constraints.map((constraint) => `<img style="width:120px;height:80px;${constraint}">`).join('');
+		expect(await verdicts(body, '')).toEqual(constraints.map(() => false));
+	});
+
+	it('uses cascade and media scenarios for intrinsic size constraints', async () => {
+		const css = `
+			.pic { width:120px; height:80px; max-width:max-content; }
+			.cleared { max-width:100%; }
+			.mobile { width:120px; height:80px; }
+			@media (max-width:767px) { .mobile { min-block-size:min-content; } }
+			:root { --intrinsic:max-content; }
+			.variable { width:120px; height:80px; max-width:var(--intrinsic); }
+		`;
+		expect(await verdicts('<img class="pic"><img class="pic cleared"><img class="mobile"><img class="variable">', css))
+			.toEqual([false, true, false, false]);
+	});
+
+	it('keeps ordinary min/max constraints and out-of-flow images reserved', async () => {
+		const css = `
+			.pic { width:120px; height:80px; min-width:0; max-width:100%; min-height:0; max-height:none; }
+			.logical { inline-size:120px; block-size:80px; max-inline-size:200px; min-block-size:0; }
+			.ratio { width:120px; aspect-ratio:3/2; max-width:100%; }
+			.absolute { position:absolute; min-width:min-content; }
+		`;
+		expect(await verdicts('<img class="pic"><img class="logical"><img class="ratio"><img class="absolute">', css))
+			.toEqual([true, true, true, true]);
+	});
+
+	it('checks body and html before trusting a percentage width chain', async () => {
+		const roots = ['body', 'html'];
+		const shrinking = ['display:inline-block', 'float:left', 'position:absolute', 'width:fit-content'];
+		for (const root of roots) {
+			for (const declaration of shrinking) {
+				clearStylesheetCache();
+				expect(await verdicts('<div><img class="pic"></div>', `${root}{${declaration}} .pic{width:100%;height:40px}`),
+					`${root} { ${declaration} }`).toEqual([false]);
+			}
+		}
+	});
+
+	it('keeps viewport-filling roots and definite widths through shrinking roots reserved', async () => {
+		const css = '.pic{width:100%;height:40px} .fixed{width:240px}';
+		expect(await verdicts('<div><img class="pic"></div>', css)).toEqual([true]);
+		clearStylesheetCache();
+		expect(await verdicts('<div><img class="pic"></div>', `html,body{width:100%} ${css}`)).toEqual([true]);
+		clearStylesheetCache();
+		expect(await verdicts('<div class="fixed"><img class="pic"></div>', `body{display:inline-block} ${css}`)).toEqual([true]);
+		clearStylesheetCache();
+		expect(await verdicts('<img class="pic">', `body{display:inline-block;width:240px} ${css}`)).toEqual([true]);
+	});
+
+	it('preserves the percentage width ancestor budget while inspecting page roots', async () => {
+		const nested = (count: number) => '<div>'.repeat(count) + '<img class="pic">' + '</div>'.repeat(count);
+		const css = '.pic { width:100%; height:40px; }';
+		expect(await verdicts(nested(8), css)).toEqual([true]);
+		clearStylesheetCache();
+		expect(await verdicts(nested(9), css)).toEqual([false]);
+	});
+
+	it('does not hide intrinsic constraints behind unresolved element variables', async () => {
+		const css = '.pic { width:120px; height:80px; max-width:var(--limit); }';
+		expect(await verdicts('<img class="pic" style="--limit:max-content"><img class="pic"><img class="pic" style="max-width:max(0px,var(--limit))">', css)).toEqual([false, false, false]);
+		clearStylesheetCache();
+		expect(await verdicts('<img class="pic">', ':root{--limit:none} ' + css)).toEqual([true]);
+	});
+
+	it('bounds malformed chains containing repeated page root tags', async () => {
+		const html = '<style>.pic{width:100%;height:40px}</style><img class="pic">';
+		const styles = await loadPageStyles(html, PAGE);
+		const img = findImages(html)[0];
+		let node = img;
+		for (let i = 0; i < 20; i += 1) {
+			const parent: StyledNode = { type:'tag', name:i % 2 ? 'html' : 'body', children:[node] };
+			node.parent = parent;
+			node = parent;
+		}
+		expect(imageSpaceReserved(img, styles!)).toBe(false);
+	});
+
 	it('applies overlapping media queries together', async () => {
 		const css = `
 			.pic { width: 300px; height: 200px; aspect-ratio: 3 / 2; }
