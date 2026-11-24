@@ -64,6 +64,10 @@ const additional = [
 ];
 
 export const agencyHeroes: AgencyHero[] = [
+  {
+    route: '/canon', selector: '.character-portrait', owner: 'route',
+    src: '/images/canon-agency-v1/body-r41.webp', mobileSrc: '/images/canon-agency-v1/body-r41.webp'
+  },
   ...treatments.filter(item => item.heroSelector && !isRedirect(item.route) && (coverageRoutes.has(item.route) || routeOwnedRoutes.has(item.route))).map(item => ({
     route: item.route,
     selector: item.route === '/products/ground' ? '.ground-hero'

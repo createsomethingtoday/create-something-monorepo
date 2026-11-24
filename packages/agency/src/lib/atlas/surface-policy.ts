@@ -27,6 +27,7 @@ export const AGENCY_ATLAS_PROOF_PATHS = [
 
 export const AGENCY_COMPACT_PRIVACY_PATHS = [
   '/privacy',
+  '/canon',
   ...AGENCY_WEBFLOW_PORTFOLIO_PATHS,
   '/scopefield',
   '/airtable-workflow-consulting',
@@ -91,6 +92,7 @@ export const AGENCY_ROUTE_OWNED_PERFORMANCE_ENDING_PATHS = [
   '/dental-ai-agents',
   '/use-cases/business',
   '/use-cases/enterprise',
+  '/canon',
   '/about'
 ] as const;
 

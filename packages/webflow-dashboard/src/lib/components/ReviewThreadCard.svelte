@@ -200,7 +200,7 @@
 					</div>
 					{#if group.round.submittedAt || group.startedAt}
 						<p class="thread-submitted">
-							{#if group.round.submittedAt}Submitted {formatLongDate(group.round.submittedAt)}{/if}{#if group.round.submittedAt && group.startedAt}<span class="thread-dot" aria-hidden="true"> · </span>{/if}{#if group.startedAt}Review started {formatLongDate(group.startedAt)}{/if}
+							{#if group.round.submittedAt}Submitted {formatLongDate(group.round.submittedAt)}{/if}{#if group.round.submittedAt && group.startedAt}<span class="thread-dot" aria-hidden="true">·</span>{/if}{#if group.startedAt}Review started {formatLongDate(group.startedAt)}{/if}
 						</p>
 					{/if}
 
@@ -359,6 +359,11 @@
 		color: var(--color-fg-muted);
 		/* The line holds two dates now; it needs room before the rating or the note. */
 		margin-bottom: var(--space-sm);
+	}
+
+	/* Svelte drops the spaces at the edges of the element, so the gap is a margin. */
+	.thread-dot {
+		margin: 0 0.4em;
 	}
 
 	.thread-summary {
