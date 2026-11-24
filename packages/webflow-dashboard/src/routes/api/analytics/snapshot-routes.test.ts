@@ -71,7 +71,7 @@ describe('snapshot analytics API contracts', () => {
     expect(leaderboard.leaderboard[1]).not.toHaveProperty('totalRevenue30d');
     expect(leaderboard.leaderboard[1]).not.toHaveProperty('fulfillmentSales30d');
   });
-  it('passes listed supply, the 90-day window and their totals through, and words the insight from supply', async () => {
+  it('passes listed supply, the 90-day window and their totals through, and counts competition from supply', async () => {
     const id = (char: string) => char.repeat(24);
     const input = {
       snapshotAt: '2026-09-21T16:00:00.000Z',
@@ -138,7 +138,7 @@ describe('snapshot analytics API contracts', () => {
       totalSales30d: 0
     });
     expect(body.insights.find((insight) => insight.type === 'opportunity')?.message).toBe(
-      '"Agency" has 3 listed templates, and 2 of them sold in the last 30 days.'
+      '"Agency" has low competition with 3 listed templates and $115 avg revenue.'
     );
 
     // A snapshot from before supply existed: no supply totals, and the older wording.

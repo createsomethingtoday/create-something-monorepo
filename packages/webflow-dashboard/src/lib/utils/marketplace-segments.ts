@@ -16,9 +16,6 @@ export interface SegmentRow {
   fulfillmentSales90d?: number;
 }
 
-/** Below this many templates sold, a segment's sell-through moves a lot from one week to the next. */
-export const THIN_SELLERS = 15;
-
 export function hasSupply(rows: ReadonlyArray<SegmentRow>): boolean {
   return rows.some((row) => row.listedTemplates !== undefined);
 }
@@ -45,20 +42,6 @@ export function revenuePerSeller(row: SegmentRow, window: SegmentWindow): number
   return sellers > 0 ? segmentRevenue(row, window) / sellers : 0;
 }
 
-/**
- * Share of listed templates that sold at least once in the window, 0 to 1.
- * Null when the snapshot has no supply for the row.
- */
-export function sellThrough(row: SegmentRow, window: SegmentWindow): number | null {
-  if (row.listedTemplates === undefined || row.listedTemplates <= 0) return null;
-  return Math.min(1, sellingTemplates(row, window) / row.listedTemplates);
-}
-
-/** Few templates sold in the window: read the rate as a hint, not as a ranking. */
-export function isThin(row: SegmentRow, window: SegmentWindow): boolean {
-  return sellingTemplates(row, window) < THIN_SELLERS;
-}
-
 /** A row's revenue is marked as an estimate from this share of assumed sales. */
 export const ESTIMATE_SHARE = 0.25;
 
@@ -80,15 +63,7 @@ export function isEstimate(row: SegmentRow, window: SegmentWindow = '30d'): bool
   return (assumedRevenueShare(row, window) ?? 0) >= ESTIMATE_SHARE;
 }
 
-/** One decimal for every rate, so a column of rates compares by eye. */
-export function formatShare(share: number): string {
-  const percent = share * 100;
-  if (percent === 0) return '0%';
-  if (percent < 0.1) return '<0.1%';
-  return `${percent.toFixed(1)}%`;
-}
-
-/** Whole percent, for a share that labels a marker and is not compared down a column. */
+/** Whole percent, for the share named in the estimate note. */
 export function formatWholeShare(share: number): string {
   return `${Math.round(share * 100)}%`;
 }

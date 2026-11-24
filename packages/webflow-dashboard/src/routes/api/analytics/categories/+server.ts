@@ -48,28 +48,19 @@ export const GET: RequestHandler = async ({ locals, platform }) => {
 				? categories.reduce((sum, c) => sum + c.avgRevenuePerTemplate, 0) / categories.length
 				: 0;
 
-		// Low competition with proof of demand. With listed supply this is a real
-		// count of the templates a new one sits beside; older snapshots only know
-		// the templates that sold.
+		// Lowest competition with revenue. With listed supply this counts the
+		// templates a new one sits beside; older snapshots only know the
+		// templates that sold.
 		const hasSupply = categories.some((c) => c.listedTemplates !== undefined);
+		const competitors = (c: (typeof categories)[number]) => c.listedTemplates ?? c.templatesInSubcategory;
 		const lowestCompetition = categories
-			.filter((c) =>
-				hasSupply
-					? getCategoryCompetition(c).key === 'low' && c.templatesInSubcategory >= 2
-					: c.templatesInSubcategory < 10 && c.avgRevenuePerTemplate > 0
-			)
-			.sort((a, b) =>
-				hasSupply
-					? b.templatesInSubcategory / (b.listedTemplates || 1) -
-						a.templatesInSubcategory / (a.listedTemplates || 1)
-					: a.templatesInSubcategory - b.templatesInSubcategory
-			)
+			.filter((c) => getCategoryCompetition(c).key === 'low' && c.avgRevenuePerTemplate > 0)
+			.sort((a, b) => competitors(a) - competitors(b))
 			.slice(0, 3)
 			.map((c) => ({
 				category: c.category,
 				subcategory: c.subcategory,
-				templateCount: c.listedTemplates ?? c.templatesInSubcategory,
-				sellingTemplates: c.templatesInSubcategory,
+				templateCount: competitors(c),
 				avgRevenue: c.avgRevenuePerTemplate,
 				competitionLevel: getCategoryCompetition(c).level
 			}));
@@ -81,9 +72,7 @@ export const GET: RequestHandler = async ({ locals, platform }) => {
 			const lowest = lowestCompetition[0];
 			insights.push({
 				type: 'opportunity',
-				message: hasSupply
-					? `"${lowest.subcategory}" has ${lowest.templateCount} listed templates, and ${lowest.sellingTemplates} of them sold in the last 30 days.`
-					: `"${lowest.subcategory}" has low competition with ${lowest.templateCount} templates and $${Math.round(lowest.avgRevenue)} avg revenue.`
+				message: `"${lowest.subcategory}" has low competition with ${lowest.templateCount} ${hasSupply ? 'listed templates' : 'templates'} and $${Math.round(lowest.avgRevenue)} avg revenue.`
 			});
 		}
 

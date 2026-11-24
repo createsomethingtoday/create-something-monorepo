@@ -19,17 +19,13 @@
   } from '$lib/utils/marketplace-insights-filters';
   import {
     ESTIMATE_SHARE,
-    THIN_SELLERS,
     assumedRevenueShare,
-    formatShare,
     formatWholeShare,
     hasNinetyDays,
     hasSupply,
-    isThin,
     revenuePerSeller,
     segmentRevenue,
     segmentSales,
-    sellThrough,
     sellingTemplates,
     type SegmentWindow
   } from '$lib/utils/marketplace-segments';
@@ -56,7 +52,6 @@
     | 'revenueRank'
     | 'listedTemplates'
     | 'templatesInSubcategory'
-    | 'sellThrough'
     | 'totalSales30d'
     | 'avgRevenuePerTemplate'
     | 'category'
@@ -79,7 +74,6 @@
     'revenueRank',
     'listedTemplates',
     'templatesInSubcategory',
-    'sellThrough',
     'totalSales30d',
     'avgRevenuePerTemplate',
     'category',
@@ -136,11 +130,6 @@
     return ranks;
   });
   const getRank = (entry: CategoryEntry) => windowRanks.get(entry) ?? entry.revenueRank;
-  const marketSellThrough = $derived.by(() => {
-    const listed = summary.segments?.listedTemplates;
-    const selling = summary.segments?.sellingTemplates;
-    return listed && typeof selling === 'number' ? selling / listed : null;
-  });
 
   /** Unique marketplace numbers for the active window: the one row that rows below can be read against. */
   const totalsRow = $derived.by(() => {
@@ -155,7 +144,6 @@
       listed: totals.listedTemplates,
       sold,
       sales,
-      rate: Math.min(1, sold / totals.listedTemplates),
       revenuePerSold: revenue !== null && sold > 0 ? revenue / sold : null
     };
   });
@@ -170,11 +158,6 @@
   function getEstimateShare(entry: CategoryEntry): number | null {
     const share = assumedRevenueShare(entry, activeWindow);
     return share !== null && share >= ESTIMATE_SHARE ? share : null;
-  }
-
-  /** Some templates sold, but too few for the rate to be steady. */
-  function isThinRow(entry: CategoryEntry): boolean {
-    return sellingTemplates(entry, activeWindow) > 0 && isThin(entry, activeWindow);
   }
 
   function getEstimateTitle(share: number): string {
@@ -198,10 +181,7 @@
     { key: 'avgRevenuePerTemplate', label: 'Avg Revenue' },
     { key: 'totalSales30d', label: `Sales (${windowDays}d)` },
     ...(supplyAvailable
-      ? ([
-          { key: 'sellThrough', label: 'Sell-through' },
-          { key: 'listedTemplates', label: 'Listed Templates' }
-        ] as const)
+      ? ([{ key: 'listedTemplates', label: 'Listed Templates' }] as const)
       : []),
     { key: 'templatesInSubcategory', label: 'Selling Templates' },
     { key: 'competition', label: 'Competition' },
@@ -212,7 +192,6 @@
     'revenueRank',
     'listedTemplates',
     'templatesInSubcategory',
-    'sellThrough',
     'totalSales30d',
     'avgRevenuePerTemplate'
   ];
@@ -226,8 +205,6 @@
         return entry.listedTemplates ?? -1;
       case 'templatesInSubcategory':
         return sellingTemplates(entry, activeWindow);
-      case 'sellThrough':
-        return sellThrough(entry, activeWindow) ?? -1;
       case 'totalSales30d':
         return segmentSales(entry, activeWindow);
       case 'avgRevenuePerTemplate':
@@ -485,11 +462,8 @@
     : 'revenue per sold template'}
 {/snippet}
 
-<!-- The four numbers of a segment, in reading order: supply, sellers, the rate, then sales. -->
+<!-- The numbers of a segment, in reading order: supply, sellers, then sales. -->
 {#snippet cardStats(category: CategoryEntry, variant: 'mobile' | 'grid')}
-  {@const rate = sellThrough(category, activeWindow)}
-  {@const thin = isThinRow(category)}
-  {@const sellers = sellingTemplates(category, activeWindow)}
   <div
     class:mobile-card-stats={variant === 'mobile'}
     class:category-stats={variant === 'grid'}
@@ -509,16 +483,8 @@
         Templates sold
         <HelpCircle size={10} />
       </span>
-      <span class="stat-value">{sellers.toLocaleString()}</span>
+      <span class="stat-value">{sellingTemplates(category, activeWindow).toLocaleString()}</span>
     </div>
-    {#if supplyAvailable}
-      <div class="stat">
-        <span class="stat-label">Sell-through</span>
-        <span class="stat-value stat-value-rate" class:is-soft={thin || sellers === 0}>
-          {rate === null ? '-' : `${thin ? '~' : ''}${formatShare(rate)}`}
-        </span>
-      </div>
-    {/if}
     <div class="stat">
       <span class="stat-label">Sales ({windowDays}d)</span>
       <span class="stat-value">{segmentSales(category, activeWindow).toLocaleString()}</span>
@@ -555,15 +521,16 @@
       {/if}
 
       {#if categories.length > 0}
-        {#if marketSellThrough !== null && summary.segments}
+        {#if summary.segments?.listedTemplates}
           <div class="summary-item">
-            <dt class="summary-term">Sell-through (30d)</dt>
-            <dd class="summary-value">{formatShare(marketSellThrough)}</dd>
-            <dd class="summary-support">
-              {(summary.segments.sellingTemplates ?? 0).toLocaleString()} of
-              {(summary.segments.listedTemplates ?? 0).toLocaleString()} listed templates sold
+            <dt class="summary-term">Listed Templates</dt>
+            <dd class="summary-value">
+              <KineticNumber value={summary.segments.listedTemplates} />
             </dd>
-            <dd class="summary-meta">at least one sale in 30 days</dd>
+            <dd class="summary-support">
+              {(summary.segments.sellingTemplates ?? 0).toLocaleString()} sold at least once
+            </dd>
+            <dd class="summary-meta">30-day window</dd>
           </div>
         {:else}
           <div class="summary-item">
@@ -738,13 +705,6 @@
             </span>
           </li>
           <li>
-            <span class="mark" aria-hidden="true">~</span>
-            <span>
-              <strong>Few sold.</strong> Fewer than {THIN_SELLERS} templates sold, so the rate is
-              approximate.
-            </span>
-          </li>
-          <li>
             <span class="mark" aria-hidden="true">est.</span>
             <span>
               <strong>Estimate.</strong>
@@ -814,7 +774,6 @@
               <col class="rank-col" />
               {#if supplyAvailable}<col class="listed-col" />{/if}
               <col class="active-col" />
-              {#if supplyAvailable}<col class="sell-through-col" />{/if}
               <col class="sales-col" />
               <col class="revenue-col" />
               <col class="competition-col" />
@@ -880,28 +839,6 @@
                     {/if}
                   </button>
                 </th>
-                {#if supplyAvailable}
-                  <th scope="col" class="right-head" aria-sort={getAriaSort('sellThrough')}>
-                    <button
-                      type="button"
-                      class="table-sort-button"
-                      onclick={() => handleSort('sellThrough')}
-                    >
-                      <span class="th-with-tooltip">
-                        Sell-through
-                        <span
-                          class="tooltip-trigger"
-                          title="Templates with sales divided by listed templates"
-                        >
-                          <HelpCircle size={12} />
-                        </span>
-                      </span>
-                      {#if sortKey === 'sellThrough'}
-                        <span class="sort-icon">{sortDirection === 'asc' ? '↑' : '↓'}</span>
-                      {/if}
-                    </button>
-                  </th>
-                {/if}
                 <th
                   scope="col"
                   class="right-head"
@@ -964,9 +901,6 @@
                   <td class="right"></td>
                   <td class="right">{totalsRow.listed.toLocaleString()}</td>
                   <td class="right">{totalsRow.sold.toLocaleString()}</td>
-                  <td class="right sell-through-cell">
-                    <span class="sell-through-value">{formatShare(totalsRow.rate)}</span>
-                  </td>
                   <td class="right">{totalsRow.sales.toLocaleString()}</td>
                   <td class="right">
                     <span class="marked-value">
@@ -983,8 +917,6 @@
               {/if}
               {#each sortedCategories as category, index (getCategoryRowKey(category, index))}
                 {@const competition = getCategoryCompetition(category)}
-                {@const rate = sellThrough(category, activeWindow)}
-                {@const thin = isThinRow(category)}
                 {@const estimateShare = getEstimateShare(category)}
                 {@const sellers = sellingTemplates(category, activeWindow)}
                 {@const isUserCategory =
@@ -1007,21 +939,6 @@
                     <td class="right">{(category.listedTemplates ?? 0).toLocaleString()}</td>
                   {/if}
                   <td class="right" class:is-zero={sellers === 0}>{sellers.toLocaleString()}</td>
-                  {#if supplyAvailable}
-                    <td class="right sell-through-cell">
-                      {#if rate === null}
-                        <span class="cell-empty">-</span>
-                      {:else}
-                        <span
-                          class="sell-through-value"
-                          class:is-soft={thin || sellers === 0}
-                          title={thin
-                            ? `Fewer than ${THIN_SELLERS} templates sold in the window. Read the rate as a hint.`
-                            : undefined}>{thin ? '~' : ''}{formatShare(rate)}</span
-                        >
-                      {/if}
-                    </td>
-                  {/if}
                   <td class="right" class:is-zero={segmentSales(category, activeWindow) === 0}>
                     {segmentSales(category, activeWindow).toLocaleString()}
                   </td>
@@ -2384,7 +2301,7 @@
   }
 
   /* Reduced motion support */
-  /* Segments: listed supply, sell-through and the sales window switch */
+  /* Segments: listed supply, the totals row and the sales window switch */
   .header-controls {
     display: flex;
     align-items: center;
@@ -2394,39 +2311,35 @@
   }
 
   .data-table.has-supply {
-    min-width: 68rem;
+    min-width: 64rem;
   }
 
   .data-table.has-supply col.category-col {
-    width: 26%;
+    width: 30%;
   }
 
   .data-table.has-supply col.rank-col {
-    width: 6%;
+    width: 7%;
   }
 
   .data-table.has-supply col.listed-col {
-    width: 8%;
-  }
-
-  .data-table.has-supply col.active-col {
-    width: 11%;
-  }
-
-  .data-table.has-supply col.sell-through-col {
-    width: 11%;
-  }
-
-  .data-table.has-supply col.sales-col {
     width: 9%;
   }
 
+  .data-table.has-supply col.active-col {
+    width: 12%;
+  }
+
+  .data-table.has-supply col.sales-col {
+    width: 10%;
+  }
+
   .data-table.has-supply col.revenue-col {
-    width: 17%;
+    width: 18%;
   }
 
   .data-table.has-supply col.competition-col {
-    width: 12%;
+    width: 14%;
   }
 
   .toggle-label {
@@ -2475,7 +2388,6 @@
     font-weight: var(--font-semibold);
   }
 
-  .data-table tr.total-row .sell-through-value,
   .data-table tr.total-row .revenue {
     font-weight: var(--font-semibold);
   }
@@ -2493,29 +2405,8 @@
     font-weight: var(--font-medium);
   }
 
-  .sell-through-cell,
   .data-table td.right {
     white-space: nowrap;
-  }
-
-  .sell-through-value {
-    font-weight: var(--font-semibold);
-  }
-
-  .sell-through-value.is-soft,
-  .stat-value.is-soft {
-    color: var(--color-fg-muted);
-    font-weight: var(--font-regular, 400);
-  }
-
-  /* With supply on the page, sell-through is the one emphasised number in a row. */
-  .data-table.has-supply .rank-value {
-    color: var(--color-fg-secondary);
-    font-weight: var(--font-regular, 400);
-  }
-
-  .data-table.has-supply .revenue {
-    font-weight: var(--font-medium);
   }
 
   .cell-empty,
@@ -2525,7 +2416,7 @@
 
   .segments-key {
     display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 0.4rem var(--space-lg);
     margin: 0 0 var(--space-sm);
     padding: 0;
@@ -2565,9 +2456,6 @@
     }
   }
 
-  .stat-value-rate {
-    font-weight: var(--font-semibold);
-  }
 
   .category-stats.with-supply,
   .mobile-card-stats.with-supply {
