@@ -227,8 +227,8 @@
 					{#if group.comments.length === 0 && index === 0}
 						<p class="thread-note">
 							{#if group.startedAt}
-								The review team started the review of this version. You do not need to do anything
-								now. Their feedback appears here when they send it.
+								The review team is working on this version. No action required at the moment. When
+								the feedback is ready, we will email you and it appears here.
 							{:else}
 								No feedback on this version yet. The review team's feedback appears here when they
 								send it.
@@ -352,7 +352,8 @@
 	.thread-submitted {
 		font-size: var(--text-caption);
 		color: var(--color-fg-muted);
-		margin-bottom: var(--space-xs);
+		/* The line holds two dates now; it needs room before the rating or the note. */
+		margin-bottom: var(--space-sm);
 	}
 
 	.thread-summary {
