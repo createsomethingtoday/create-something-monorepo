@@ -228,7 +228,7 @@
 						<p class="thread-note">
 							{#if group.startedAt}
 								The review team is working on this version. No action required at the moment. When
-								the feedback is ready, we will email you and it appears here.
+								the feedback is ready, we will email you and show it here.
 							{:else}
 								No feedback on this version yet. The review team's feedback appears here when they
 								send it.
