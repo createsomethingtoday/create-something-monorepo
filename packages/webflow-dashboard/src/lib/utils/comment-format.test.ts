@@ -65,6 +65,21 @@ describe('links', () => {
 		]);
 	});
 
+	it('keeps a mark at the end of a bare address unless it closes formatting', () => {
+		expect(links(inline('Get https://example.com/download?signature=abc_ today'))).toEqual([
+			'https://example.com/download?signature=abc_'
+		]);
+		expect(links(inline('Get https://example.com/a~ and https://example.com/b*'))).toEqual([
+			'https://example.com/a~',
+			'https://example.com/b*'
+		]);
+		expect(inline('**See https://example.com/a_b.** _Or https://example.com/c_d_')).toEqual([
+			{ type: 'bold', children: [text('See '), link('https://example.com/a_b', 'example.com', text('https://example.com/a_b')), text('.')] },
+			text(' '),
+			{ type: 'italic', children: [text('Or '), link('https://example.com/c_d', 'example.com', text('https://example.com/c_d'))] }
+		]);
+	});
+
 	it('shows an image as a link and never as an image', () => {
 		expect(inline('![Hero section](https://example.com/hero.png)')).toEqual([
 			link('https://example.com/hero.png', 'example.com', text('Hero section'))
@@ -91,6 +106,25 @@ describe('links', () => {
 		expect(links(nodes)).toEqual(['https://webflow.com/login', 'https://example.net/login']);
 		expect(inlineText(nodes)).toBe('[https://webflow.com/login](https://example.net/login)');
 		expect(links(inline('[webflow.com](https://www.webflow.com/)'))).toEqual(['https://www.webflow.com/']);
+	});
+
+	it('reads the label as the reader does when it looks for another host', () => {
+		for (const body of [
+			'[**https://webflow.com/login**](https://example.net/login)',
+			'[`https://webflow.com/login`](https://example.net/login)',
+			'[~~webflow.com~~](https://example.net/login)',
+			'[*webflow*.com](https://example.net/login)'
+		]) {
+			// No link shows a webflow.com label and opens example.net.
+			const hidden = (nodes: Inline[]): boolean =>
+				nodes.some(
+					(node) =>
+						(node.type === 'link' && node.host === 'example.net' && /webflow/.test(inlineText(node.children))) ||
+						('children' in node && hidden(node.children))
+				);
+			expect(hidden(inline(body))).toBe(false);
+			expect(links(inline(body))).toContain('https://example.net/login');
+		}
 	});
 
 	it('does not link a label that holds text-direction characters', () => {
@@ -185,6 +219,12 @@ describe('blocks', () => {
 
 	it('starts a new list when the marker type changes, and a paragraph at an unindented line', () => {
 		expect(parseCommentBody('1. One\n- Two\nThen text.').map((block) => block.type)).toEqual(['list', 'list', 'paragraph']);
+	});
+
+	it('keeps the continuation lines of the first item in a new list', () => {
+		const blocks = parseCommentBody('1. One\n- Two\n  Fix the missing permission.\n- Three\n1. Four\n   and more');
+		expect(blocks.map((block) => block.type)).toEqual(['list', 'list', 'list']);
+		expect(shown(blocks)).toEqual(['One', 'Two\nFix the missing permission.', 'Three', 'Four\nand more']);
 	});
 
 	it('reads a heading and a short ALL-CAPS line as a label, and a line of dashes as a divider', () => {

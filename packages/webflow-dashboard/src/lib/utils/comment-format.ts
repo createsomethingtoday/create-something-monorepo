@@ -117,21 +117,31 @@ function closingBracket(text: string, open: number, openChar: string, closeChar:
 	return -1;
 }
 
-/** Sentence punctuation and an unpaired closing bracket at the end of a bare address are not part of it. */
-function trimAddress(address: string): string {
-	let opened = 0;
-	let closed = 0;
+/**
+ * The end of a bare address. Sentence punctuation and an unpaired closing
+ * bracket are not part of it. A run of `*`, `_` or `~` is not part of it only
+ * when the same mark opened earlier on the line, because an address can end
+ * in one of those characters ("?signature=abc_").
+ */
+function trimAddress(address: string, opened: (mark: string, length: number) => boolean): string {
+	let brackets = 0;
 	for (const char of address) {
-		if (char === '(') opened++;
-		else if (char === ')') closed++;
+		if (char === '(') brackets++;
+		else if (char === ')') brackets--;
 	}
 	let end = address.length;
 	while (end > 0) {
 		const last = address[end - 1];
-		if (".,;:!?*~_'".includes(last)) end--;
-		else if (last === ')' && closed > opened) {
+		if (".,;:!?'".includes(last)) {
 			end--;
-			closed--;
+		} else if (last === ')' && brackets < 0) {
+			end--;
+			brackets++;
+		} else if (last === '*' || last === '_' || last === '~') {
+			let run = 1;
+			while (address[end - 1 - run] === last) run++;
+			if (!opened(last, run)) break;
+			end -= run;
 		} else break;
 	}
 	return address.slice(0, end);
@@ -207,9 +217,10 @@ function tokenize(line: string, allowLinks: boolean, depth: number): Token[] {
 					const end = closingBracket(line, close + 1, '(', ')', MAX_URL);
 					const target = end === -1 ? null : safeUrl(line.slice(close + 2, end));
 					const label = line.slice(open + 1, close);
-					if (target && !BIDI.test(label) && !labelNamesOtherHost(label, target.host)) {
-						const children = label.trim() ? parseInline(label, false, depth + 1) : [];
-						const shown = plainText(children).trim() ? children : [{ type: 'text' as const, text: line.slice(close + 2, end) }];
+					const children = target && label.trim() && !BIDI.test(label) ? parseInline(label, false, depth + 1) : [];
+					const seen = plainText(children);
+					if (target && !BIDI.test(label) && !labelNamesOtherHost(seen, target.host)) {
+						const shown = seen.trim() ? children : [{ type: 'text' as const, text: line.slice(close + 2, end) }];
 						push(linkNode(target, shown));
 						i = end + 1;
 						continue;
@@ -220,7 +231,11 @@ function tokenize(line: string, allowLinks: boolean, depth: number): Token[] {
 			if ((char === 'h' || char === 'H') && !isAlnum(line[i - 1])) {
 				WEB_ADDRESS.lastIndex = i;
 				const match = WEB_ADDRESS.exec(line);
-				const address = match ? trimAddress(match[0]) : '';
+				const address = match
+					? trimAddress(match[0], (mark, length) =>
+							tokens.some((t) => t.kind === 'delim' && t.canOpen && t.char === mark && t.length === length)
+						)
+					: '';
 				const target = address ? safeUrl(address) : null;
 				if (target) {
 					push(linkNode(target, [{ type: 'text', text: address }]));
@@ -412,10 +427,13 @@ export function parseCommentBody(body: string): Block[] {
 		if (ordered || bullet) {
 			endParagraph();
 			const isOrdered = ordered !== null;
+			// A new marker type at the top level starts a new list. End the open one first:
+			// ending it reads and clears the stored lines, and the new item's lines must stay.
+			if (state.open && indent < state.open.indent + 2 && state.open.block.ordered !== isOrdered) endList();
 			const item: ListItem = { value: ordered ? Number(ordered[2]) : null, children: [], lists: [] };
 			itemLines.set(item, [ordered ? ordered[3] : bullet![2]]);
 
-			let list = state.open;
+			const list = state.open;
 			if (list && indent >= list.indent + 2) {
 				// One nested level; deeper lines join it.
 				const parent = list.block.items[list.block.items.length - 1];
@@ -424,10 +442,6 @@ export function parseCommentBody(body: string): Block[] {
 				else parent.lists.push({ type: 'list', ordered: isOrdered, items: [item] });
 				list.last = item;
 				continue;
-			}
-			if (list && list.block.ordered !== isOrdered) {
-				endList();
-				list = null;
 			}
 			if (list) {
 				list.block.items.push(item);
