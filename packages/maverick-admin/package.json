@@ -15,7 +15,7 @@
     "deploy": "pnpm build && node ../../scripts/run-wrangler.mjs pages deploy .svelte-kit/cloudflare --project-name=maverick-admin"
   },
   "devDependencies": {
-    "@sveltejs/adapter-cloudflare": "^4.7.2",
+    "@sveltejs/adapter-cloudflare": "^7.2.10",
     "@sveltejs/kit": "^2.70.2",
     "@sveltejs/vite-plugin-svelte": "^4.0.0",
     "@types/node": "^22.0.0",
