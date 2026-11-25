@@ -74,7 +74,9 @@ const CONTROL_LABEL = /^(?:open|close|menu|toggle|submit|send|search|play|pause|
  * Creators word it in many ways: "Designed by Studio", "Template by Studio", "© 2026 Name by Studio",
  * "All rights reserved by Studio".
  */
-const FOOTER_CREDIT = /\bby\b|©|\(c\)|\bcopyright\b|\ball rights reserved\b/i;
+const CREDIT_IN_LINK = /©|\(c\)|\bcopyright\b|\ball rights reserved\b|\b(?:design|develop|ma[dk]e|built|build|creat|craft|power|template|theme|site|website)\w*\b[^.]{0,30}\bby\b/i;
+/** The words right before the link, which the link completes: "… by", "©", "Copyright 2026". */
+const CREDIT_BEFORE_LINK = /(?:\bby|©|\(c\)|\bcopyright)\s*(?:\d{4}\s*)?[:\-–—]?\s*["'“‘«(\[]?\s*$/i;
 const SOCIAL = /facebook|instagram|twitter|linkedin|youtube|tiktok|dribbble|behance|pinterest|github|whatsapp|telegram|threads|social/i;
 const BUTTON_CLASS = /(?:^|[-_])(?:button|btn|cta)(?:[-_]|$)/i;
 
@@ -388,7 +390,20 @@ function isControl(link: MarkupNode): boolean {
 
 function isDesignCredit(link: MarkupNode): boolean {
 	if (!ancestors(link).some(isFooter)) return false;
-	return FOOTER_CREDIT.test(normalize(text(link))) || (link.parent ? FOOTER_CREDIT.test(normalize(text(link.parent)).slice(0, 240)) : false);
+	// The credit is the link itself or the phrase the link completes. A navigation link next to a copyright line is not a credit.
+	return CREDIT_IN_LINK.test(normalize(text(link))) || CREDIT_BEFORE_LINK.test(textBefore(link));
+}
+
+/** The text that comes right before a node in its parent. A node that starts its parent takes the text before the parent. */
+function textBefore(node: MarkupNode): string {
+	let current = node;
+	for (let level = 0; level < 3 && current.parent; level++) {
+		const siblings = current.parent.children ?? [];
+		const before = normalize(siblings.slice(0, siblings.indexOf(current)).map((sibling) => text(sibling)).join(''));
+		if (before) return before.slice(-60);
+		current = current.parent;
+	}
+	return '';
 }
 
 function linkLabel(link: MarkupNode): string {

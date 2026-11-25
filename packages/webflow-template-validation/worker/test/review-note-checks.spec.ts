@@ -134,11 +134,22 @@ describe('Review-note checks', () => {
 				'© 2026 Example by <a href="https://studio-name.webflow.io">Studio Name</a>.',
 				'<a href="https://studio-name.webflow.io">© All rights reserved by Studio Name</a>',
 				'Template by <a href="https://studio-name.webflow.io">Studio Name</a>',
-				'Copyright <a href="https://studio-name.webflow.io">Studio Name</a>'
+				'Copyright <a href="https://studio-name.webflow.io">Studio Name</a>',
+				'© 2025 Copyright - Example | Designed by “<a href="https://studio-name.webflow.io">Studio Name</a>”'
 			]) {
 				const home = page('/', `${NAV}<footer class="footer"><div>${credit}</div> Powered by <a href="https://webflow.com">Webflow</a></footer>`);
 				expect(detail('links-other-webflow-site', [home]), credit).toBeUndefined();
 			}
+		});
+
+		it('does not read a navigation link next to a copyright line as the credit', () => {
+			const home = page('/', `${NAV}<footer class="footer"><span>© 2026 Example Inc. All rights reserved.</span><a href="https://another-template.webflow.io/about">About</a></footer>`);
+			expect(detail('links-other-webflow-site', [home])![0].detail).toBe('another-template.webflow.io');
+		});
+
+		it('reads a credit whose link is wrapped in another element', () => {
+			const home = page('/', `${NAV}<footer class="footer"><div>Designed by <span><a href="https://studio-name.webflow.io">Studio Name</a></span></div> Powered by <a href="https://webflow.com">Webflow</a></footer>`);
+			expect(detail('links-other-webflow-site', [home])).toBeUndefined();
 		});
 
 		it('still reports a footer navigation link that opens another webflow.io site', () => {
