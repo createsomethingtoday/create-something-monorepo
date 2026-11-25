@@ -69,6 +69,7 @@ const SUMMARY = {
   totalRevenue: 55890,
   sellingTemplates: 441,
   fulfillmentSales: 61,
+  checkoutRevenue: 49840,
   listedTemplates: 4980,
   totalSales90d: 1902,
   totalRevenue90d: 172400,
@@ -165,19 +166,26 @@ function leaderboard() {
     totalSales30d: sales,
     totalRevenue30d: sales * price,
     avgRevenuePerSale: price,
-    fulfillmentSales30d: fulfillment
+    fulfillmentSales30d: fulfillment,
+    // Like the snapshot build: revenue from Marketplace checkout only. Older
+    // snapshots (legacy mode) do not have it and rank list-price revenue.
+    ...(!legacy && { checkoutRevenue30d: (sales - fulfillment) * price })
   }));
+  const ranked = (row: (typeof rows)[number]) => row.checkoutRevenue30d ?? row.totalRevenue30d;
   const salesRanks = rankBy(rows, (row) => row.totalSales30d);
-  const revenueRanks = rankBy(rows, (row) => row.totalRevenue30d);
-  return rows.map((row) => ({
-    ...row,
-    salesRank: salesRanks.get(row)!,
-    revenueRank: revenueRanks.get(row)!
-  }));
+  const revenueRanks = rankBy(rows, ranked);
+  return rows
+    .map((row) => ({
+      ...row,
+      salesRank: salesRanks.get(row)!,
+      revenueRank: revenueRanks.get(row)!
+    }))
+    .sort((a, b) => b.totalSales30d - a.totalSales30d || ranked(b) - ranked(a));
 }
 
 function summary() {
-  const { listedTemplates, totalSales90d, totalRevenue90d, sellingTemplates90d, ...base } = SUMMARY;
+  const { checkoutRevenue, listedTemplates, totalSales90d, totalRevenue90d, sellingTemplates90d, ...base } =
+    SUMMARY;
   return legacy ? base : SUMMARY;
 }
 

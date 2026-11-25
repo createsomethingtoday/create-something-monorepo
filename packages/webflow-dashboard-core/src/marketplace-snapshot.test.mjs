@@ -342,3 +342,67 @@ test('the 90-day source can carry its own fulfillment-link split, all or nothing
   input.sellers90[1].fulfillmentSales = 3;
   assert.throws(() => buildMarketplaceSnapshot(input), /fulfillment-link sales exceed sales/);
 });
+
+// Fulfillment-link revenue. List price is an upper limit of what the buyer paid
+// off-platform, so leaderboard revenue and revenue rank use Marketplace checkout only.
+const linkRevenueFixture = () => {
+  const input = fixture();
+  // A: 3 sales, 2 through links. $150 at list price, $50 through checkout.
+  Object.assign(input.sellers[0], { fulfillmentSales: 2, fulfillmentRevenue: 100 });
+  // C: 3 sales, all through checkout. $120.
+  input.sellers.push({ templateId: 'c'.repeat(24), mrpId: 'd'.repeat(24), name: 'Checkout Only', sales: 3, revenue: 120, fulfillmentSales: 0, fulfillmentRevenue: 0 });
+  input.assets.push({ templateId: 'c'.repeat(24), creatorEmail: 'two@example.test', categories: ['Agency'] });
+  // E: 1 sale through a link. $400 at list price, $0 through checkout.
+  input.sellers.push({ templateId: 'e'.repeat(24), mrpId: 'f'.repeat(24), name: 'Link Only', sales: 1, revenue: 400, fulfillmentSales: 1, fulfillmentRevenue: 400 });
+  input.assets.push({ templateId: 'e'.repeat(24), creatorEmail: 'three@example.test', categories: ['Agency'] });
+  return input;
+};
+test('leaderboard revenue rank and tie-break use Marketplace checkout revenue when the source has it', () => {
+  const snapshot = buildMarketplaceSnapshot(linkRevenueFixture());
+  const rows = snapshot.leaderboard.map((r) => [r.templateName, r.totalSales30d, r.totalRevenue30d, r.checkoutRevenue30d, r.salesRank, r.revenueRank]);
+  assert.deepEqual(rows, [
+    // Same sales: the template with more checkout revenue is first, though its list-price revenue is lower.
+    ['Checkout Only', 3, 120, 120, 1, 1],
+    ['Same Name', 3, 150, 50, 1, 2],
+    // $400 at list price is the highest revenue, but none of it went through checkout.
+    ['Link Only', 1, 400, 0, 3, 3]
+  ]);
+  // Totals and subcategory rows keep list price for link sales; the summary also carries the checkout part.
+  assert.equal(snapshot.summary.totalRevenue, 670);
+  assert.equal(snapshot.summary.checkoutRevenue, 170);
+  assert.equal(snapshot.summary.totalSales, 7);
+  const agency = snapshot.categories.find((row) => row.subcategory === 'Agency');
+  assert.equal(agency.totalRevenue30d, 670);
+  assert.equal(agency.checkoutRevenue30d, undefined);
+  assert.deepEqual(snapshotFromFields(snapshotToFields(snapshot)), snapshot);
+});
+test('without fulfillment-link revenue the leaderboard keeps list-price ranking and has no checkout fields', () => {
+  const input = linkRevenueFixture();
+  for (const seller of input.sellers) delete seller.fulfillmentRevenue;
+  const snapshot = buildMarketplaceSnapshot(input);
+  assert.deepEqual(snapshot.leaderboard.map((r) => [r.templateName, r.revenueRank]), [['Same Name', 2], ['Checkout Only', 3], ['Link Only', 1]]);
+  assert.equal(snapshot.leaderboard[0].checkoutRevenue30d, undefined);
+  assert.equal(snapshot.summary.checkoutRevenue, undefined);
+});
+test('rejects fulfillment-link revenue that is partial or disagrees with the sales split', () => {
+  const build = (change) => {
+    const input = linkRevenueFixture();
+    change(input.sellers);
+    return () => buildMarketplaceSnapshot(input);
+  };
+  assert.throws(build((s) => delete s[1].fulfillmentRevenue), /partial fulfillment-link revenue/);
+  assert.throws(build((s) => s.forEach((x) => delete x.fulfillmentSales)), /fulfillment-link revenue without counts/);
+  assert.throws(build((s) => (s[0].fulfillmentRevenue = 151)), /fulfillment-link revenue exceeds revenue/);
+  assert.throws(build((s) => (s[1].fulfillmentRevenue = 10)), /fulfillment-link revenue without fulfillment-link sales/);
+  assert.throws(build((s) => (s[2].fulfillmentRevenue = 300)), /checkout revenue without checkout sales/);
+  // The same rules hold for a snapshot read back from storage.
+  const wire = (change) => {
+    const snapshot = buildMarketplaceSnapshot(linkRevenueFixture());
+    change(snapshot);
+    return () => snapshotFromFields(snapshotToFields(snapshot));
+  };
+  assert.throws(wire((s) => delete s.leaderboard[1].checkoutRevenue30d), /mixed checkout revenue/);
+  assert.throws(wire((s) => delete s.summary.checkoutRevenue), /mixed checkout revenue/);
+  assert.throws(wire((s) => (s.leaderboard[1].checkoutRevenue30d = 151)), /checkout revenue exceeds revenue/);
+  assert.throws(wire((s) => (s.summary.checkoutRevenue = 671)), /checkout revenue exceeds revenue/);
+});

@@ -46,6 +46,11 @@ function ranks(rows, metric) {
  *    counts as listed when it is listed now or sold in a window of this snapshot.
  *  - `sellers90`: every template with a delivered sale in the 90 days that end
  *    at `snapshotAt`. It must contain the 30-day sellers.
+ *  - `seller.fulfillmentRevenue`: the part of `seller.revenue` that came through
+ *    fulfillment links, at list price. Webflow does not see the price the buyer
+ *    paid, so that part is an upper limit. With it, the leaderboard carries
+ *    `checkoutRevenue30d` (revenue from Marketplace checkout only) and ranks
+ *    revenue by it. Sales counts and sales rank still include link sales.
  */
 export function buildMarketplaceSnapshot({ sellers, assets, categories, snapshotAt, sellers90 }) {
   if (
@@ -119,6 +124,11 @@ export function buildMarketplaceSnapshot({ sellers, assets, categories, snapshot
   const withFulfillment = sellers.filter((s) => s.fulfillmentSales !== undefined && s.fulfillmentSales !== null);
   if (withFulfillment.length && withFulfillment.length !== sellers.length) reject('partial fulfillment-link counts');
   const hasFulfillment = withFulfillment.length > 0;
+  // The revenue of those sales is optional in the same way, and needs the counts.
+  const withLinkRevenue = sellers.filter((s) => s.fulfillmentRevenue !== undefined && s.fulfillmentRevenue !== null);
+  if (withLinkRevenue.length && withLinkRevenue.length !== sellers.length) reject('partial fulfillment-link revenue');
+  const hasCheckout = withLinkRevenue.length > 0;
+  if (hasCheckout && !hasFulfillment) reject('fulfillment-link revenue without counts');
   const seen = new Set();
   const rows = sellers.map((seller) => {
     const templateId = id(seller.templateId);
@@ -150,15 +160,25 @@ export function buildMarketplaceSnapshot({ sellers, assets, categories, snapshot
       row.fulfillmentSales30d = number(seller.fulfillmentSales, 'fulfillment-link sales', true);
       if (row.fulfillmentSales30d > totalSales30d) reject('fulfillment-link sales exceed sales');
     }
+    if (hasCheckout) {
+      const linkRevenue = round(number(seller.fulfillmentRevenue, 'fulfillment-link revenue'));
+      if (linkRevenue > row.totalRevenue30d) reject('fulfillment-link revenue exceeds revenue');
+      row.checkoutRevenue30d = round(row.totalRevenue30d - linkRevenue);
+      checkCheckoutRevenue(row);
+    }
     return row;
   });
+  // Revenue rank and the revenue tie-break use money that Webflow processed,
+  // when the source has it. List price for link sales can be far from what the
+  // buyer paid, so it must not decide a template's place.
+  const rankedRevenue = hasCheckout ? 'checkoutRevenue30d' : 'totalRevenue30d';
   const salesRanks = ranks(rows, 'totalSales30d');
-  const revenueRanks = ranks(rows, 'totalRevenue30d');
+  const revenueRanks = ranks(rows, rankedRevenue);
   const leaderboard = [...rows]
     .sort(
       (a, b) =>
         b.totalSales30d - a.totalSales30d ||
-        b.totalRevenue30d - a.totalRevenue30d ||
+        b[rankedRevenue] - a[rankedRevenue] ||
         a.templateId.localeCompare(b.templateId)
     )
     .slice(0, 160)
@@ -227,6 +247,9 @@ export function buildMarketplaceSnapshot({ sellers, assets, categories, snapshot
       ...(hasFulfillment && {
         fulfillmentSales: rows.reduce((sum, r) => sum + r.fulfillmentSales30d, 0)
       }),
+      ...(hasCheckout && {
+        checkoutRevenue: round(rows.reduce((sum, r) => sum + r.checkoutRevenue30d, 0))
+      }),
       ...(hasSupply && { listedTemplates: rows.length + others.size + unplaced90 }),
       ...(has90 && {
         totalSales90d: [...sold90.values()].reduce((sum, r) => sum + r.sales, 0),
@@ -251,6 +274,16 @@ export function buildMarketplaceSnapshot({ sellers, assets, categories, snapshot
   return snapshot;
 }
 
+/** A row's checkout revenue must agree with its sales split. */
+function checkCheckoutRevenue(row) {
+  if (number(row.checkoutRevenue30d, 'checkout revenue') > row.totalRevenue30d)
+    reject('checkout revenue exceeds revenue');
+  if (row.fulfillmentSales30d === 0 && row.checkoutRevenue30d !== row.totalRevenue30d)
+    reject('fulfillment-link revenue without fulfillment-link sales');
+  if (row.fulfillmentSales30d === row.totalSales30d && row.checkoutRevenue30d !== 0)
+    reject('checkout revenue without checkout sales');
+}
+
 export function validateMarketplaceSnapshot(snapshot) {
   if (!snapshot || snapshot.schemaVersion !== SNAPSHOT_SCHEMA_VERSION) reject('unsupported schema');
   if (
@@ -268,6 +301,11 @@ export function validateMarketplaceSnapshot(snapshot) {
   const hasFulfillment = summary.fulfillmentSales !== undefined;
   if (hasFulfillment && number(summary.fulfillmentSales, 'fulfillment-link sales', true) > summary.totalSales)
     reject('fulfillment-link sales exceed sales');
+  // Optional: revenue from Marketplace checkout only (link sales left out).
+  const hasCheckout = summary.checkoutRevenue !== undefined;
+  if (hasCheckout && !hasFulfillment) reject('checkout revenue without fulfillment-link counts');
+  if (hasCheckout && number(summary.checkoutRevenue, 'checkout revenue') > summary.totalRevenue)
+    reject('checkout revenue exceeds revenue');
   // Optional listed supply and optional 90-day window; each is all or nothing.
   const hasSupply = summary.listedTemplates !== undefined;
   if (hasSupply && number(summary.listedTemplates, 'listed templates', true) < summary.sellingTemplates)
@@ -308,6 +346,8 @@ export function validateMarketplaceSnapshot(snapshot) {
       reject('mixed fulfillment-link counts');
     if (hasFulfillment && number(row.fulfillmentSales30d, 'fulfillment-link sales', true) > row.totalSales30d)
       reject('fulfillment-link sales exceed sales');
+    if (hasCheckout !== (row.checkoutRevenue30d !== undefined)) reject('mixed checkout revenue');
+    if (hasCheckout) checkCheckoutRevenue(row);
   }
   const keys = new Set();
   for (const row of snapshot.categories) {

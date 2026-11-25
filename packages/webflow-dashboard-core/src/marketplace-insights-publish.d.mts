@@ -15,6 +15,8 @@ export interface Seller {
   sales: number;
   fulfillmentSales?: number;
   revenue: number;
+  /** Part of revenue from fulfillment-link sales, at list price. */
+  fulfillmentRevenue?: number;
 }
 /** One template's sales in the 90 days to the window end. */
 export interface Seller90 {

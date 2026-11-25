@@ -2734,6 +2734,7 @@ export function getAirtableClient(env: AirtableEnv | undefined) {
 				salesRank: number;
 				revenueRank: number;
 				fulfillmentSales30d?: number;
+				checkoutRevenue30d?: number;
 			}>;
 			freshness: MarketplaceFreshnessMetadata;
       marketplaceSummary?: MarketplaceSnapshot['summary'];

@@ -31,6 +31,7 @@ const fixture = () => ({
       SALES_30D: 3,
       FULFILLMENT_SALES_30D: 1,
       REVENUE_30D: 150,
+      FULFILLMENT_REVENUE_30D: 50,
       LOADED_THROUGH: '2026-09-22T05:00:00.000Z'
     }
   ],
@@ -177,7 +178,8 @@ test('duplicate names preserve stable IDs and creator attribution', () => {
     NAME: 'Template',
     SALES_30D: 2,
     FULFILLMENT_SALES_30D: 0,
-    REVENUE_30D: 100
+    REVENUE_30D: 100,
+    FULFILLMENT_REVENUE_30D: 0
   });
   data.records[tables.assets].push({
     id: 'recOther',
@@ -418,4 +420,38 @@ test('snowflake source does not read the 90-day table', () => {
   assert.equal(result.status, 0, result.stderr);
   assert.equal(result.calls.some((call) => call.table === tables.sellers90), false);
   assert.deepEqual(receiptOf(result).windowNotes, []);
+});
+
+// Fulfillment-link revenue (FULFILLMENT_REVENUE_30D). With it, leaderboard revenue
+// and revenue rank use Marketplace checkout only; sales counts keep link sales.
+test('snowflake source gives the leaderboard its checkout revenue', () => {
+  const result = run(fixture());
+  assert.equal(result.status, 0, result.stderr);
+  const [row] = result.snapshot.leaderboard;
+  assert.equal(row.totalSales30d, 3);
+  assert.equal(row.totalRevenue30d, 150);
+  assert.equal(row.checkoutRevenue30d, 100);
+  assert.equal(result.snapshot.summary.totalRevenue, 150);
+  assert.equal(result.snapshot.summary.checkoutRevenue, 100);
+});
+test('airtable source carries fulfillment-link revenue when the activation writes it', () => {
+  const rows = [sellerRow({ fld7zlIkAV4GDW7rk: 2, fldlTdFquWfV8hiL0: 100 })];
+  const result = run(airtableFixture(rows), ['--execute', '--source', 'airtable']);
+  assert.equal(result.status, 0, result.stderr);
+  assert.equal(result.snapshot.leaderboard[0].checkoutRevenue30d, 50);
+  assert.equal(result.snapshot.summary.checkoutRevenue, 50);
+});
+test('airtable source without the revenue column keeps list-price ranking', () => {
+  const result = run(airtableFixture([sellerRow({ fld7zlIkAV4GDW7rk: 2 })]), ['--execute', '--source', 'airtable']);
+  assert.equal(result.status, 0, result.stderr);
+  assert.equal(result.snapshot.leaderboard[0].checkoutRevenue30d, undefined);
+  assert.equal(result.snapshot.summary.checkoutRevenue, undefined);
+});
+test('airtable source fails when only some rows carry fulfillment-link revenue', () => {
+  const first = sellerRow({ fld7zlIkAV4GDW7rk: 1, fldlTdFquWfV8hiL0: 50, fldkJiQBUdfWUMP7Q: 2, fld31oTda0kji5IDi: 6, fldzB6kawJH32fDmA: 300 });
+  const second = sellerRow({ fldgZHXYZqlX2HSag: 'c'.repeat(24), fld7zlIkAV4GDW7rk: 0, fldkJiQBUdfWUMP7Q: 2, fld31oTda0kji5IDi: 6, fldzB6kawJH32fDmA: 300 });
+  const result = run(airtableFixture([first, second]), ['--execute', '--source', 'airtable']);
+  assert.notEqual(result.status, 0);
+  assert.match(result.stderr, /FULFILLMENT_REVENUE_30D on 1 of 2 rows/);
+  assert.deepEqual(result.writes, []);
 });
