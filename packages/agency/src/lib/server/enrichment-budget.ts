@@ -62,24 +62,24 @@ function safeLabel(value: unknown, maximum: number) {
   if (!/^[a-zA-Z0-9_.:\/-]+$/.test(value)) throw new TypeError('Invalid receipt reference');
   return value;
 }
-// A Treg grant owns two separately charged calls. Canonical event IDs are
-// receipt units, not successive revisions of one total. Retain old whole-grant
-// receipts as their own unit so an unknown legacy event never disappears.
+// Subcall corrections retain the original unit; an invoice total supersedes
+// all subcalls for that grant. Every receipt remains in the append-only ledger.
 const TREG_SPEND_SQL = `WITH grants AS (
  SELECT reservation_id FROM npg_enrichment_grants WHERE provider='treg'
 ), events AS (
  SELECT r.*, CASE
-   WHEN event_id=request_id||':treg:phone' THEN 'phone'
-   WHEN event_id=request_id||':treg:email' THEN 'email'
-   ELSE 'legacy' END AS unit
+   WHEN event_id=request_id||':treg:phone' OR instr(event_id,request_id||':treg:phone:')=1 THEN 'phone'
+   WHEN event_id=request_id||':treg:email' OR instr(event_id,request_id||':treg:email:')=1 THEN 'email'
+   ELSE 'operation' END AS unit
  FROM npg_enrichment_receipts r WHERE provider='treg'
+), split_grants AS (
+ SELECT reservation_id FROM grants g
+ WHERE EXISTS(SELECT 1 FROM events e WHERE e.request_id=g.reservation_id AND e.unit IN ('phone','email'))
+ AND NOT EXISTS(SELECT 1 FROM events e WHERE e.request_id=g.reservation_id AND e.unit='operation' AND actual_micros IS NOT NULL)
 ), units AS (
- SELECT reservation_id,'phone' AS unit FROM grants g WHERE EXISTS(SELECT 1 FROM events e WHERE e.request_id=g.reservation_id AND e.unit IN('phone','email'))
- UNION ALL
- SELECT reservation_id,'email' AS unit FROM grants g WHERE EXISTS(SELECT 1 FROM events e WHERE e.request_id=g.reservation_id AND e.unit IN('phone','email'))
- UNION ALL
- SELECT reservation_id,'legacy' AS unit FROM grants g WHERE NOT EXISTS(SELECT 1 FROM events e WHERE e.request_id=g.reservation_id)
- OR EXISTS(SELECT 1 FROM events e WHERE e.request_id=g.reservation_id AND e.unit='legacy')
+ SELECT reservation_id,'phone' AS unit FROM split_grants
+ UNION ALL SELECT reservation_id,'email' FROM split_grants
+ UNION ALL SELECT reservation_id,'operation' FROM grants WHERE reservation_id NOT IN (SELECT reservation_id FROM split_grants)
 ), amounts AS (
  SELECT (SELECT actual_micros FROM events e WHERE e.request_id=u.reservation_id AND e.unit=u.unit AND actual_micros IS NOT NULL ORDER BY id DESC LIMIT 1) AS actual,
  (SELECT estimated_micros FROM events e WHERE e.request_id=u.reservation_id AND e.unit=u.unit AND estimated_micros IS NOT NULL ORDER BY id DESC LIMIT 1) AS estimated

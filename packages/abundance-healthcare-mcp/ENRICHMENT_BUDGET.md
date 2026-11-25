@@ -39,3 +39,5 @@ Clay has been retired from the active catalog, readiness, dispatch and recovery.
 ## Treg receipts and deployment
 
 Configure the Healthcare MCP Worker secret `TREG_TOKEN` for the intended team. Apply Agency migration `0068_npg_treg_enrichment_provider.sql` before releasing the new scope. The ledger retains historical grants and events. Treg returns a separate call ID for each routed lookup. Settled costs are expressed in micro-USD. An unknown charge remains pending for reconciliation. A line check reports reachability at lookup time. Current subscriber ownership and contact permission require separate evidence.
+
+For a Treg subcall correction, use an event ID of the form `<request_id>:treg:phone:<revision>` or `<request_id>:treg:email:<revision>` and the full corrected amount for that subcall. For an invoice covering both calls, use a separate unique operation-level event ID and the full confirmed total. Once a confirmed operation total exists, subsequent whole-operation adjustments must append a new cumulative total.
