@@ -1,3 +1,4 @@
+import { createPublisher } from './lifecycle.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
@@ -51,7 +52,7 @@ test('extension has no host or upload permissions and no background capture', as
 });
 test('controller state rejects consent/source mismatch before opening audio; explicit Stop writes WAV and stops tracks', async () => {
   const code = (await readFile(new URL('./control.js', import.meta.url), 'utf8')).replace(
-    /^import .*;\n/,
+    /^import .*;\n/gm,
     ''
   );
   const elements = new Map();
@@ -79,6 +80,7 @@ test('controller state rejects consent/source mismatch before opening audio; exp
     poll,
     missingTab = false;
   const chrome = {
+    windows: { create: () => new Promise(() => {}) },
     storage: {
       local: {
         get: async () => ({ testURL: selectedURL }),
@@ -105,7 +107,7 @@ test('controller state rejects consent/source mismatch before opening audio; exp
         }
       }
     },
-    runtime: { getURL: (x) => x },
+    runtime: { getURL: (x) => x, onConnect: { addListener() {} } },
     tabCapture: {
       getMediaStreamId: async () => {
         captures++;
@@ -171,6 +173,7 @@ test('controller state rejects consent/source mismatch before opening audio; exp
     }),
     addEventListener() {}
   };
+  const tileMessages = [];
   const init = new Function(
     'document',
     'chrome',
@@ -186,6 +189,8 @@ test('controller state rejects consent/source mismatch before opening audio; exp
     'validMeetingURL',
     'matchesCaptureSource',
     'StreamingWav',
+    'createPublisher',
+    'BroadcastChannel',
     code
   );
   init(
@@ -208,7 +213,9 @@ test('controller state rejects consent/source mismatch before opening audio; exp
     MAX_SECONDS,
     validMeetingURL,
     matchesCaptureSource,
-    StreamingWav
+    StreamingWav,
+    createPublisher,
+    class { postMessage(message) { tileMessages.push(message); } close() {} }
   );
   get('meeting').value = sourceURL;
   await get('configure').onclick();
@@ -227,6 +234,7 @@ test('controller state rejects consent/source mismatch before opening audio; exp
   await get('start').onclick();
   assert.equal(captures, 1);
   assert.equal(get('stop').disabled, false);
+  assert.equal(tileMessages.at(-1).state, 'recording');
   onUpdate(7, { url: 'https://us02web.zoom.us/wc/12345678901/join?pwd=changed-synthetic' });
   assert.equal(
     get('stop').disabled,
@@ -234,10 +242,16 @@ test('controller state rejects consent/source mismatch before opening audio; exp
     'same-origin same-meeting ephemeral update keeps capture'
   );
   node.port.onmessage({ data: new Float32Array([0, 0.5, -0.5]) });
+  get('open-tile').onclick();
+  await poll();
+  await new Promise((resolve) => setImmediate(resolve));
+  assert.equal(aborted, 0, 'opening a tile cannot discard an audio-only capture');
+  assert.equal(get('open-tile').disabled, true);
   get('stop').onclick();
   await new Promise((resolve) => setImmediate(resolve));
   await new Promise((resolve) => setImmediate(resolve));
   assert.equal(ended, 1);
+  assert.equal(get('open-tile').disabled, false);
   assert.equal(written.byteLength, 52, 'explicit Stop includes the last partial worklet block');
   assert.equal(get('stop').disabled, true);
   assert.match(get('status').textContent, /Saved private local WAV/);
@@ -454,4 +468,14 @@ test('disk write failure cannot finalize a seemingly valid WAV', async () => {
   await sink.abort();
   assert.equal(closed, false);
   assert.equal(aborted, true);
+});
+
+test('signed-in Meet tab matches only its saved room with a numeric account selector', () => {
+  const room = 'https://meet.google.com/abc-defg-hij';
+  assert.equal(matchesCaptureSource(room + '?authuser=0', room), true);
+  for (const suffix of ['?authuser=0&other=x', '?authuser=0&authuser=1', '?authuser=name', '?authuser=1#other']) {
+    assert.equal(matchesCaptureSource(room + suffix, room), false);
+  }
+  assert.equal(matchesCaptureSource(room + '?authuser=1', 'https://meet.google.com/xyz-defg-hij'), false);
+  assert.equal(validMeetingURL(room + '?authuser=0'), null);
 });

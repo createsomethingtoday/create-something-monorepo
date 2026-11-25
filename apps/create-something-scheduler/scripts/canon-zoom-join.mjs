@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // Scheduled runner adapter. Never prints private navigation URLs or browser errors.
 import { readFile, writeFile, rename, open, unlink, stat } from 'node:fs/promises';
-import { runParticipant } from './canon-participant.mjs';
+import { runParticipant, verifyScheduledSelection } from './canon-participant.mjs';
 const requireValue = (v, m) => {
   if (!v) throw Error(m);
   return v;
@@ -18,7 +18,17 @@ async function main() {
     )
   );
   const config = { ...(outer.participant ?? outer) };
-  const selection = JSON.parse(await readFile(selectionPath, 'utf8'));
+  let selection = JSON.parse(await readFile(selectionPath, 'utf8'));
+  if (config.camera_pilot?.enabled === true) {
+    requireValue(
+      outer.cameraVerification?.scope === 'internal-zoom-occurrence',
+      'Internal Zoom camera verification config required'
+    );
+    selection = await verifyScheduledSelection(selection, outer.cameraVerification, {
+      token: process.env.GOOGLE_PILOT_ACCESS_TOKEN,
+      expires_at: process.env.GOOGLE_PILOT_TOKEN_EXPIRES_AT
+    });
+  }
   requireValue(selection.platform === 'zoom', 'Zoom selection required');
   const invitationFile = outer.zoomInvitationFile ?? config.zoom_invitation_file;
   if (invitationFile) {

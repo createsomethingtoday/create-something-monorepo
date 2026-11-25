@@ -170,6 +170,105 @@ export function safeInvite(event, options) {
     attendees: [...(event.attendees ?? []), { email: options.canonEmail, displayName: 'Canon' }]
   };
 }
+function zoomMeetingLinks(event) {
+  const sources = [
+    ...(event.conferenceData?.entryPoints ?? [])
+      .filter((p) => p.entryPointType === 'video')
+      .map((p) => p.uri),
+    event.location,
+    event.description
+  ];
+  const urls = new Set();
+  for (const source of sources) {
+    for (const candidate of String(source ?? '').match(/https:\/\/[^\s<>"']+/g) ?? []) {
+      let url;
+      try {
+        url = new URL(candidate);
+      } catch {
+        continue;
+      }
+      if (
+        /^(?:[a-z0-9-]+\.)?zoom\.us$/.test(url.hostname) &&
+        !url.username &&
+        !url.password &&
+        !url.port &&
+        /^\/j\/[0-9]{9,11}$/.test(url.pathname)
+      )
+        urls.add(`${url.origin}${url.pathname}`);
+    }
+  }
+  return urls;
+}
+
+export function verifyInternalZoomOccurrence(event, options) {
+  if (
+    options.approved !== true ||
+    options.internalTest !== true ||
+    options.selectionAttested !== true ||
+    options.canonIdentityVerified !== true ||
+    options.hostEmail !== 'micah@createsomething.io' ||
+    options.canonEmail !== 'canon@createsomething.io' ||
+    options.selectedEventId !== options.eventId ||
+    event.id !== options.eventId ||
+    !options.eventId ||
+    !options.calendarId ||
+    options.transcriptionMode !== 'off' ||
+    event.organizer?.email?.toLowerCase() !== options.hostEmail ||
+    event.organizer?.self !== true ||
+    event.creator?.self !== true ||
+    event.status !== 'confirmed' ||
+    event.recurrence ||
+    event.recurringEventId ||
+    !event.etag ||
+    event.attendeesOmitted ||
+    !Number.isFinite(Date.parse(event.start?.dateTime))
+  )
+    throw Error(
+      'Exact approved Micah-owned internal Zoom occurrence and canonical Calendar evidence required'
+    );
+  if (
+    !event.attendees?.length ||
+    event.attendees.some(
+      (a) => ![options.hostEmail, options.canonEmail].includes(a.email?.toLowerCase())
+    )
+  )
+    throw Error('Internal Zoom allows only Micah and the verified Canon attendee');
+  const canon = event.attendees.filter((a) => a.email?.toLowerCase() === options.canonEmail);
+  if (
+    canon.length !== 1 ||
+    canon[0].responseStatus !== 'accepted' ||
+    !event.description?.includes(NOTICE)
+  )
+    throw Error('Accepted Canon invitation and visible Canon notice required');
+  const urls = zoomMeetingLinks(event);
+  if (urls.size !== 1 || !urls.has(options.selectedMeetingUrl))
+    throw Error('Selected canonical Zoom link must exactly match the one Calendar meeting link');
+  return {
+    inviteVerified: true,
+    participantPresence: 'unverified',
+    captureAuthorized: false,
+    participantSelection: {
+      selection_scope: 'internal-zoom-occurrence',
+      internal_test: true,
+      calendar_verified: true,
+      event_id: event.id,
+      calendar_id: options.calendarId,
+      identity_email: options.canonEmail,
+      organizer_email: options.hostEmail,
+      invitation_verified: true,
+      canon_rsvp: 'accepted',
+      invited_emails: event.attendees.map((a) => a.email),
+      starts_at: event.start.dateTime,
+      status: event.status,
+      platform: 'zoom',
+      meeting_url: options.selectedMeetingUrl,
+      verified_at: new Date().toISOString(),
+      capture_authorized: false,
+      join_mode: 'manual-host-admitted'
+    }
+  };
+}
+
 export function verifyGuestOccurrence(event, options) {
   if (
     options.approved !== true ||
@@ -202,32 +301,7 @@ export function verifyGuestOccurrence(event, options) {
     throw Error(
       'Exact accepted Canon invitation required; this guest verification cannot invite or capture'
     );
-  const sources = [
-    ...(event.conferenceData?.entryPoints ?? [])
-      .filter((p) => p.entryPointType === 'video')
-      .map((p) => p.uri),
-    event.location,
-    event.description
-  ];
-  const urls = new Set();
-  for (const source of sources) {
-    for (const candidate of String(source ?? '').match(/https:\/\/[^\s<>"']+/g) ?? []) {
-      let url;
-      try {
-        url = new URL(candidate);
-      } catch {
-        continue;
-      }
-      if (
-        /^(?:[a-z0-9-]+\.)?zoom\.us$/.test(url.hostname) &&
-        !url.username &&
-        !url.password &&
-        !url.port &&
-        /^\/j\/[0-9]{9,11}$/.test(url.pathname)
-      )
-        urls.add(`${url.origin}${url.pathname}`);
-    }
-  }
+  const urls = zoomMeetingLinks(event);
   if (urls.size !== 1) throw Error('One unambiguous validated Zoom meeting link required');
   return {
     inviteVerified: true,
@@ -279,6 +353,10 @@ export async function runPilot({ action, options, state, save, fetcher = fetch, 
     return response.json();
   }
   let event = await api(eventUrl);
+  if (options.scope === 'internal-zoom-occurrence') {
+    if (action !== 'verify') throw Error('Internal Zoom adapter is read-only: verify only');
+    return verifyInternalZoomOccurrence(event, options);
+  }
   if (options.scope === 'halfdozen-guest-occurrence') {
     if (action !== 'verify')
       throw Error('Guest occurrence is read-only: verify only; no invitations or capture');

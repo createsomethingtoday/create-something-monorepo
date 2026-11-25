@@ -361,7 +361,14 @@ test('Zoom cannot reuse a Google Meet meeting URL', () => {
   assert.throws(
     () =>
       planParticipant(
-        { ...selection, platform: 'zoom', selection_scope: 'halfdozen-guest-occurrence' },
+        {
+          ...selection,
+          platform: 'zoom',
+          selection_scope: 'internal-zoom-occurrence',
+          calendar_verified: true,
+          organizer_email: 'micah@createsomething.io',
+          calendar_id: 'primary'
+        },
         config,
         {},
         now

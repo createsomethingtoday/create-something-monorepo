@@ -85,3 +85,54 @@ no fake-media flags, and unsafe extension debugging excluded. No Google Chrome
 process was present during the process inventory, so an active dedicated-profile
 lock could not be exercised. Never bypass a Chrome profile lock or kill an
 operator's running browser to make a scheduled launch succeed.
+
+### Opt-in internal virtual-camera pilot
+
+Default Join still verifies microphone and camera off. To request virtual video **after verified admission**, use a private participant config:
+
+```json
+{
+  "camera_pilot": {
+    "enabled": true,
+    "device_label": "OBS Virtual Camera",
+    "operator_confirmed_event_id": "EXACT_INTERNAL_EVENT_ID"
+  }
+}
+```
+
+For the Meet CLI, pass `--camera-pilot-config /private/path/camera.json`; this 0600 file contains the inner `camera_pilot` object above. The scheduled Zoom adapter reads `participant.camera_pilot` from its existing occurrence config.
+
+Camera-enabled execution requires fresh canonical Calendar verification, not an edited `internal_test` field. Any `halfdozen-*` selection is rejected for camera use even if that field is injected. This does not extend video to Half Dozen guest occurrences. The operator must confirm the actual internal call, start the approved Canon scene in OBS, check its preview, start Virtual Camera, and grant browser camera permission for the dedicated meeting origin. Permission must already be granted: device discovery uses `enumerateDevices`, never a temporary physical-camera stream. Supported exact labels are `OBS Virtual Camera` and `Canon Virtual Camera`; zero or duplicate matches stop activation.
+
+After admission, a visible terminal prompt gives the operator 60 seconds to open the capture controller and intended Canon tile from the admitted meeting tab, bind OBS to that exact tile, verify the approved scene and virtual-camera preview, then type `ENABLE CANON <event-id>`. This is a new post-admission gesture; the config attestation alone cannot enable video. Cancellation, timeout or a noninteractive scheduled runner leaves the camera off. The browser and controller remain usable during the prompt. Local capture still requires its own explicit consent/action.
+
+The pre-navigation guard applies in page frames and rejects video until admission. After admission, the adapter selects the unique approved device with `deviceId: {exact: ...}` on every video request, regardless of the platform's dropdown default. It verifies the actual returned video track label and device ID, then verifies camera-on and muted-microphone UI. Missing admission, permission, device, or readback leaves the pilot paused. Source removal or camera-permission revocation stops managed video tracks and disarms the gate. Video activation cannot start recording or meeting-audio capture, and Join never starts capture.
+
+This is an internal browser pilot, not production qualification. No live call was joined during implementation. Platform UI labels can change; a delayed camera transition or unavailable permission causes a conservative stop. A running OBS virtual device does not prove that OBS is rendering the approved scene or fresh frames; the operator must inspect the scene and the participant's received video. Browser device loss is guarded, but an OBS scene that goes black/frozen while the same device stays alive requires operator intervention. An interrupted/opened ledger still blocks duplicate Join: use normal camera-off/Leave controls, reconcile the ledger, and prepare a new explicitly confirmed internal attempt rather than auto-rejoining.
+
+### Internal Zoom selection and live verification
+
+Create the dedicated nonrecurring test in Micah's calendar, invite Canon, accept its invitation, and include the existing `NOTICE` from `canon-pilot.mjs` in the visible event description. This adapter makes no calendar changes. Set this private verification config to the exact selected event and canonical passcode-free meeting link:
+
+```json
+{
+  "scope": "internal-zoom-occurrence",
+  "internalTest": true,
+  "approved": true,
+  "selectionAttested": true,
+  "canonIdentityVerified": true,
+  "hostEmail": "micah@createsomething.io",
+  "canonEmail": "canon@createsomething.io",
+  "calendarId": "primary",
+  "eventId": "EXACT_CALENDAR_EVENT_ID",
+  "selectedEventId": "EXACT_CALENDAR_EVENT_ID",
+  "selectedMeetingUrl": "https://zoom.us/j/12345678901",
+  "transcriptionMode": "off"
+}
+```
+
+Run `node scripts/canon-pilot.mjs verify /private/verification.json /private/receipt.json` with `GOOGLE_PILOT_ACCESS_TOKEN` for Micah's calendar. Save the returned `participantSelection` as the private selection file. Readback requires the exact event, authenticated organizer/creator ownership, a complete Micah-and-Canon-only roster, Canon's accepted invitation, the visible notice, and one unambiguous matching Zoom link. It emits `selection_scope: internal-zoom-occurrence`; guest verification retains its existing separate contract. `prepare`, `resume` and `rollback` are refused for this read-only Zoom scope.
+
+For camera-enabled `canon-zoom-join.mjs`, place the same verification object under `cameraVerification` beside `participant` in the occurrence config; set `GOOGLE_PILOT_TOKEN_EXPIRES_AT` from OAuth issuance as well as the access token. The adapter re-fetches Calendar before launch. For the participant CLI, camera execution requires `--verify-config /private/verification.json`. Browser navigation still accepts passcodes only through the existing private invitation environment/file path. A scheduled process without an interactive terminal cannot enable the camera; run the internal launch in an operator-owned terminal for the final source attestation.
+
+The media guard is installed before navigation in page frames and inspected across current frames. A newly created frame starts unarmed. UI interaction still requires uniquely exposed accessible controls in the primary page; unsupported subframe UI or a changed Zoom/Meet structure pauses rather than broadening selectors or enabling a device. Gate tests use a browser-like media fixture, and the CLI test executes the real verification CLI followed by the real participant dry-run CLI with a mocked Calendar response. Neither establishes current live Zoom/Meet compatibility or received-video quality.

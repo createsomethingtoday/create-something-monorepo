@@ -1,4 +1,29 @@
 import { MAX_SECONDS, validMeetingURL, matchesCaptureSource, StreamingWav } from './audio.mjs';
+import { createPublisher } from './lifecycle.mjs';
+const occurrence = crypto.randomUUID();
+const tileChannel = new BroadcastChannel(`canon-tile-${occurrence}`);
+const tilePorts = new Set();
+let tileWindowId;
+let activeTileSession = occurrence;
+const transport = { postMessage(message) {
+  tileChannel.postMessage(message);
+  for (const port of tilePorts) {
+    try { port.postMessage(message); } catch { tilePorts.delete(port); }
+  }
+} };
+let tile = createPublisher(transport, activeTileSession);
+chrome.runtime.onConnect.addListener((port) => {
+  if (port.name !== `canon-tile-${occurrence}` ||
+      port.sender?.url !== chrome.runtime.getURL(`tile/tile.html#${occurrence}`)) return;
+  tilePorts.add(port);
+  port.onMessage.addListener((data) => tile.receive(data));
+  port.onDisconnect.addListener(() => tilePorts.delete(port));
+  port.postMessage({ type: 'attempt', occurrence, session: activeTileSession });
+  tile.publish();
+});
+let visualMode = false;
+tileChannel.onmessage = ({ data }) => tile.receive(data);
+const tileHeartbeat = setInterval(() => tile.publish(), 1000);
 const $ = (id) => document.getElementById(id);
 let stream,
   context,
@@ -29,9 +54,11 @@ const status = (text) => {
   $('status').textContent = text;
 };
 function buttons() {
-  $('start').disabled = recording || stopping || starting;
-  $('configure').disabled = recording || stopping || starting;
-  $('meeting').disabled = recording || stopping || starting;
+  const busy = recording || stopping || starting;
+  $('open-tile').disabled = busy;
+  $('start').disabled = busy;
+  $('configure').disabled = busy;
+  $('meeting').disabled = busy;
   $('stop').disabled = !recording && !starting;
 }
 async function cleanup() {
@@ -53,12 +80,15 @@ async function stop(save = true, flush = false) {
   if (starting && !recording) {
     runVersion++;
     await cleanup();
+    tile.setState('stopped');
     status('Start cancelled. No recording retained.');
     return;
   }
   if (!recording) return;
+  if (save && visualMode && !tile.acknowledged('recording')) save = false;
   runVersion++;
   stopping = true;
+  tile.setState(save ? 'saving' : 'failed');
   shouldSave = save;
   recording = false;
   buttons();
@@ -82,15 +112,18 @@ async function stop(save = true, flush = false) {
     await cleanup();
     if (shouldSave) {
       await sink.finish(() => shouldSave);
+      tile.setState(shouldSave ? 'stopped' : 'failed');
       status(
         `Saved private local WAV (${Math.round(count / rate)} seconds). ${tailFlushed ? '' : 'Final audio tail unavailable (flush timed out). '}Check file permissions before transcription.`
       );
     } else {
       await sink?.abort();
+      tile.setState('failed');
       status('Stopped; audio discarded because the source changed or capture failed.');
     }
   } catch {
     await sink?.abort();
+    tile.setState('failed');
     status('Capture stopped. Local save failed; audio discarded. No upload attempted.');
   } finally {
     sink = null;
@@ -102,6 +135,17 @@ async function stop(save = true, flush = false) {
     buttons();
   }
 }
+$('selection').textContent = 'OBS window: Canon meeting notes · ' + occurrence.slice(0, 8);
+$('open-tile').onclick = () => {
+  if ($('open-tile').disabled) return;
+  visualMode = true;
+  void chrome.windows.create({
+    url: chrome.runtime.getURL(`tile/tile.html#${occurrence}`),
+    type: 'popup',
+    width: 960,
+    height: 640
+  }).then((window) => { tileWindowId = window.id; });
+};
 $('configure').onclick = async () => {
   const url = validMeetingURL($('meeting').value);
   if (!url) {
@@ -117,6 +161,7 @@ $('configure').onclick = async () => {
 $('start').onclick = async () => {
   if (recording || stopping || starting) return;
   starting = true;
+  tile.setState('preparing');
   const version = ++runVersion;
   buttons();
   async function verifySource() {
@@ -146,6 +191,15 @@ $('start').onclick = async () => {
       suggestedName: 'canon-meeting.wav',
       types: [{ description: 'PCM WAV audio', accept: { 'audio/wav': ['.wav'] } }]
     });
+    if (visualMode) {
+      // A new Start authorizes a fresh attempt after the picker. It does not
+      // revive any expired recording attempt or replace the OBS-selected window.
+      activeTileSession = crypto.randomUUID();
+      tile = createPublisher(transport, activeTileSession);
+      for (const port of tilePorts) port.postMessage({ type: 'attempt', occurrence, session: activeTileSession });
+      if (tileWindowId !== undefined) await chrome.windows.update(tileWindowId, { focused: true });
+      tile.setState('preparing');
+    }
     const current = await chrome.tabs.get(selected);
     if (current?.id !== selected || !matchesCaptureSource(current.url, boundURL))
       throw new Error('Selected tab changed; no capture started.');
@@ -166,6 +220,16 @@ $('start').onclick = async () => {
     await sink.begin();
     await verifySource();
     await context.audioWorklet.addModule(chrome.runtime.getURL('processor.js'));
+    if (visualMode) {
+      tile.setState('recording');
+      const deadline = performance.now() + 3000;
+      while (!tile.acknowledged('recording')) {
+        if (performance.now() > deadline) throw new Error('Visual tile did not acknowledge Taking notes. No recording retained. Reopen the tile before retrying.');
+        await new Promise((resolve) => setTimeout(resolve, 50));
+        await verifySource();
+      }
+    }
+    await verifySource();
     await context.resume();
     const remote = context.createMediaStreamSource(stream);
     remote.connect(context.destination); // Preserve guest playback; headphones prevent echo.
@@ -181,10 +245,10 @@ $('start').onclick = async () => {
     silent.gain.value = 0;
     processor.connect(silent);
     silent.connect(context.destination);
-    await verifySource();
     count = 0;
     starting = false;
     recording = true;
+    tile.setState('recording');
     shouldSave = true;
     processor.port.onmessage = ({ data }) => {
       if (!recording && !flushing) return;
@@ -217,6 +281,7 @@ $('start').onclick = async () => {
     handle = null;
     sink = null;
     count = 0;
+    tile.setState('failed');
     status(error.message || 'Capture failed.');
     buttons();
   } finally {
@@ -226,6 +291,9 @@ $('start').onclick = async () => {
 };
 $('stop').onclick = () => void stop(true, true);
 window.addEventListener('pagehide', () => {
+  clearInterval(tileHeartbeat);
+  tile.setState('disconnected');
+  tileChannel.close();
   runVersion++;
   recording = false;
   stopTracks();
@@ -247,6 +315,7 @@ chrome.tabs.onRemoved.addListener((id) => {
 });
 const watch = setInterval(async () => {
   if (!recording) return;
+  if (visualMode && !tile.acknowledged('recording')) { void stop(false); return; }
   try {
     const tab = await chrome.tabs.get(Number(location.hash.slice(1)));
     const { testURL } = await chrome.storage.local.get('testURL');

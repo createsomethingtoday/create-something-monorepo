@@ -130,6 +130,8 @@ export function findDirectPackageImports(files, packageName) {
 function trackedSourceFiles() {
   const paths = execFileSync('git', ['ls-files', '-co', '--exclude-standard', '-z'], {
     cwd: ROOT,
+    // This NUL-delimited inventory must include every path, even beyond Node's default 1 MiB.
+    maxBuffer: Infinity,
     encoding: 'utf8'
   })
     .split('\0')
