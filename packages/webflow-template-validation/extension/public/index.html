@@ -1,3 +1,7 @@
+<!doctype html>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Webflow Way Validator</title>
 <!-- Webflow Way Validator - Tufte-style Density -->
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -15,12 +19,12 @@
       <span id="toolbar-status-text" class="toolbar-status-text">Checking script...</span>
     </div>
 
-    <button id="validate-btn" class="validate-btn">Run Validator</button>
+    <button id="validate-btn" class="validate-btn"><span class="btn-label">Run Validator</span></button>
 
     <!-- Options dropdown (absolute positioned from toolbar) -->
     <div id="options-panel" class="options-panel" hidden>
+      <div class="options-note options-lead">Partial runs are for iterating. Marketplace submission requires a run with all checks enabled and all pages in scope.</div>
       <div class="options-section">
-        <div class="options-note">Partial runs are for iterating. Marketplace submission requires a run with all checks enabled and all pages in scope.</div>
         <div class="options-title">Validation</div>
         <label class="option-row">
           <input type="checkbox" id="opt-run-designer" />
@@ -28,16 +32,25 @@
         </label>
         <label class="option-row">
           <input type="checkbox" id="opt-run-assets" />
-          <span>Assets & Images</span>
+          <span>Assets and images</span>
         </label>
         <label class="option-row">
           <input type="checkbox" id="opt-run-content" />
-          <span>Content & Accessibility</span>
+          <span>Content and accessibility</span>
+        </label>
+        <div class="options-title options-title-gap">Page scope</div>
+        <label class="option-row">
+          <input type="radio" name="opt-page-scope" id="opt-page-scope-all" value="all" />
+          <span>All pages</span>
+        </label>
+        <label class="option-row">
+          <input type="radio" name="opt-page-scope" id="opt-page-scope-current" value="current" />
+          <span>Current page only</span>
         </label>
       </div>
 
       <div class="options-section" id="content-options">
-        <div class="options-title">Content Checks</div>
+        <div class="options-title">Content checks</div>
         <label class="option-row">
           <input type="checkbox" id="opt-content-lorem" />
           <span>Lorem/placeholder</span>
@@ -67,21 +80,10 @@
           <span>Exclude Style Guide page</span>
         </label>
 
-        <div class="options-divider"></div>
-
-        <div class="options-title">Page Scope</div>
-        <label class="option-row">
-          <input type="radio" name="opt-page-scope" id="opt-page-scope-all" value="all" />
-          <span>All pages</span>
-        </label>
-        <label class="option-row">
-          <input type="radio" name="opt-page-scope" id="opt-page-scope-current" value="current" />
-          <span>Current page only</span>
-        </label>
       </div>
 
-      <div class="options-section">
-        <div class="options-title">Unused Styles</div>
+      <div class="options-section options-section-wide">
+        <div class="options-title">Unused styles</div>
         <label class="option-field-label" for="opt-preview-url">Preview link (optional)</label>
         <input type="url" id="opt-preview-url" class="option-text-input" placeholder="https://preview.webflow.com/preview/..." autocomplete="off" spellcheck="false" aria-describedby="opt-preview-url-note" />
         <div class="options-note" id="opt-preview-url-note">Paste the preview link of this site (Share &gt; Copy link) to get the same list as "Clean up" in the Style selectors panel. Without the link, the check compares the published pages and can find fewer styles.</div>
@@ -111,35 +113,24 @@
     </ol>
     <div id="bridge-message" class="bridge-message"></div>
     <div class="review-bridge-actions">
-      <button id="bridge-install-btn" class="validate-btn" style="font-size: var(--text-xs); padding: var(--space-1) var(--space-3);">Copy Validator script</button>
-      <button id="bridge-rotate-btn" class="secondary-btn">Rotate script token</button>
+      <button id="bridge-install-btn" class="validate-btn bridge-primary-btn">Copy Validator script</button>
       <button id="bridge-recheck-btn" class="secondary-btn">Re-check script</button>
+      <button id="bridge-rotate-btn" class="text-btn" title="Make a new token. The old script stops working until you paste the new one and publish.">Rotate script token</button>
     </div>
-    <div class="bridge-note" style="font-size: var(--text-2xs, 10px); color: var(--text-muted, #6d6d6d); margin-top: var(--space-1, 4px);">
-      The submission form detects this script on the published site. Paste it in site Head code, then publish.
+    <div class="bridge-note">
+      The submission form looks for this script on the published site.
     </div>
     <div id="bridge-token-row" class="bridge-token-row" style="display:none;">
-      <span class="token-label">Token:</span>
+      <span class="token-label">Token</span>
       <code id="bridge-token-value" class="bridge-token-value"></code>
     </div>
     <details id="bridge-snippet-wrap" class="bridge-snippet-wrap" style="display:none;">
       <summary>Validator script snippet</summary>
       <div class="bridge-snippet-toolbar">
-        <p class="bridge-snippet-help">Paste this in Site Settings &gt; Custom Code &gt; Head code, publish, then re-check.</p>
         <button id="bridge-copy-btn" class="secondary-btn bridge-copy-btn">Copy snippet</button>
       </div>
       <pre id="bridge-snippet-code" class="bridge-snippet-code"></pre>
     </details>
-    <div id="bridge-progress" class="bridge-progress" style="display:none;">
-      <div class="bridge-progress-head">
-        <span id="bridge-progress-state">Queued</span>
-        <span id="bridge-progress-percent">0%</span>
-      </div>
-      <div class="bridge-progress-track">
-        <div id="bridge-progress-fill" class="bridge-progress-fill"></div>
-      </div>
-      <div id="bridge-progress-message" class="bridge-progress-message" role="status" aria-live="polite"></div>
-    </div>
   </section>
 
   <!-- Error State -->
@@ -147,10 +138,29 @@
     <span id="error-message"></span>
   </div>
 
-  <!-- Loading State: inline progress bar replaces toolbar status -->
+  <!-- Empty state: no run for this site yet -->
+  <div id="empty-display" class="empty-display">
+    <h2 class="empty-title">No Validator run for this site yet</h2>
+    <p class="empty-copy">The submission form needs a full run with a 100% score. A run reads this site in the Designer and checks the published pages.</p>
+    <ol class="empty-list">
+      <li><span class="bridge-step-index">1</span>Publish the site. The checks read the last publish.</li>
+      <li><span class="bridge-step-index">2</span>Select Run Validator.</li>
+      <li><span class="bridge-step-index">3</span>Fix the items in the Fix List, publish, then run again.</li>
+    </ol>
+  </div>
+
+  <!-- Loading state: progress of the current run -->
   <div id="loading-display" class="loading-display" style="display:none">
-    <div class="loading-spinner"></div>
-    <span>Validating...</span>
+    <div id="bridge-progress" class="bridge-progress">
+      <div class="bridge-progress-head">
+        <span id="bridge-progress-state">Starting</span>
+        <span id="bridge-progress-percent">0%</span>
+      </div>
+      <div class="bridge-progress-track">
+        <div id="bridge-progress-fill" class="bridge-progress-fill"></div>
+      </div>
+      <div id="bridge-progress-message" class="bridge-progress-message" role="status" aria-live="polite"></div>
+    </div>
   </div>
 
   <!-- Results: Actionable Checklist -->

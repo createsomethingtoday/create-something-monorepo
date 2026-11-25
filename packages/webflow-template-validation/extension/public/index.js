@@ -1,7 +1,7 @@
 "use strict";
 (() => {
   // src/utils.ts
-  var EXTENSION_VERSION = "1.3.13";
+  var EXTENSION_VERSION = "1.3.14";
   function filterRetiredAccessibilityIssues(issues) {
     return issues.filter((issue) => issue.id !== "color-contrast-violations");
   }
@@ -1088,6 +1088,7 @@
     hideError();
     hideResults();
     setValidationProgress({ status: "queued", progress: 2, message: "Preparing validation run..." });
+    setToolbarStatus("Running the Validator...", "neutral");
     try {
       const webflow = window.webflow;
       if (!webflow) {
@@ -1245,7 +1246,8 @@
         btn.disabled = false;
         btn.setAttribute("aria-busy", "false");
       }
-      if (btnLabel) btnLabel.textContent = "Run Validator";
+      syncRunButton();
+      if (bridgeStatus?.status === "active") setToolbarStatus("Validator script detected", "active");
     }
   }
   function getPageSlugScope(projectData) {
@@ -1856,6 +1858,13 @@
       return null;
     }
   }
+  var PROGRESS_STATE_LABELS = {
+    queued: "Starting the run",
+    running: "Running checks",
+    completed: "Checks complete",
+    failed: "Run failed",
+    cancelled: "Run cancelled"
+  };
   function setValidationProgress({
     status,
     progress,
@@ -1867,7 +1876,7 @@
     const fillEl = document.getElementById("bridge-progress-fill");
     const messageEl = document.getElementById("bridge-progress-message");
     if (progressWrap) progressWrap.style.display = "flex";
-    if (stateEl) stateEl.textContent = status;
+    if (stateEl) stateEl.textContent = PROGRESS_STATE_LABELS[status];
     if (percentEl) percentEl.textContent = `${Math.max(0, Math.min(100, Math.round(progress)))}%`;
     if (fillEl) fillEl.style.width = `${Math.max(0, Math.min(100, progress))}%`;
     if (messageEl) messageEl.textContent = message;
@@ -2032,7 +2041,7 @@
     setBridgeMessage(getValidatorScriptStatusMessage(status));
     if (status.status === "active") {
       setBridgeSetupStep("run");
-      setToolbarStatus("Validator script detected. Run Validator.", "active");
+      setToolbarStatus(lastValidationReport ? "Validator script detected" : "Validator script detected. Run Validator.", "active");
       hideBridgeDrawer();
     } else {
       const snippet = status.snippet;
@@ -2154,10 +2163,12 @@
   function showBridgeDrawer() {
     const drawer = document.getElementById("review-bridge");
     if (drawer) drawer.style.display = "flex";
+    syncEmptyState();
   }
   function hideBridgeDrawer() {
     const drawer = document.getElementById("review-bridge");
     if (drawer) drawer.style.display = "none";
+    syncEmptyState();
   }
   function setToolbarStatus(text, type) {
     const statusText = document.getElementById("toolbar-status-text");
@@ -2850,12 +2861,30 @@
       return null;
     }
   }
+  function syncRunButton() {
+    const btn = document.getElementById("validate-btn");
+    if (!btn) return;
+    const hasReport = document.getElementById("results-display")?.classList.contains("show") === true;
+    const inSetup = document.getElementById("review-bridge")?.style.display === "flex";
+    btn.classList.toggle("is-secondary", hasReport || inSetup);
+    const label = btn.querySelector(".btn-label");
+    if (label && !isValidating) label.textContent = hasReport ? "Run again" : "Run Validator";
+  }
+  function syncEmptyState() {
+    const emptyDisplay = document.getElementById("empty-display");
+    if (!emptyDisplay) return;
+    const isShown = (id) => document.getElementById(id)?.classList.contains("show") === true;
+    const inSetup = document.getElementById("review-bridge")?.style.display === "flex";
+    emptyDisplay.hidden = inSetup || isShown("loading-display") || isShown("results-display") || isShown("error-display");
+    syncRunButton();
+  }
   function showLoading() {
     const loadingDisplay = document.getElementById("loading-display");
     if (loadingDisplay) {
       loadingDisplay.style.display = "flex";
       loadingDisplay.classList.add("show");
     }
+    syncEmptyState();
   }
   function hideLoading() {
     const loadingDisplay = document.getElementById("loading-display");
@@ -2863,6 +2892,7 @@
       loadingDisplay.style.display = "none";
       loadingDisplay.classList.remove("show");
     }
+    syncEmptyState();
   }
   function showError(message) {
     const errorDisplay = document.getElementById("error-display");
@@ -2872,6 +2902,7 @@
       errorDisplay.style.display = "block";
       errorDisplay.classList.add("show");
     }
+    syncEmptyState();
   }
   function hideError() {
     const errorDisplay = document.getElementById("error-display");
@@ -2879,6 +2910,7 @@
       errorDisplay.style.display = "none";
       errorDisplay.classList.remove("show");
     }
+    syncEmptyState();
   }
   function hideResults() {
     const resultsDisplay = document.getElementById("results-display");
@@ -2886,6 +2918,7 @@
       resultsDisplay.style.display = "none";
       resultsDisplay.classList.remove("show");
     }
+    syncEmptyState();
   }
   function updateMetaDisplay(projectLabel, projectData) {
     const metaDisplay = document.getElementById("meta-display");
@@ -2972,7 +3005,7 @@
     const element = canvasElementRegistry.get(elementKey);
     const webflow = window.webflow;
     if (!element || !webflow) {
-      void notifyDesigner(webflow, "Info", "Element reference expired \u2014 re-run the validator to refresh canvas checks.");
+      void notifyDesigner(webflow, "Info", "Element reference expired. Run the Validator again to refresh canvas checks.");
       return;
     }
     void webflow.setSelectedElement(element).catch((error) => {
@@ -3030,7 +3063,7 @@
         })
       });
       if (!response.ok) throw new Error(`HTTP ${response.status}`);
-      void notifyDesigner(webflow, "Success", "Thanks \u2014 this issue was flagged for review by the validator team.");
+      void notifyDesigner(webflow, "Success", "Thanks. This issue was flagged for review by the Validator team.");
     } catch (error) {
       console.warn("Issue feedback failed:", error);
       void notifyDesigner(webflow, "Error", "Could not send feedback. Please try again later.");
@@ -3045,7 +3078,7 @@
     }
     try {
       await navigator.clipboard.writeText(markdown);
-      void notifyDesigner(webflow, "Success", "Validation report copied \u2014 paste it into a support ticket or document.");
+      void notifyDesigner(webflow, "Success", "Validation report copied. Paste it into a support ticket or document.");
     } catch (error) {
       console.warn("Copy report failed:", error);
       void notifyDesigner(webflow, "Error", "Could not copy the report to the clipboard.");
@@ -3062,69 +3095,25 @@
     <!-- Tabs Navigation -->
     <div class="validation-tabs" role="tablist" aria-label="Validation report sections">
       <button id="overview-tab-button" class="tab-button active" data-tab="overview" type="button" role="tab" aria-selected="true" aria-controls="overview-tab" tabindex="0">Overview</button>
-      <button id="checklist-tab-button" class="tab-button" data-tab="checklist" type="button" role="tab" aria-selected="false" aria-controls="checklist-tab" tabindex="-1">Fix List${blockingCount > 0 ? ` (${blockingCount})` : ""}</button>
+      <button id="checklist-tab-button" class="tab-button" data-tab="checklist" type="button" role="tab" aria-selected="false" aria-controls="checklist-tab" tabindex="-1">Fix List${blockingCount > 0 ? ` <span class="tab-count">${blockingCount}</span>` : ""}</button>
     </div>
 
     <!-- Overview Tab Content -->
     <div id="overview-tab" class="tab-content active" role="tabpanel" aria-labelledby="overview-tab-button" tabindex="0">
-      ${isRestored ? `
-        <div class="restored-banner" role="status">
-          Restored from last run (${generatedAt.toLocaleString()}) \u2014 results may be stale. Run Validator to refresh.
-        </div>
-      ` : ""}
-      <!-- Project Overview -->
-      <div class="project-overview">
-      <div class="project-header">
-        <h2 class="project-title">Validation Report: ${escapeHtml(data.url || "")}</h2>
-        <div class="validation-timestamp">${generatedAt.toLocaleString()}</div>
-        <button type="button" id="copy-report-btn" class="secondary-btn copy-report-btn">Copy report</button>
-      </div>
-    </div>
-
-    ${createMarketplaceOutcomeHTML(data)}
-    ${createValidationScopeHTML(data)}
-
-    <!-- Summary Stats -->
-    <div class="results-summary">
-      <div class="summary-stat">
-        <div class="stat-number error">${data.summary.totalErrors || data.summary.errors || 0}</div>
-        <div class="stat-label">Errors</div>
-      </div>
-      <div class="summary-stat">
-        <div class="stat-number warning">${data.summary.totalWarnings || data.summary.warnings || 0}</div>
-        <div class="stat-label">Warnings</div>
-      </div>
-      <div class="summary-stat">
-        <div class="stat-number info">${data.summary.totalInfo || data.summary.infos || 0}</div>
-        <div class="stat-label">Info</div>
-      </div>
-      <div class="summary-stat">
-        <div class="stat-number success">${data.summary.passedCategories} <span style="font-size:12px; color:#6b7280">(${calculateOverallScore(data.summary)}%)</span></div>
-        <div class="stat-label">Categories Passed</div>
-      </div>
-    </div>
-
-    <!-- Submission State -->
-    <div class="submission-state ${blockingCount > 0 ? "is-blocked" : "is-ready"}">
-      <div class="submission-state-headline">
-        ${blockingCount > 0 ? `${blockingCount} blocker${blockingCount === 1 ? "" : "s"} remaining before submission` : "Submission gate clear"}
-      </div>
-      <div class="submission-state-sub">
-        Categories passed: ${data.summary.passedCategories}/${data.categories.length} \xB7 Score ${calculateOverallScore(data.summary)}%
-      </div>
-    </div>
+      ${createReportSummaryHTML(data, generatedAt, isRestored)}
+      ${createValidationScopeHTML(data)}
 
     <!-- Category Results with Enhanced Details -->
     ${(() => {
       console.log("Rendering categories in UI. Total categories:", data.categories.length);
       console.log("Category names:", data.categories.map((cat) => cat.category));
-      return data.categories.map((cat, idx) => createCategoryHTML(cat, idx, data.collectedData)).join("");
+      return createCategoriesHTML(data);
     })()}
 
     <!-- Webflow Way Guidelines Reference -->
     <div class="guidelines-reference">
       <div class="reference-header">
-        <h3>Webflow Way Guidelines</h3>
+        <h3>Webflow Way guidelines</h3>
         <p>This validation follows official Webflow Way best practices for template submission and design system consistency.</p>
       </div>
       <div class="reference-links">
@@ -3142,9 +3131,6 @@
         </div>
       </div>
     </div>
-
-      <!-- Action Items Summary -->
-      ${createActionItemsHTML(data)}
     </div>
 
     <!-- Submission Fix List Tab Content -->
@@ -3155,6 +3141,15 @@
     resultsDisplay.innerHTML = resultsHTML;
     resultsDisplay.style.display = "block";
     resultsDisplay.classList.add("show");
+    syncEmptyState();
+    resultsDisplay.querySelector("[data-open-fix-list]")?.addEventListener("click", () => openFixList());
+    resultsDisplay.querySelectorAll("[data-show-more-issues]").forEach((button) => {
+      button.addEventListener("click", () => {
+        const rest = button.previousElementSibling;
+        if (rest) rest.hidden = false;
+        button.remove();
+      });
+    });
     initializeTabs();
     resultsDisplay.querySelectorAll("[data-canvas-element]").forEach((button) => {
       button.addEventListener("click", () => {
@@ -3180,61 +3175,112 @@
     console.log("Resetting isExplicitRefresh to false after rendering");
     isExplicitRefresh = false;
   }
+  function getCategorySortRank(cat) {
+    const issues = Array.isArray(cat.issues) ? cat.issues : [];
+    if (issues.some((issue) => issue.severity === "error" || issue.id === "validator-script-required")) return 0;
+    if (cat.passed !== true) return 1;
+    if (issues.some((issue) => issue.severity === "warning")) return 2;
+    if (issues.length > 0) return 3;
+    return 4;
+  }
+  function sortCategoriesForReport(categories) {
+    return categories.map((cat, index) => ({ cat, index })).sort((a, b) => getCategorySortRank(a.cat) - getCategorySortRank(b.cat) || a.index - b.index).map(({ cat }) => cat);
+  }
+  var SEVERITIES = ["error", "warning", "info"];
+  var SEVERITY_ORDER = { error: 0, warning: 1, info: 2 };
+  var SEVERITY_NOUNS = {
+    error: ["error", "errors"],
+    warning: ["warning", "warnings"],
+    info: ["note", "notes"]
+  };
+  function countIssuesBySeverity(issues) {
+    const counts = { error: 0, warning: 0, info: 0 };
+    for (const issue of issues) {
+      if (issue.severity in counts) counts[issue.severity] += 1;
+    }
+    return counts;
+  }
+  function formatSeverityCount(severity, count) {
+    return `${count} ${SEVERITY_NOUNS[severity][count === 1 ? 0 : 1]}`;
+  }
+  function createSeverityCountsHTML(counts, showZero = false) {
+    return SEVERITIES.filter((severity) => showZero || counts[severity] > 0).map((severity) => `<span class="count-pill ${severity}${counts[severity] === 0 ? " is-zero" : ""}"><span class="count-dot" aria-hidden="true"></span>${formatSeverityCount(severity, counts[severity])}</span>`).join("");
+  }
   function createCategoryHTML(cat, idx, collectedData) {
     const status = getCategoryStatus(cat);
     const categoryAnchorId = getCategoryAnchorId(cat.category);
-    if (cat.passed && cat.issues.length === 0) {
-      return `
-      <details id="${categoryAnchorId}" class="category-section category-collapsed ${idx === 0 ? "first" : ""}">
-        <summary class="category-header category-summary">
-          <h3 class="category-title">${cat.category}</h3>
-          <div class="category-status ${status.className}">
-            ${status.label}
-          </div>
-          ${cat.stats ? `<span class="category-stats">${formatCategoryStats(cat.stats)}</span>` : ""}
-        </summary>
-        ${createSuccessHTML()}
-        ${cat.stats ? createMetadataHTML(cat.category, cat.stats) : ""}
-        ${createDataCollectedSection(cat.category, collectedData)}
-      </details>
-    `;
-    }
+    const issues = Array.isArray(cat.issues) ? cat.issues : [];
+    const hasWork = issues.some((issue) => issue.severity !== "info") || cat.passed !== true;
     return `
-    <div id="${categoryAnchorId}" class="category-section ${idx === 0 ? "first" : ""}">
-      <div class="category-header">
-        <h3 class="category-title">${cat.category}</h3>
-        <div class="category-status ${status.className}">
-          ${status.label}
-        </div>
+    <details id="${categoryAnchorId}" class="category-section ${idx === 0 ? "first" : ""}" ${hasWork ? "open" : ""}>
+      <summary class="category-header category-summary">
+        <h3 class="category-title">${escapeHtml(cat.category)}</h3>
+        <span class="category-counts">${createSeverityCountsHTML(countIssuesBySeverity(issues))}</span>
+        <span class="category-status ${status.className}">${status.label}</span>
         ${cat.stats ? `<span class="category-stats">${formatCategoryStats(cat.stats)}</span>` : ""}
-      </div>
-
-      ${cat.issues.length > 0 ? createIssuesHTML(cat.issues) : createSuccessHTML()}
-
+      </summary>
+      ${issues.length > 0 ? createIssuesHTML(issues) : createSuccessHTML()}
       ${cat.stats ? createMetadataHTML(cat.category, cat.stats) : ""}
       ${createDataCollectedSection(cat.category, collectedData)}
+    </details>
+  `;
+  }
+  function createCategoriesHTML(data) {
+    const sorted = sortCategoriesForReport(data.categories);
+    const withFindings = sorted.filter((cat) => getCategorySortRank(cat) < 4);
+    const clean = sorted.filter((cat) => getCategorySortRank(cat) === 4);
+    const render = (cats) => cats.map((cat, idx) => createCategoryHTML(cat, idx, data.collectedData)).join("");
+    if (clean.length < 3) return render(sorted);
+    return `
+    ${render(withFindings)}
+    <details class="clean-categories">
+      <summary class="clean-categories-summary">
+        <span class="clean-categories-title">${clean.length} categories with no findings</span>
+        <span class="clean-categories-names">${clean.map((cat) => escapeHtml(cat.category)).join(", ")}</span>
+      </summary>
+      <div class="clean-categories-body">${render(clean)}</div>
+    </details>
+  `;
+  }
+  var ISSUES_SHOWN_FIRST = 8;
+  function createIssuesHTML(issues) {
+    const sorted = issues.map((issue, index) => ({ issue, index })).sort((a, b) => (SEVERITY_ORDER[a.issue.severity] ?? 3) - (SEVERITY_ORDER[b.issue.severity] ?? 3) || a.index - b.index).map(({ issue }) => issue);
+    const splitAt = sorted.length > ISSUES_SHOWN_FIRST + 2 ? ISSUES_SHOWN_FIRST : sorted.length;
+    const rest = sorted.slice(splitAt);
+    const restCounts = countIssuesBySeverity(rest);
+    const restSummary = SEVERITIES.filter((severity) => restCounts[severity] > 0).map((severity) => formatSeverityCount(severity, restCounts[severity])).join(", ");
+    return `
+    <div class="issues-list">
+      ${sorted.slice(0, splitAt).map((issue) => createIssueHTML(issue)).join("")}
+      ${rest.length > 0 ? `
+        <div class="issues-rest" hidden>
+          ${rest.map((issue) => createIssueHTML(issue)).join("")}
+        </div>
+        <button type="button" class="show-more-btn" data-show-more-issues>Show ${rest.length} more (${restSummary})</button>
+      ` : ""}
     </div>
   `;
   }
-  function createIssuesHTML(issues) {
-    return `
-    <div class="issues-list">
-      ${issues.map((issue) => createIssueHTML(issue)).join("")}
-    </div>
-  `;
+  function formatIssueLocation(location) {
+    if (!/^https?:\/\//i.test(location)) return { text: location };
+    try {
+      const url = new URL(location);
+      return { text: `${url.pathname}${url.search}`, title: location };
+    } catch {
+      return { text: location };
+    }
   }
   function createIssueHTML(issue) {
     const howToFix = getIssueHowToFix(issue);
     const location = getIssueLocation(issue);
+    const shownLocation = location ? formatIssueLocation(location) : void 0;
     const policy = getIssuePolicy(issue);
     const republishHint = issue.details?.republishHint;
     const canvasElementKeys = Array.isArray(issue.details?.canvasElementKeys) ? issue.details.canvasElementKeys : [];
     return `
     <div class="issue-item ${issue.severity}">
       <div class="issue-content">
-        <span class="issue-severity ${issue.severity}">
-          ${getIssueSeverityLabel(issue)}
-        </span>
+        <span class="issue-severity ${issue.severity}">${getIssueSeverityLabel(issue)}</span>
         <div class="issue-details">
           <div class="issue-message">${escapeHtml(issue.message)}</div>
           ${policy ? createIssuePolicyHTML(issue) : ""}
@@ -3243,12 +3289,12 @@
           ` : ""}
           ${howToFix ? `
             <div class="issue-fix">
-              <strong>${policy ? "Required fix:" : issue.severity === "warning" ? "Suggestion:" : issue.severity === "info" ? "Recommendation:" : "How to fix:"}</strong> ${escapeHtml(howToFix)}
+              <strong>${policy ? "Required fix:" : issue.severity === "warning" ? "Suggestion:" : issue.severity === "info" ? "Recommendation:" : "Fix:"}</strong> ${escapeHtml(howToFix)}
             </div>
           ` : ""}
-          ${location ? `
-            <div class="issue-location">
-              <strong>Location:</strong> ${escapeHtml(location)}
+          ${shownLocation ? `
+            <div class="issue-location" ${shownLocation.title ? `title="${escapeHtml(shownLocation.title)}"` : ""}>
+              <strong>${shownLocation.title ? "Page:" : "Location:"}</strong> <span class="issue-location-path">${escapeHtml(shownLocation.text)}</span>
             </div>
           ` : ""}
           ${canvasElementKeys.length > 0 ? `
@@ -3261,29 +3307,56 @@
             </div>
           ` : ""}
           ${createDetailsHTML(issue.details)}
-          <button type="button" class="issue-flag-btn" data-flag-issue="${escapeHtml(issue.id)}" data-flag-category="${escapeHtml(issue.category)}" title="Report this as a validator false positive">
-            Flag as incorrect
-          </button>
         </div>
+        <button type="button" class="issue-flag-btn" data-flag-issue="${escapeHtml(issue.id)}" data-flag-category="${escapeHtml(issue.category)}" title="Tell the Validator team this result is wrong for your site">Flag as incorrect</button>
       </div>
     </div>
   `;
   }
-  function createMarketplaceOutcomeHTML(data) {
+  function getHostLabel(url) {
+    if (!url) return "";
+    try {
+      return new URL(url).host;
+    } catch {
+      return url;
+    }
+  }
+  function createReportSummaryHTML(data, generatedAt, isRestored) {
     const outcome = getMarketplaceOutcome(data);
+    const counts = {
+      error: data.summary.totalErrors || data.summary.errors || 0,
+      warning: data.summary.totalWarnings || data.summary.warnings || 0,
+      info: data.summary.totalInfo || data.summary.infos || 0
+    };
+    const host = getHostLabel(data.url);
+    const runTime = generatedAt.toLocaleString(void 0, { dateStyle: "medium", timeStyle: "short" });
     return `
-    <div class="marketplace-outcome ${outcome.className}">
-      <div class="marketplace-outcome-main">
-        <span class="marketplace-outcome-kicker">Marketplace outcome</span>
-        <div class="marketplace-outcome-title">${outcome.title}</div>
-        <p class="marketplace-outcome-copy">${outcome.copy}</p>
+    <section class="report-summary ${outcome.className}" aria-label="Validation result">
+      <div class="report-summary-head">
+        <div class="report-summary-main">
+          <div class="report-summary-title-row">
+            <span class="report-summary-badge">${outcome.badge}</span>
+            <h2 class="report-summary-title">${outcome.title}</h2>
+          </div>
+          <p class="report-summary-copy">${outcome.copy}</p>
+        </div>
+        <div class="report-summary-actions">
+          ${outcome.showFixListAction ? '<button type="button" class="validate-btn" data-open-fix-list>Open Fix List</button>' : ""}
+          <button type="button" id="copy-report-btn" class="secondary-btn copy-report-btn">Copy report</button>
+        </div>
       </div>
-      <div class="marketplace-outcome-meta">
-        <span class="marketplace-outcome-badge">${outcome.badge}</span>
-        <span class="marketplace-outcome-time">Validated ${(lastValidationReport?.generatedAt ? new Date(lastValidationReport.generatedAt) : /* @__PURE__ */ new Date()).toLocaleTimeString()}</span>
-        ${outcome.showFixListAction ? '<button type="button" class="marketplace-outcome-action" onclick="openFixList()">Open Fix List</button>' : ""}
+      <div class="report-summary-stats">
+        ${createSeverityCountsHTML(counts, true)}
+        <span class="report-summary-stat">${data.summary.passedCategories} of ${data.categories.length} categories passed</span>
+        <span class="report-summary-stat">Score ${calculateOverallScore(data.summary)}%</span>
       </div>
-    </div>
+      <div class="report-summary-meta">
+        ${host ? `<span class="report-summary-host" title="${escapeHtml(data.url || "")}">${escapeHtml(host)}</span>` : ""}
+        <span ${isRestored ? 'class="report-summary-restored" role="status"' : ""}>
+          ${isRestored ? `Saved result from ${escapeHtml(runTime)}. Run Validator to refresh it.` : `Validated ${escapeHtml(runTime)}`}
+        </span>
+      </div>
+    </section>
   `;
   }
   function getMarketplaceOutcome(data) {
@@ -3309,7 +3382,7 @@
       return {
         className: "is-blocked",
         title: hasSetupBlocker && errors === 0 ? "Published-site checks required" : "Blocked by validation errors",
-        copy: hasSetupBlocker && errors === 0 ? "Add and publish the Validator script so the marketplace form has a complete validation result." : "Resolve every error-level issue, publish the site again, and re-run validation before submitting the template.",
+        copy: hasSetupBlocker && errors === 0 ? "Add and publish the Validator script so the marketplace form has a complete validation result." : "Fix every error, publish the site again, then run the Validator again before you submit the template.",
         badge: "Blocked",
         showFixListAction: true
       };
@@ -3325,17 +3398,17 @@
     }
     if (warnings > 0) {
       return {
-        className: "is-review",
-        title: "Ready with non-blocking warnings",
-        copy: "The submission gate is clear, but the warnings below should be reviewed before handoff.",
+        className: "is-ready",
+        title: "Ready, with warnings to review",
+        copy: "No error blocks submission. Review the warnings below before you submit. Warnings are not added to the Fix List.",
         badge: "Ready",
         showFixListAction: false
       };
     }
     return {
       className: "is-ready",
-      title: "Ready for marketplace review",
-      copy: "No blocking errors or warnings were found. Re-run validation after any Designer changes and after publishing.",
+      title: "Ready for Marketplace review",
+      copy: "No errors or warnings. You can submit the template. Run the Validator again after each Designer change and each publish.",
       badge: "Ready",
       showFixListAction: false
     };
@@ -3399,11 +3472,11 @@
       });
     }
     return `
-    <div class="validation-scope">
-      <div class="validation-scope-header">
-        <h3>Validation Scope</h3>
-        <span>${scope?.publishedChecks === "full" ? "Full coverage" : "Partial coverage"}</span>
-      </div>
+    <details class="validation-scope">
+      <summary class="validation-scope-header">
+        <h3>Validation scope</h3>
+        <span>${scope ? `${scope.pageScope === "current" ? "Current page" : "All published pages"}, ${scope.publishedChecks === "full" ? "full coverage" : "partial coverage"}` : ""}</span>
+      </summary>
       <div class="validation-scope-grid">
         ${scopeRows.map((row) => `
           <div class="validation-scope-row">
@@ -3412,7 +3485,7 @@
           </div>
         `).join("")}
       </div>
-    </div>
+    </details>
   `;
   }
   function getCategoryStatus(cat) {
@@ -3434,9 +3507,9 @@
   function getIssueSeverityLabel(issue) {
     if (issue.id === "validator-script-required") return "Setup required";
     if (getIssuePolicy(issue)) return "Rejected policy";
-    if (issue.severity === "warning") return "Review";
-    if (issue.severity === "info") return "Advisory";
-    return "Blocked";
+    if (issue.severity === "warning") return "Warning";
+    if (issue.severity === "info") return "Note";
+    return "Error";
   }
   function getIssuePolicy(issue) {
     const policy = issue.details?.policy;
@@ -3449,9 +3522,6 @@
     return data.categories.flatMap(
       (category) => (Array.isArray(category.issues) ? category.issues : []).filter(isSubmissionBlockingIssue).map((issue) => ({ category: category.category, issue }))
     );
-  }
-  function getSubmissionBlockingCategoryCount(data) {
-    return new Set(getSubmissionBlockingIssues(data).map(({ category }) => category)).size;
   }
   function createIssuePolicyHTML(issue) {
     const details = issue.details;
@@ -3711,52 +3781,6 @@
     </div>
   `;
   }
-  function createActionItemsHTML(data) {
-    const summary = data.summary;
-    const errors = summary.totalErrors || summary.errors || 0;
-    const warnings = summary.totalWarnings || summary.warnings || 0;
-    const failedCategories = summary.failedCategories || 0;
-    const score = calculateOverallScore(summary);
-    const blockingIssues = getSubmissionBlockingIssues(data);
-    const blockingCategoryCount = getSubmissionBlockingCategoryCount(data);
-    const hasScoreReview = blockingIssues.length === 0 && (failedCategories > 0 || score < 100);
-    const warningStepNumber = blockingIssues.length > 0 || hasScoreReview ? "2" : "1";
-    if (blockingIssues.length === 0 && errors === 0 && warnings === 0 && failedCategories === 0) return "";
-    return `
-    <div class="action-items">
-      <h3>Next Steps</h3>
-      <div class="action-priorities">
-        ${blockingIssues.length > 0 ? `
-          <div class="action-priority error">
-            <strong>1. Fix ${blockingIssues.length} Blocking Item${blockingIssues.length === 1 ? "" : "s"}</strong>
-            <p>Open the Fix List for the ${blockingCategoryCount} categor${blockingCategoryCount === 1 ? "y" : "ies"} preventing template submission.</p>
-          </div>
-        ` : ""}
-        ${hasScoreReview ? `
-          <div class="action-priority warning">
-            <strong>1. Review Score Details</strong>
-            <p>No error-level blockers were returned, but the run is below 100%. Review warning categories and re-run validation after publishing.</p>
-          </div>
-        ` : ""}
-        ${errors > 0 && blockingIssues.length === 0 ? `
-          <div class="action-priority error">
-            <strong>1. Fix ${errors} Critical Error${errors > 1 ? "s" : ""}</strong>
-            <p>Address all error-level issues before template submission</p>
-          </div>
-        ` : ""}
-        ${warnings > 0 ? `
-          <div class="action-priority warning">
-            <strong>${warningStepNumber}. Review ${warnings} Warning${warnings > 1 ? "s" : ""}</strong>
-            <p>Warnings are review targets. They should be cleaned up, but they are not added to the blocking Fix List unless paired with an error-level issue.</p>
-          </div>
-        ` : ""}
-        <div class="action-priority info">
-          <strong>Re-run Validation:</strong> Use this panel again after making changes to track your progress
-        </div>
-      </div>
-    </div>
-  `;
-  }
   function createDataCollectedSection(category, collectedData) {
     if (!collectedData || collectedData.length === 0) return "";
     const data = collectedData[0];
@@ -3896,6 +3920,8 @@
       if (categorySection instanceof HTMLDetailsElement) {
         categorySection.open = true;
       }
+      const group = categorySection.closest("details.clean-categories");
+      if (group instanceof HTMLDetailsElement) group.open = true;
       categorySection.scrollIntoView({ block: "start", behavior: "smooth" });
       categorySection.classList.add("is-targeted");
       window.setTimeout(() => categorySection.classList.remove("is-targeted"), 1400);
@@ -3943,6 +3969,7 @@
       const fixItemMessage = fixListItem.querySelector(".fix-item-message");
       const updatedFixItem = updated.find((item) => item.id === fixItemId);
       if (checkbox && fixItemMessage && updatedFixItem) {
+        checkbox.parentElement?.setAttribute("aria-checked", updatedFixItem.completed ? "true" : "false");
         if (updatedFixItem.completed) {
           checkbox.classList.remove("unchecked");
           checkbox.classList.add("checked");
@@ -4032,8 +4059,8 @@
         <div class="checklist-title">
           <h3>Submission Fix List</h3>
           <p class="checklist-description">
-            Fix these items to reach the confirmed 100% Validator pass required by the submission form.
-            Checkboxes are local planning only; Refresh Validation confirms real fixes.
+            Fix these items to reach the 100% Validator pass that the submission form needs.
+            The checkboxes are your own notes. Run again to confirm the real fixes.
           </p>
           <div class="checklist-progress">
             <span class="progress-text">${completedCount} of ${totalCount} completed (${progressPercent}%)</span>
@@ -4042,30 +4069,28 @@
             </div>
           </div>
         </div>
-        <button class="resync-button" onclick="resyncValidation()">Refresh Validation</button>
+        <button class="resync-button" onclick="resyncValidation()">Run again</button>
       </div>
       
       ${Object.entries(fixItemsByCategory).map(([categoryName, fixItems]) => `
         <div class="checklist-category">
           <h4 class="category-name">
-            <span>${categoryName}</span>
+            <span>${escapeHtml(categoryName)}</span>
             <span class="category-name-meta">${fixItems.length} item${fixItems.length === 1 ? "" : "s"}</span>
           </h4>
           <div class="checklist-items">
             ${fixItems.map((fixItem) => `
               <div class="checklist-item ${fixItem.severity} ${fixItem.completed ? "completed" : ""}" data-fix-item-id="${fixItem.id}">
-                <div class="fix-item-content">
-                  <div class="fix-item-meta">
-                    <span class="fix-item-badge ${fixItem.severity}">${fixItem.blockingReason}</span>
-                  </div>
-                  <div class="fix-item-message ${fixItem.completed ? "completed" : ""}">${fixItem.message}</div>
-                  <div class="fix-item-guidance">Fix: ${fixItem.howToFix}</div>
-                  ${fixItem.location ? `<div class="fix-item-guidance">Location: ${fixItem.location}</div>` : ""}
-                  <button type="button" class="fix-item-detail-button" onclick="openOverviewCategory('${fixItem.categoryAnchorId}')">View details</button>
-                  ${fixItem.detailsHtml || ""}
-                </div>
-                <div class="checkbox-wrapper" onclick="toggleFixItemCompleted('${fixItem.id}')">
+                <div class="checkbox-wrapper" role="checkbox" tabindex="0" aria-checked="${fixItem.completed ? "true" : "false"}" aria-label="Mark as done" onclick="toggleFixItemCompleted('${fixItem.id}')" onkeydown="if(event.key===' '||event.key==='Enter'){event.preventDefault();this.click();}">
                   <div class="fix-item-checkbox ${fixItem.completed ? "checked" : "unchecked"}"></div>
+                </div>
+                <span class="fix-item-badge ${fixItem.severity}">${fixItem.blockingReason}</span>
+                <div class="fix-item-content">
+                  <div class="fix-item-message ${fixItem.completed ? "completed" : ""}">${escapeHtml(fixItem.message)}</div>
+                  <div class="fix-item-guidance"><strong>Fix:</strong> ${escapeHtml(fixItem.howToFix)}</div>
+                  ${fixItem.location ? `<div class="fix-item-guidance" title="${escapeHtml(fixItem.location)}"><strong>Page:</strong> <span class="issue-location-path">${escapeHtml(formatIssueLocation(fixItem.location).text)}</span></div>` : ""}
+                  ${fixItem.detailsHtml || ""}
+                  <button type="button" class="fix-item-detail-button" onclick="openOverviewCategory('${fixItem.categoryAnchorId}')">Show in Overview</button>
                 </div>
               </div>
             `).join("")}
@@ -4086,9 +4111,9 @@
       return "Error";
     }
     if (issue.severity === "warning") {
-      return "Review";
+      return "Warning";
     }
-    return "Advisory";
+    return "Note";
   }
   function updateProgressDisplay() {
     const savedFixItems = loadFixList();
