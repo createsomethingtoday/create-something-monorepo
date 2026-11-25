@@ -53,7 +53,7 @@ import {
 import { normalizePublishedHost, verifyOauthSiteAccess } from './utils/oauth-site-evidence';
 
 const REVIEW_SNIPPET_VERSION = '0.3.0';
-const WORKER_VERSION = '2.19.0';
+const WORKER_VERSION = '2.20.0';
 
 /**
  * Oldest Template CLI that may record a result. Part of the rules run inside
@@ -242,6 +242,8 @@ interface ValidationResultRecord {
 	scope?: ValidationRunScope;
 	evidence?: OauthSiteAccessEvidence | null;
 	artifact: ValidationResultArtifactPersistResult;
+	/** Version of the worker, and so of the rule set, that stored the result. Absent on records stored before 2.20.0. */
+	workerVersion?: string;
 }
 
 type BridgeUsageEvent =
@@ -1299,7 +1301,8 @@ async function handleValidationSubmit(
 		warningCategoryDetails: getWarningCategoryDetails(resultsToRecord),
 		scope: sanitizeValidationScope(resultsToRecord.scope),
 		evidence,
-		artifact: artifactResult
+		artifact: artifactResult,
+		workerVersion: WORKER_VERSION
 	};
 	const previousResult = await getValidationResultState(env, siteId);
 	await persistValidationResultState(env, latestResult);
@@ -1544,7 +1547,8 @@ async function handleValidationSubmissionLatest(
 			warningCategoryDetails: record.warningCategoryDetails || [],
 			scope: record.scope,
 			evidence: record.evidence ?? null,
-			artifact: record.artifact
+			artifact: record.artifact,
+			workerVersion: record.workerVersion
 		},
 		200,
 		request

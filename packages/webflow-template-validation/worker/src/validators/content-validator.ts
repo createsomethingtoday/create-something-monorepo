@@ -17,7 +17,8 @@ import {
 	PageSEOData,
 	LinkAnalysis,
 	ContentQualityAnalysis,
-	ValidationOptions
+	ValidationOptions,
+	ReviewerPageAudit
 } from '../types';
 import {
 	collectClassUsage,
@@ -42,6 +43,7 @@ import {
 	parseRenderedElements,
 	type MarkupNode
 } from './reviewer-standards';
+import { generateReviewNoteIssues, uncheckedInternalTargets } from './review-note-checks';
 
 const LOREM_IPSUM_PATTERNS = [
 	/lorem\s+ipsum/i,
@@ -266,7 +268,8 @@ export async function validateContent(
 
 			const issues = [
 				...generateContentIssues([pageAnalysis], resolvedChecks),
-				...generateReviewerStandardIssues(pageAnalysis.reviewerAudit ? [pageAnalysis.reviewerAudit] : [])
+				...generateReviewerStandardIssues(pageAnalysis.reviewerAudit ? [pageAnalysis.reviewerAudit] : []),
+				...generateReviewNoteIssues(pageAnalysis.reviewerAudit ? [pageAnalysis.reviewerAudit] : [])
 			];
 			const stats = calculateContentStats([pageAnalysis]);
 
@@ -314,12 +317,13 @@ export async function validateContent(
 		// Generate content validation issues. The reviewer standards also read
 		// the utility pages, which the crawl does not always reach.
 		const utility = await auditUtilityPages(siteUrl, allPages, excludedSlugs, classUsage);
+		const reviewerAudits = [...allPages.flatMap(page => (page.reviewerAudit ? [page.reviewerAudit] : [])), ...utility.audits];
+		// A page limit cuts the run short, so a limited run asks for no link targets.
+		const notFoundTargets = maxPages === undefined ? await findMissingInternalTargets(siteUrl, reviewerAudits, excludedSlugs) : [];
 		const issues = [
 			...generateContentIssues(allPages, resolvedChecks),
-			...generateReviewerStandardIssues(
-				[...allPages.flatMap(page => (page.reviewerAudit ? [page.reviewerAudit] : [])), ...utility.audits],
-				{ missingPaths: utility.missingPaths }
-			),
+			...generateReviewerStandardIssues(reviewerAudits, { missingPaths: utility.missingPaths }),
+			...generateReviewNoteIssues(reviewerAudits, { missingPaths: utility.missingPaths, notFoundTargets }),
 			// The check needs every static page. Only the page list from the
 			// Designer gives that: a list from a sitemap or from links can be
 			// cut short, and a page limit cuts any list. A style on a page that
@@ -590,6 +594,29 @@ async function analyzeItemPageSample(
 		console.warn('Item page sample stopped:', error);
 	}
 	return sampled;
+}
+
+/** How many internal link targets outside the page list a run asks the site for. */
+const INTERNAL_TARGET_CHECK_LIMIT = 40;
+
+/** Internal link targets, outside the pages already read, that the site answers with HTTP 404. */
+async function findMissingInternalTargets(siteUrl: string, audits: ReviewerPageAudit[], excludedSlugs: Set<string>): Promise<string[]> {
+	const targets = uncheckedInternalTargets(audits, INTERNAL_TARGET_CHECK_LIMIT).filter(path => !excludedSlugs.has(normalizeSlugForComparison(path) ?? ''));
+	const missing = await Promise.all(
+		targets.map(async path => {
+			try {
+				const response = await fetch(new URL(path, siteUrl).href, {
+					method: 'HEAD',
+					signal: AbortSignal.timeout(8_000),
+					headers: { 'User-Agent': 'WebflowWayValidator/1.0' }
+				});
+				return response.status === 404 ? path : null;
+			} catch {
+				return null; // No answer is not a missing page.
+			}
+		})
+	);
+	return missing.filter((path): path is string => path !== null);
 }
 
 async function auditUtilityPages(siteUrl: string, pages: AnalyzedPage[], excludedSlugs: Set<string>, classUsage?: ClassUsage) {

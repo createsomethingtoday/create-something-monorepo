@@ -404,6 +404,24 @@ function validateComponents(components: DesignerData['components']): CategoryRes
     }
   }
 
+  // The instance count is a real 0 only when the runtime reports counts: an older
+  // runtime sends 0 for every component, and that is "not measured".
+  const instancesMeasured = components.some(component => isRecord(component) && typeof component.instances === 'number' && component.instances > 0);
+  const unusedComponents = instancesMeasured
+    ? components.filter(component => isRecord(component) && component.instances === 0 && component.library == null && component.name).map(component => component.name)
+    : [];
+  if (unusedComponents.length > 0) {
+    issues.push({
+      id: 'components.zero-instances',
+      category: 'Components',
+      severity: 'warning',
+      message: `${unusedComponents.length} component${unusedComponents.length === 1 ? ' has' : 's have'} no instances.`,
+      description: 'A component with 0 instances in the Components panel is not used on a page. Reviewers ask creators to remove unused components.',
+      howToFix: 'Delete the component, or place it on a page. A component that is used only inside a CMS Rich Text field also shows 0 instances: keep it and ignore this warning for it.',
+      details: { names: unusedComponents.slice(0, 20) }
+    });
+  }
+
   if (issues.length === 0) {
     issues.push({
       id: 'components.excellent',
