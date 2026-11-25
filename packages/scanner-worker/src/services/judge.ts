@@ -195,7 +195,7 @@ function applyVerdict(finding: Finding, verdict: AIVerdict): Finding {
  */
 async function callWorkersAI(ai: Ai, persona: string, context: string): Promise<AIVerdict | null> {
   try {
-    const response = await ai.run('@cf/meta/llama-3.1-8b-instruct' as Parameters<Ai['run']>[0], {
+    const response = await ai.run('@cf/meta/llama-3.3-70b-instruct-fp8-fast' as Parameters<Ai['run']>[0], {
       messages: [
         { role: 'system', content: persona },
         { role: 'user', content: context },
@@ -205,8 +205,10 @@ async function callWorkersAI(ai: Ai, persona: string, context: string): Promise<
     } as Record<string, unknown>);
 
     const result = response as Record<string, unknown>;
-    if ('response' in result && typeof result.response === 'string') {
-      return parseAIResponse(result.response);
+    if ('response' in result && result.response != null) {
+      // Workers AI can return JSON objects even for the text response schema.
+      const text = typeof result.response === 'string' ? result.response : JSON.stringify(result.response);
+      return parseAIResponse(text);
     }
     return null;
   } catch (err) {
