@@ -16,6 +16,8 @@ export const npgTheme = defineTheme({
         animationName: 'none',
         transform: 'none',
         ':active': { transform: 'none' },
+        ':is(.npg-new-research)': { backgroundColor: '#ffffff', color: '#102f43' },
+        ':is([aria-current="page"])': { backgroundColor: '#265b7a', color: '#ffffff' },
         ':is(.npg-results-toggle[aria-expanded="true"])': {
           backgroundColor: '#d9ecf8',
           color: '#164664'
@@ -24,22 +26,35 @@ export const npgTheme = defineTheme({
     },
     'top-nav': {
       base: {
-        backgroundColor: 'var(--color-on-accent)',
-        borderBottom: 'var(--spacing-0-5) solid #f47821'
+        backgroundColor: '#ffffff',
+        borderBottom: 'var(--spacing-0-5) solid #f47821',
+        minHeight: 'calc(var(--spacing-10) + var(--spacing-6))'
       }
     },
-    'side-nav': { base: { backgroundColor: '#f0f7fc' } },
+    'side-nav': { base: {
+      backgroundColor: '#102f43',
+      '--color-text-primary': '#f0f7fc',
+      '--color-text-secondary': '#bed0dd',
+      '--color-icon-primary': '#d9ecf8',
+      '--color-text-accent': '#ffffff',
+      '--color-accent-muted': '#214c67',
+      '--color-border-default': '#36586d'
+    } },
     'top-nav-heading': { base: { color: '#164664' } },
     'side-nav-item': {
       base: { minHeight: 'calc(var(--spacing-10) + var(--spacing-1))' },
       'selected:selected': {
-        backgroundColor: '#d9ecf8',
-        color: '#164664'
+        backgroundColor: '#265b7a',
+        color: '#ffffff'
       }
     }
   },
   tokens: {
-    '--font-family-heading': '"Agency Reading", Georgia, serif',
+    '--font-family-heading': '"Figtree", system-ui, sans-serif',
+    '--color-background-surface': '#ffffff',
+    '--color-background-body': '#f3f6f9',
+    '--text-heading-1-weight': 'var(--font-weight-semibold)',
+    '--text-heading-2-weight': 'var(--font-weight-semibold)',
     '--color-accent': '#126c9b',
     '--color-accent-muted': '#d9ecf8',
     '--color-text-accent': '#126c9b',

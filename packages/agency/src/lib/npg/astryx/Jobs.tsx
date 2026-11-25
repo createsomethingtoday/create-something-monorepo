@@ -120,15 +120,13 @@ export function Jobs({ onBack }: { onBack: () => void }) {
     <Section
       padding={4}
       variant="transparent"
-      className="min-w-0 overflow-y-auto"
+      className="min-w-0 overflow-y-auto bg-workspace-canvas"
       aria-label="Healthcare jobs"
     >
-      <VStack gap={3}>
-        <HStack>
-          <Button size="sm" variant="ghost" label="Back to conversations" onClick={onBack} />
-        </HStack>
-        <VStack gap={1}>
-          <Heading level={1} ref={heading} tabIndex={-1}>
+      <VStack gap={3} className="max-w-screen-xl mx-auto w-full">
+        <HStack justify="between" align="center" gap={3} wrap="wrap">
+          <VStack gap={2} className="min-w-0 w-full md:w-auto md:flex-1">
+          <Heading level={1} className="!text-3xl md:!text-4xl !tracking-tight" ref={heading} tabIndex={-1}>
             Jobs
           </Heading>
           <Text color="secondary">
@@ -136,39 +134,9 @@ export function Jobs({ onBack }: { onBack: () => void }) {
             source.
           </Text>
         </VStack>
-        <Disclosure trigger="Connect the Jobs MCP">
-          <VStack gap={2}>
-            <Text>
-              Use the public, read-only Jobs MCP in an MCP-compatible client. It searches the same
-              public jobs dataset; it does not access your private conversations or submit
-              applications.
-            </Text>
-            <Text className="break-all">
-              https://abundance-jobs-mcp.createsomething.workers.dev/chatgpt/mcp
-            </Text>
-            <Text>
-              Available tools: search, fetch, list_public_jobs, search_public_jobs, get_job and
-              summarize_job_markets. Add the address as a remote MCP connection, then ask for
-              healthcare openings by location or specialty.
-            </Text>
-            <Button
-              label="Copy MCP address"
-              size="sm"
-              variant="ghost"
-              onClick={() => {
-                if (!navigator.clipboard) {
-                  setCopied('Select the address above to copy it.');
-                  return;
-                }
-                navigator.clipboard
-                  .writeText('https://abundance-jobs-mcp.createsomething.workers.dev/chatgpt/mcp')
-                  .then(() => setCopied('MCP address copied'))
-                  .catch(() => setCopied('Copy unavailable. Select the address above to copy it.'));
-              }}
-            />
-            <Text role="status">{copied}</Text>
-          </VStack>
-        </Disclosure>
+          <Button size="sm" variant="ghost" label="Back to conversations" onClick={onBack} />
+        </HStack>
+
         <form
           onSubmit={(event) => {
             event.preventDefault();
@@ -244,8 +212,33 @@ export function Jobs({ onBack }: { onBack: () => void }) {
         )}
         {data && (
           <>
-            <Grid columns={1} gap={3} className="lg:grid-cols-2 items-start">
-              <Section padding={3} variant="muted" className="min-w-0 !m-0">
+            <VStack gap={3}>
+
+              <VStack gap={2}>
+                <Heading level={2}>
+                  {data.total.toLocaleString()} public opening{data.total === 1 ? '' : 's'}
+                  {state
+                    ? ` in ${MARKET_STATES.find((item) => item.code === state)?.name || state}`
+                    : ''}
+                </Heading>
+                <Text color="secondary">
+                  Latest source observation: {date(data.freshness.lastSeenAt)} · Dataset fetched:{' '}
+                  {date(data.freshness.fetchedAt)}
+                </Text>
+                {stale(data.freshness.lastSeenAt) && (
+                  <Banner
+                    status="warning"
+                    title="Source observations are stale"
+                    description="The latest recorded observation is older than seven days or unavailable. Listings may have closed; verify every opening at its source."
+                  />
+                )}
+                <Text>
+                  Public listings are a sourcing signal. They do not establish candidate supply or
+                  complete market demand.
+                </Text>
+              </VStack>
+              <Disclosure trigger="Explore openings on the map">
+              <Section padding={3} variant="section" className="min-w-0 !m-0">
                 <VStack gap={2}>
                   <Heading level={2}>Openings by state</Heading>
                   <Text color="secondary">
@@ -255,7 +248,7 @@ export function Jobs({ onBack }: { onBack: () => void }) {
                   <svg
                     viewBox={MARKET_MAP_VIEWBOX}
                     width="100%"
-                    className="block w-full h-auto"
+                    className="block w-full h-auto max-h-64"
                     role="img"
                     aria-label="United States openings by state. Use the State selector for keyboard access. Alaska and Hawaii are insets."
                   >
@@ -293,30 +286,8 @@ export function Jobs({ onBack }: { onBack: () => void }) {
                   </Text>
                 </VStack>
               </Section>
-              <VStack gap={2}>
-                <Heading level={2}>
-                  {data.total.toLocaleString()} public opening{data.total === 1 ? '' : 's'}
-                  {state
-                    ? ` in ${MARKET_STATES.find((item) => item.code === state)?.name || state}`
-                    : ''}
-                </Heading>
-                <Text color="secondary">
-                  Latest source observation: {date(data.freshness.lastSeenAt)} · Dataset fetched:{' '}
-                  {date(data.freshness.fetchedAt)}
-                </Text>
-                {stale(data.freshness.lastSeenAt) && (
-                  <Banner
-                    status="warning"
-                    title="Source observations are stale"
-                    description="The latest recorded observation is older than seven days or unavailable. Listings may have closed; verify every opening at its source."
-                  />
-                )}
-                <Text>
-                  Public listings are a sourcing signal. They do not establish candidate supply or
-                  complete market demand.
-                </Text>
-              </VStack>
-            </Grid>
+              </Disclosure>
+            </VStack>
             {data.jobs.length === 0 ? (
               <Banner
                 status="info"
@@ -400,6 +371,39 @@ export function Jobs({ onBack }: { onBack: () => void }) {
             </HStack>
           </>
         )}
+        <Disclosure trigger="Connect the Jobs MCP">
+          <VStack gap={2}>
+            <Text>
+              Use the public, read-only Jobs MCP in an MCP-compatible client. It searches the same
+              public jobs dataset; it does not access your private conversations or submit
+              applications.
+            </Text>
+            <Text className="break-all">
+              https://abundance-jobs-mcp.createsomething.workers.dev/chatgpt/mcp
+            </Text>
+            <Text>
+              Available tools: search, fetch, list_public_jobs, search_public_jobs, get_job and
+              summarize_job_markets. Add the address as a remote MCP connection, then ask for
+              healthcare openings by location or specialty.
+            </Text>
+            <Button
+              label="Copy MCP address"
+              size="sm"
+              variant="ghost"
+              onClick={() => {
+                if (!navigator.clipboard) {
+                  setCopied('Select the address above to copy it.');
+                  return;
+                }
+                navigator.clipboard
+                  .writeText('https://abundance-jobs-mcp.createsomething.workers.dev/chatgpt/mcp')
+                  .then(() => setCopied('MCP address copied'))
+                  .catch(() => setCopied('Copy unavailable. Select the address above to copy it.'));
+              }}
+            />
+            <Text role="status">{copied}</Text>
+          </VStack>
+        </Disclosure>
       </VStack>
     </Section>
   );

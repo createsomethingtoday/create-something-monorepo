@@ -82,19 +82,19 @@ export function MarketActivity({
     <Section
       padding={4}
       variant="transparent"
-      className="min-w-0 overflow-y-auto"
+      className="min-w-0 overflow-y-auto bg-workspace-canvas"
       aria-label="Private market activity"
     >
-      <VStack gap={3}>
-        <HStack>
-          <Button variant="ghost" size="sm" onClick={onBack} label="Back to conversations" />
-        </HStack>
-        <VStack gap={1}>
-          <Heading level={1} ref={heading} tabIndex={-1}>
+      <VStack gap={3} className="max-w-screen-xl mx-auto w-full">
+        <HStack justify="between" align="center" gap={3} wrap="wrap">
+          <VStack gap={2} className="min-w-0 w-full md:w-auto md:flex-1">
+          <Heading level={1} className="!text-3xl md:!text-4xl !tracking-tight" ref={heading} tabIndex={-1}>
             Market activity
           </Heading>
           <Text color="secondary">Private sourcing history · activity, not hiring demand.</Text>
         </VStack>
+          <Button variant="ghost" size="sm" onClick={onBack} label="Back to conversations" />
+        </HStack>
         {!data && !error && <Text role="status">Loading your market activity…</Text>}
         {error && (
           <VStack gap={3}>
@@ -111,10 +111,11 @@ export function MarketActivity({
               .map((value, index) => (
                 <Banner key={index} status="info" title="Partial history" description={value} />
               ))}
-            <Text aria-label="Activity totals">
-              {counted(data.totals.searches, 'search')} · {matches(data.totals)} ·{' '}
-              {counted(data.totals.exportsPrepared, 'export')} prepared
-            </Text>
+            <Grid columns={3} gap={2} aria-label="Activity totals">
+              <VStack padding={2} gap={1} className="rounded-xl bg-surface"><Text color="secondary">Searches</Text><Text size="2xl" weight="semibold">{number(data.totals.searches)}</Text><Text type="supporting" color="secondary" className="hidden md:block">Your research activity</Text></VStack>
+              <VStack padding={2} gap={1} className="rounded-xl bg-surface"><Text color="secondary">Matches</Text><Text size="2xl" weight="semibold">{matches(data.totals)}</Text><Text type="supporting" color="secondary" className="hidden md:block">Across saved searches</Text></VStack>
+              <VStack padding={2} gap={1} className="rounded-xl bg-surface"><Text color="secondary">Exports</Text><Text size="2xl" weight="semibold">{number(data.totals.exportsPrepared)}</Text><Text type="supporting" color="secondary" className="hidden md:block">Download from the source conversation</Text></VStack>
+            </Grid>
             {data.locales.length === 0 ? (
               <Banner
                 status="info"
