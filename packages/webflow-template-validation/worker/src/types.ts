@@ -541,6 +541,48 @@ export interface ReviewerPageAudit {
 	hasFooter: boolean;
 	/** The page calls GSAP from inline custom code (not only Webflow's own GSAP-powered Interactions). */
 	usesCustomGsap: boolean;
+	/** What the review-note checks read on the page. */
+	notes?: ReviewNotePageData;
+}
+
+export type ReviewNoteCheckId =
+	| 'links-placeholder-href'
+	| 'links-own-domain-absolute'
+	| 'links-other-webflow-site'
+	| 'links-internal-not-found'
+	| 'cms-collection-over-item-limit'
+	| 'changelog-future-date'
+	| 'powered-by-webflow-target'
+	| 'gsap-interactions-instructions-page'
+	| 'licenses-asset-type-not-listed'
+	| 'licenses-flaticon-attribution'
+	| 'licenses-ai-not-identified'
+	| 'assets-other-project';
+
+export interface ReviewNotePageData {
+	/** Site id on the html element. */
+	siteId?: string;
+	/** The page is a CMS item page: the platform writes data-wf-collection on its html element. */
+	isCmsItemPage: boolean;
+	/** Links with the target "#" that are not controls (tabs, lightboxes, menu buttons, interaction triggers). */
+	placeholderLinks: Array<{ context: 'navigation' | 'footer' | 'button' | 'social' | 'other'; label: string }>;
+	/** Links that hold the full address of the page's own host (samples). */
+	ownDomainLinks: string[];
+	/** Hosts of other webflow.io sites the page links to. */
+	otherWebflowSites: string[];
+	/** Pathnames of this site that the page links to. */
+	internalTargets: string[];
+	/** Item pathnames ("/collection/item") linked from a collection list on the page. */
+	cmsItemPaths: string[];
+	/** Footer links to webflow.com, and footer links that read "Webflow". `target` is host and path, "webflow.com" for the home page. */
+	footerWebflowLinks: Array<{ text: string; target: string }>;
+	/** Asset folders of cdn.prod.website-files.com that the page's images and videos use. */
+	assetPrefixes: Record<string, { count: number; inCollectionList: boolean }>;
+	loadsGsap: boolean;
+	usesVideo: boolean;
+	usesLottie: boolean;
+	/** Visible text. Kept only for the Licenses and Changelog pages. */
+	pageText?: string;
 }
 
 export interface PageSEOData {

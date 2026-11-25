@@ -2144,7 +2144,7 @@ export function registerTools(
 
   server.tool(
     'template_review_run_published_site_validation',
-    'Read-only: run published-site validators for content, assets, accessibility signals, interactions/IX2, GSAP, and custom-code policy evidence. Pass published_url, never a Preview link. With asset_id, the server reads the preview link on that asset record and the validator also reports the unused styles in the Designer "Clean up" list. Does not write to Airtable.',
+    'Read-only: run published-site validators for content, assets, accessibility signals, interactions/IX2, GSAP, and custom-code policy evidence. The result starts with submissionGate: whether the stored Validator pass was run after the site was last published. Pass published_url, never a Preview link. With asset_id, the server reads the preview link on that asset record and the validator also reports the unused styles in the Designer "Clean up" list. Does not write to Airtable.',
     {
       published_url: z.string().url(),
       asset_id: z.string().regex(/^rec[A-Za-z0-9]{14}$/).optional().describe('Airtable asset record ID of this template. Turns on the unused styles check.'),

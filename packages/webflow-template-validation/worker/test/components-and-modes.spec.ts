@@ -301,3 +301,33 @@ describe('Designer payload transport', () => {
 		expect(components.issues.some((i: any) => i.id === 'components.code-components-present')).toBe(true);
 	});
 });
+
+describe('Components: zero instances', () => {
+	const withCounts = (counts: Array<number | undefined>) =>
+		REQUIRED_COMPONENTS.map((component, index) => ({ ...component, ...(counts[index] === undefined ? {} : { instances: counts[index] }) }));
+
+	it('warns about a component with no instances when the runtime reports counts', async () => {
+		const components = await category(baseDesignerData({ components: [...withCounts([4, 9, 0]), { id: 'c_old', name: 'Old Banner', type: 'component', instances: 0 }] }), 'Components');
+		const issue = components.issues.find((i) => i.id === 'components.zero-instances')!;
+		expect(issue.severity).toBe('warning');
+		expect(issue.message).toBe('2 components have no instances.');
+		expect(issue.details?.names).toEqual(['CTA Section', 'Old Banner']);
+		expect(components.passed).toBe(true);
+		expect(components.issues.some((i) => i.id === 'components.excellent')).toBe(false);
+	});
+
+	it('says nothing when every count is 0, because an older runtime sends 0 for all components', async () => {
+		const components = await category(baseDesignerData({ components: withCounts([0, 0, 0]) }), 'Components');
+		expect(components.issues.some((i) => i.id === 'components.zero-instances')).toBe(false);
+	});
+
+	it('says nothing for a payload without counts, and does not count library components', async () => {
+		const legacy = await category(baseDesignerData({ components: withCounts([undefined, undefined, undefined]) }), 'Components');
+		expect(legacy.issues.some((i) => i.id === 'components.zero-instances')).toBe(false);
+		const library = await category(
+			baseDesignerData({ components: [...withCounts([4, 9, 2]), { id: 'c_lib', name: 'Library Card', type: 'component', instances: 0, library: { name: 'Kit', id: 'lib_1' } }] }),
+			'Components'
+		);
+		expect(library.issues.some((i) => i.id === 'components.zero-instances')).toBe(false);
+	});
+});

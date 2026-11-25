@@ -9,16 +9,10 @@
 
 import { parseDocument } from 'htmlparser2';
 import type { ReviewerPageAudit, ReviewerStandardId, ValidationIssue } from '../types';
+import { ancestors, attr, classes, isFooter, isNav, normalize, rawText, renderedDescendants, text, type MarkupNode } from '../utils/markup';
+import { auditReviewNotes } from './review-note-checks';
 
-/** The subset of a domhandler node that the checks read. */
-export interface MarkupNode {
-	type: string;
-	name?: string;
-	attribs?: Record<string, string>;
-	children?: Node[];
-	parent?: Node | null;
-	data?: string;
-}
+export type { MarkupNode };
 
 type Node = MarkupNode;
 
@@ -95,15 +89,7 @@ const DEFAULT_ERROR = 'oops! something went wrong while submitting the form';
 const DEFAULT_NAME = /^(?:field(?:[- ]\d+)?|email[- ]form(?:[- ]\d+)?|name[- ]\d+|form[- ]\d+)$/i;
 const FIELD_TAGS = new Set(['input', 'select', 'textarea']);
 const NON_FIELD_INPUT_TYPES = new Set(['hidden', 'submit', 'reset', 'button', 'image']);
-const FOOTER_TOKEN = /(?:^|[\s_-])footer(?:$|[\s_-])/i;
 const DEFAULT_ICON_PATHS = { favicon: '/img/favicon.ico', webclip: '/img/webclip.png' } as const;
-const NO_TEXT_TAGS = new Set(['script', 'style', 'noscript', 'template', 'svg', 'head']);
-const INERT_TAGS = new Set(['template', 'noscript']);
-const BLOCK_TAGS = new Set([
-	'address', 'article', 'aside', 'blockquote', 'br', 'dd', 'details', 'div', 'dl', 'dt', 'fieldset', 'figcaption', 'figure',
-	'footer', 'form', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'header', 'hr', 'li', 'main', 'nav', 'ol', 'p', 'pre', 'section',
-	'summary', 'table', 'tbody', 'td', 'tfoot', 'th', 'thead', 'tr', 'ul'
-]);
 const LICENSES_PATH = '/licenses';
 const INSTRUCTIONS_PATH = '/instructions';
 /** Calls to buy, get or see more templates (guideline layout-and-content-18). Matched only on links that leave the site. */
@@ -147,7 +133,8 @@ export function auditReviewerStandards(html: string, pageUrl: string): ReviewerP
 		hasFooter: elements.some(isFooter),
 		usesCustomGsap: elements.some(
 			(el) => el.name === 'script' && !attr(el, 'src') && CUSTOM_GSAP_CALL.test(withoutCommentsAndStrings(rawText(el)))
-		)
+		),
+		notes: auditReviewNotes(elements, root, url, path)
 	};
 }
 
@@ -304,11 +291,6 @@ function comparable(value: string): string {
 	return normalize(value.replace(/[\u2018\u2019]/g, "'").replace(/[\u201c\u201d]/g, '"')).toLowerCase();
 }
 
-/** Raw text of a script element (its contents are not parsed as markup). */
-function rawText(node: Node): string {
-	return (node.children ?? []).map((child) => child.data ?? '').join('');
-}
-
 /**
  * JavaScript with comments removed and string and template literals emptied,
  * so a commented-out or quoted `gsap.to(...)` does not count as a call.
@@ -354,64 +336,6 @@ export function pageText(html: string): string {
 /** Elements of an HTML document that a browser renders (template and noscript subtrees are skipped). */
 export function parseRenderedElements(html: string): MarkupNode[] {
 	return renderedDescendants(parseDocument(html) as unknown as Node);
-}
-
-/**
- * Element descendants a browser renders. Comments and script text are not
- * elements in the parsed tree; <template> content and <noscript> fallbacks
- * never render, so unused markup there cannot fail or satisfy a check.
- */
-function renderedDescendants(node: Node): Node[] {
-	const out: Node[] = [];
-	const walk = (parent: Node) => {
-		for (const child of parent.children ?? []) {
-			if (!child.name || INERT_TAGS.has(child.name)) continue;
-			out.push(child);
-			walk(child);
-		}
-	};
-	walk(node);
-	return out;
-}
-
-function ancestors(node: Node): Node[] {
-	const out: Node[] = [];
-	for (let parent = node.parent; parent; parent = parent.parent) out.push(parent);
-	return out;
-}
-
-/**
- * Text a visitor could read, without script, style, SVG, or head content.
- * Inline elements join without a gap, as a browser renders them
- * ("specific <strong>asset</strong>, please" reads "specific asset, please");
- * block elements and <br> are separated by a space. CSS-hidden text is included.
- */
-function text(node: Node): string {
-	if (node.type === 'text') return node.data ?? '';
-	if (node.name && NO_TEXT_TAGS.has(node.name)) return '';
-	const inner = (node.children ?? []).map(text).join('');
-	return node.name && BLOCK_TAGS.has(node.name) ? ` ${inner} ` : inner;
-}
-
-function attr(node: Node, name: string): string {
-	return node.attribs?.[name] ?? '';
-}
-
-function classes(node: Node): string[] {
-	return attr(node, 'class').split(/\s+/).filter(Boolean);
-}
-
-function normalize(value: string): string {
-	return value.replace(/\s+/g, ' ').trim();
-}
-
-function isNav(node: Node): boolean {
-	return node.name === 'nav' || attr(node, 'role') === 'navigation' || classes(node).includes('w-nav');
-}
-
-/** Same footer rule as the template-preflight skill: a footer element, role contentinfo, or a footer class or id token. */
-function isFooter(node: Node): boolean {
-	return node.name === 'footer' || attr(node, 'role') === 'contentinfo' || FOOTER_TOKEN.test(`${attr(node, 'class')} ${attr(node, 'id')}`);
 }
 
 /**

@@ -1,4 +1,5 @@
 import { AirtableClientError } from './airtable.js';
+import { readSubmissionGateStatus, type SubmissionGateReport } from './submission-gate.js';
 
 export const DEFAULT_WEBFLOW_VALIDATION_WORKER_URL = 'https://validation-worker.createsomething.workers.dev/validate';
 export const DEFAULT_GSAP_VALIDATION_WORKER_URL = 'https://gsap-validation-worker.createsomething.workers.dev/validateGsap';
@@ -10,6 +11,8 @@ export type PublishedSiteValidationCheck = (typeof PUBLISHED_SITE_VALIDATION_CHE
 export interface ValidationToolConfig {
   webflowValidationWorkerUrl?: string;
   gsapValidationWorkerUrl?: string;
+  /** Lookup of the stored Validator result, for the submission gate status. */
+  validatorResultUrl?: string;
   timeoutMs?: number;
   fetcher?: typeof fetch;
 }
@@ -379,9 +382,13 @@ export async function runPublishedSiteValidation(input: PublishedSiteValidationI
   const gsapValidationWorkerUrl = config.gsapValidationWorkerUrl ?? DEFAULT_GSAP_VALIDATION_WORKER_URL;
 
   const results: Partial<Record<PublishedSiteValidationCheck, unknown>> = {};
+  let submissionGate: SubmissionGateReport | undefined;
 
-  await Promise.all(
-    checks.map(async (check) => {
+  await Promise.all([
+    readSubmissionGateStatus(publishedUrl, { validatorResultUrl: config.validatorResultUrl, fetcher }).then((report) => {
+      submissionGate = report;
+    }),
+    ...checks.map(async (check) => {
       try {
         if (check === 'webflow_way') {
           results[check] = await runWebflowWayValidation(publishedUrl, input.page_slugs, maxPages, includeRaw, {
@@ -404,7 +411,7 @@ export async function runPublishedSiteValidation(input: PublishedSiteValidationI
         };
       }
     }),
-  );
+  ]);
 
   return {
     publishedUrl,
@@ -412,6 +419,8 @@ export async function runPublishedSiteValidation(input: PublishedSiteValidationI
     checksRequested: checks,
     evidenceQuality: 'Partial published-site validator evidence. Useful for review triage and concrete feedback, not a final Designer/manual decision.',
     rubricCoverage: 'partial_published_site_validation',
+    // Read this first: a stale, failed or missing pass means the template did not pass the gate in the state under review.
+    submissionGate,
     caveats: [
       input.preview_url
         ? 'The unused styles finding (id unused-styles) comes from the Designer site data behind the preview link on the asset record. It is the Designer "Clean up" list, and it can be shorter than that list. No other check uses Designer or Preview data. No unused styles finding is not proof of a clean site.'

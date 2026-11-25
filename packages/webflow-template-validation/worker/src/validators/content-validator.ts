@@ -17,7 +17,8 @@ import {
 	PageSEOData,
 	LinkAnalysis,
 	ContentQualityAnalysis,
-	ValidationOptions
+	ValidationOptions,
+	ReviewerPageAudit
 } from '../types';
 import {
 	collectClassUsage,
@@ -42,6 +43,7 @@ import {
 	parseRenderedElements,
 	type MarkupNode
 } from './reviewer-standards';
+import { generateReviewNoteIssues, uncheckedInternalTargets } from './review-note-checks';
 
 const LOREM_IPSUM_PATTERNS = [
 	/lorem\s+ipsum/i,
@@ -266,8 +268,10 @@ export async function validateContent(
 
 			const issues = [
 				...generateContentIssues([pageAnalysis], resolvedChecks),
-				...generateReviewerStandardIssues(pageAnalysis.reviewerAudit ? [pageAnalysis.reviewerAudit] : [])
+				...generateReviewerStandardIssues(pageAnalysis.reviewerAudit ? [pageAnalysis.reviewerAudit] : []),
+				...generateReviewNoteIssues(pageAnalysis.reviewerAudit ? [pageAnalysis.reviewerAudit] : [])
 			];
+			dropReviewNoteData(pageAnalysis.reviewerAudit ? [pageAnalysis.reviewerAudit] : []);
 			const stats = calculateContentStats([pageAnalysis]);
 
 			return { issues, stats, pages: [pageAnalysis] };
@@ -314,12 +318,13 @@ export async function validateContent(
 		// Generate content validation issues. The reviewer standards also read
 		// the utility pages, which the crawl does not always reach.
 		const utility = await auditUtilityPages(siteUrl, allPages, excludedSlugs, classUsage);
+		const reviewerAudits = [...allPages.flatMap(page => (page.reviewerAudit ? [page.reviewerAudit] : [])), ...utility.audits];
+		// A page limit cuts the run short, so a limited run asks for no link targets.
+		const notFoundTargets = maxPages === undefined ? await findMissingInternalTargets(siteUrl, reviewerAudits, excludedSlugs) : [];
 		const issues = [
 			...generateContentIssues(allPages, resolvedChecks),
-			...generateReviewerStandardIssues(
-				[...allPages.flatMap(page => (page.reviewerAudit ? [page.reviewerAudit] : [])), ...utility.audits],
-				{ missingPaths: utility.missingPaths }
-			),
+			...generateReviewerStandardIssues(reviewerAudits, { missingPaths: utility.missingPaths }),
+			...generateReviewNoteIssues(reviewerAudits, { missingPaths: utility.missingPaths, notFoundTargets }),
 			// The check needs every static page. Only the page list from the
 			// Designer gives that: a list from a sitemap or from links can be
 			// cut short, and a page limit cuts any list. A style on a page that
@@ -330,6 +335,8 @@ export async function validateContent(
 			...(await auditDesignerUnusedStyles(options?.previewUrl, options?.previewSiteDataPath)
 				?? (maxPages === undefined && options?.pageListComplete === true && Array.isArray(pageSlugs) && pageSlugs.length > 0 ? await auditUnusedStyles(siteUrl, classUsage, excludedSlugs, allPages.map(page => page.url)) : []))
 		];
+
+		dropReviewNoteData(reviewerAudits);
 
 		// Calculate content statistics
 		const stats = {
@@ -590,6 +597,42 @@ async function analyzeItemPageSample(
 		console.warn('Item page sample stopped:', error);
 	}
 	return sampled;
+}
+
+/** The page data of the review-note checks is working data: the issues carry what the creator needs, so the result does not return it. */
+function dropReviewNoteData(audits: ReviewerPageAudit[]): void {
+	for (const audit of audits) delete audit.notes;
+}
+
+/** How many internal link targets outside the page list a run asks the site for. */
+const INTERNAL_TARGET_CHECK_LIMIT = 40;
+/** A Worker keeps about six connections open at a time. Requests above that wait, and a waiting request would use up its timeout. */
+const INTERNAL_TARGET_CONCURRENCY = 5;
+
+/** Internal link targets, outside the pages already read, that the site answers with HTTP 404. */
+async function findMissingInternalTargets(siteUrl: string, audits: ReviewerPageAudit[], excludedSlugs: Set<string>): Promise<string[]> {
+	const queue = uncheckedInternalTargets(audits, INTERNAL_TARGET_CHECK_LIMIT).filter(path => !excludedSlugs.has(normalizeSlugForComparison(path) ?? ''));
+	const origin = new URL(siteUrl).origin;
+	const missing: string[] = [];
+	const checkNext = async (): Promise<void> => {
+		for (let path = queue.shift(); path !== undefined; path = queue.shift()) {
+			try {
+				const target = new URL(siteUrl);
+				target.pathname = path;
+				if (target.origin !== origin) continue; // Never ask another host.
+				const response = await fetch(target.href, {
+					method: 'HEAD',
+					signal: AbortSignal.timeout(8_000),
+					headers: { 'User-Agent': 'WebflowWayValidator/1.0' }
+				});
+				if (response.status === 404) missing.push(path);
+			} catch {
+				// No answer is not a missing page.
+			}
+		}
+	};
+	await Promise.all(Array.from({ length: Math.min(INTERNAL_TARGET_CONCURRENCY, queue.length) }, () => checkNext()));
+	return missing.sort();
 }
 
 async function auditUtilityPages(siteUrl: string, pages: AnalyzedPage[], excludedSlugs: Set<string>, classUsage?: ClassUsage) {
