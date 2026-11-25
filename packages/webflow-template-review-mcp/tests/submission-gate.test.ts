@@ -113,6 +113,15 @@ test('a page that sends headers and then stalls ends as unavailable, inside the 
   assert.ok(Date.now() - started < 2_000);
 });
 
+test('fetch is called as a plain function, as the Workers runtime requires', async () => {
+  const inner = fetcher(page(), stored()).fn;
+  const strict = function (this: unknown, input: RequestInfo | URL, init?: RequestInit) {
+    if (this !== undefined) throw new TypeError('Illegal invocation: function called with incorrect `this` reference.');
+    return inner(input, init);
+  } as unknown as typeof fetch;
+  assert.equal((await readSubmissionGateStatus(SITE, { fetcher: strict })).status, 'current');
+});
+
 test('the published-site validation result carries the gate status', async () => {
   const { fn } = fetcher(page({ published: 'Thu Nov 26 2026 16:35:00 GMT+0000 (Coordinated Universal Time)' }), stored());
   const result = await runPublishedSiteValidation({ published_url: SITE, checks: ['gsap_custom_code'] }, { fetcher: fn });
