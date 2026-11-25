@@ -1,0 +1,48 @@
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+  <tr>
+    <td style="font-family:Inter,Arial,sans-serif;color:#1a1a1a;font-size:16px;line-height:1.6;">
+      <p style="margin:0 0 24px;">Hi {{ recipient.firstName | default: "there" }},</p>
+
+      <p style="margin:0 0 24px;">We updated the Webflow Way Validator app. The report is shorter and shows what to fix first. The checks, the findings and the score did not change.</p>
+
+      <p style="margin:0 0 24px;">You do not need to install anything. You get version 1.3.14 the next time you launch the app in the Designer.</p>
+
+      <p style="margin:0 0 8px;font-weight:600;font-size:16px;">One result at the top</p>
+      <p style="margin:0 0 12px;">The top of the report shows if you can submit, the number of errors, warnings and notes, your score, and the next step. Categories with errors come first. Categories with no findings fold into one line.</p>
+      <p style="margin:0 0 24px;"><img src="https://validation-worker.createsomething.workers.dev/announcements/validator-1-3-14/validator-report.jpg" width="560" alt="The Validator report. A result block at the top shows Blocked, 37 errors, 31 warnings, 8 notes and a score of 57%. The Required Pages category is open below it." style="display:block;width:100%;max-width:560px;height:auto;border:1px solid #e3e5e8;border-radius:8px;" /></p>
+
+      <p style="margin:0 0 8px;font-weight:600;font-size:16px;">A run shows its progress</p>
+      <p style="margin:0 0 12px;">During a run you see a progress bar and the current step.</p>
+      <p style="margin:0 0 24px;"><img src="https://validation-worker.createsomething.workers.dev/announcements/validator-1-3-14/validator-progress.jpg" width="560" alt="The Validator during a run. The progress bar is at 70% and the step reads Loading pages in a browser." style="display:block;width:100%;max-width:560px;height:auto;border:1px solid #e3e5e8;border-radius:8px;" /></p>
+
+      <p style="margin:0 0 8px;font-weight:600;font-size:16px;">A Fix List that is faster to read</p>
+      <p style="margin:0 0 12px;">The Fix List has every error that blocks your submission, with the fix and the page for each one. Use the checkboxes to track your work, then run the Validator again to confirm the fixes.</p>
+      <p style="margin:0 0 24px;"><img src="https://validation-worker.createsomething.workers.dev/announcements/validator-1-3-14/validator-fix-list.jpg" width="560" alt="The Fix List tab. Each row has a checkbox, an Error label, the finding and its fix." style="display:block;width:100%;max-width:560px;height:auto;border:1px solid #e3e5e8;border-radius:8px;" /></p>
+
+      <p style="margin:0 0 8px;font-weight:600;font-size:16px;">Other changes</p>
+      <ul style="margin:0 0 24px;padding-left:22px;">
+        <li style="margin-bottom:8px;">Before the first run on a site, the panel shows the three steps to a result.</li>
+        <li style="margin-bottom:8px;">The Options menu fits the panel. "Current page only" was cut off before.</li>
+        <li style="margin-bottom:8px;">Small text is larger and has more contrast.</li>
+      </ul>
+
+      <p style="margin:0 0 8px;font-weight:600;font-size:16px;">Reminder: the Template CLI</p>
+      <p style="margin:0 0 12px;">The Template CLI runs the same checks from your terminal. You do not need the Designer open, and you do not need the Validator script on your site. A complete run with a 100% pass counts for the template submission form, the same as a pass from the app.</p>
+      <ol style="margin:0 0 24px;padding-left:22px;">
+        <li style="margin-bottom:8px;">Install with Node 20 or later. Run the same command again to update.<div style="margin:4px 0 0;padding:10px 12px;background:#f4f5f7;border-radius:6px;font-family:Menlo,Consolas,monospace;font-size:13px;line-height:1.5;word-break:break-all;">npm install -g https://validation-worker.createsomething.workers.dev/cli/wf-template-validate.tgz</div></li>
+        <li style="margin-bottom:8px;">Sign in to Webflow, then find your site ID.<div style="margin:4px 0 0;padding:10px 12px;background:#f4f5f7;border-radius:6px;font-family:Menlo,Consolas,monospace;font-size:13px;line-height:1.5;word-break:break-all;">wf-template-validate login<br/>wf-template-validate sites</div></li>
+        <li style="margin-bottom:8px;">Publish the template site, then run all checks and record the result.<div style="margin:4px 0 0;padding:10px 12px;background:#f4f5f7;border-radius:6px;font-family:Menlo,Consolas,monospace;font-size:13px;line-height:1.5;word-break:break-all;">wf-template-validate validate https://your-template.webflow.io --site &lt;site ID&gt;</div></li>
+      </ol>
+
+      <p style="margin:0 0 8px;font-weight:600;font-size:16px;">Where to find both tools</p>
+      <ul style="margin:0 0 24px;padding-left:22px;">
+        <li style="margin-bottom:8px;">The <a href="https://webflowassets.createsomething.io/validation" style="color:#146EF5;text-decoration:underline;">Validation page</a> in the Asset Dashboard.</li>
+        <li style="margin-bottom:8px;">The <a href="https://webflow.com/templates/submission-guidelines" style="color:#146EF5;text-decoration:underline;">Submission Guidelines</a>, in the Start Here section.</li>
+      </ul>
+
+      <p style="margin:0 0 24px;">If something does not work, <a href="https://help.webflow.com/hc/en-us/requests/new" style="color:#146EF5;text-decoration:underline;">open a support ticket</a> to reach the Marketplace team.</p>
+
+      <p style="margin:0;">Thanks for building on Webflow,<br/>The Webflow Marketplace team</p>
+    </td>
+  </tr>
+</table>
