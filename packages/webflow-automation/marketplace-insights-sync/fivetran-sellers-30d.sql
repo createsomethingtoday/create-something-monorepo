@@ -11,7 +11,10 @@
 --
 -- SALES_30D includes orders through creator fulfillment links (the buyer paid
 -- the creator off-platform), valued at list price in REVENUE_30D.
--- FULFILLMENT_SALES_30D is that part of SALES_30D.
+-- FULFILLMENT_SALES_30D is that part of SALES_30D, and FULFILLMENT_REVENUE_30D
+-- is that part of REVENUE_30D. Webflow does not see the price the buyer paid,
+-- so list price is an upper limit. REVENUE_30D minus FULFILLMENT_REVENUE_30D is
+-- the revenue from Marketplace checkout.
 
 with now_utc as (
     select convert_timezone('UTC', current_timestamp())::timestamp_ntz as ts
@@ -38,7 +41,8 @@ sellers as (
         t.template_name as TEMPLATE_NAME,
         count(*) as SALES_30D,
         coalesce(count_if(o.template_fulfillment_code_id is not null), 0) as FULFILLMENT_SALES_30D,
-        round(sum(o.price_value), 2) as REVENUE_30D
+        round(sum(o.price_value), 2) as REVENUE_30D,
+        round(sum(iff(o.template_fulfillment_code_id is not null, o.price_value, 0)), 2) as FULFILLMENT_REVENUE_30D
     from analytics.webflow.marketplace_orders o
     join analytics.webflow.marketplace_products p
         on o.marketplace_product_id = p.document_id
@@ -59,6 +63,7 @@ select
     s.SALES_30D,
     s.FULFILLMENT_SALES_30D,
     s.REVENUE_30D,
+    s.FULFILLMENT_REVENUE_30D,
     to_varchar(b.window_end, 'YYYY-MM-DD"T"HH24:MI:SS.FF3"Z"') as SNAPSHOT_AT,
     count(*) over () as WINDOW_SELLERS,
     sum(s.SALES_30D) over () as WINDOW_SALES,

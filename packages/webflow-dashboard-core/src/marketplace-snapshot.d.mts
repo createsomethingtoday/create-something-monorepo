@@ -11,6 +11,12 @@ export interface SnapshotLeaderboardRow {
   revenueRank: number;
   /** Sales through creator fulfillment links (paid off-platform). Absent in older snapshots. */
   fulfillmentSales30d?: number;
+  /**
+   * The part of totalRevenue30d from Marketplace checkout. Link sales are left
+   * out, because their list price is an upper limit of what the buyer paid.
+   * When present, revenueRank uses it. Absent in older snapshots.
+   */
+  checkoutRevenue30d?: number;
 }
 export interface SnapshotCategoryRow {
   category: string;
@@ -40,6 +46,8 @@ export interface MarketplaceSnapshot {
     sellingTemplates: number;
     /** Part of totalSales made through fulfillment links. Absent in older snapshots. */
     fulfillmentSales?: number;
+    /** Part of totalRevenue from Marketplace checkout (link sales left out). Absent in older snapshots. */
+    checkoutRevenue?: number;
     /** Unique templates listed now or sold in a window of this snapshot. */
     listedTemplates?: number;
     totalSales90d?: number;
@@ -59,6 +67,8 @@ export function buildMarketplaceSnapshot(input: {
     sales: number;
     revenue: number;
     fulfillmentSales?: number;
+    /** Part of revenue from fulfillment-link sales, at list price. Needs fulfillmentSales. */
+    fulfillmentRevenue?: number;
   }>;
   assets: Array<{ templateId: string; creatorEmail?: string; categories: string[]; listed?: boolean }>;
   categories: Array<{ name: string; group: string }>;

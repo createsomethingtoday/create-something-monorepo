@@ -70,6 +70,51 @@ describe('snapshot analytics API contracts', () => {
     expect(leaderboard.leaderboard[1]).not.toHaveProperty('creatorEmail');
     expect(leaderboard.leaderboard[1]).not.toHaveProperty('totalRevenue30d');
     expect(leaderboard.leaderboard[1]).not.toHaveProperty('fulfillmentSales30d');
+    // No revenue split in this snapshot: link sales count at list price.
+    expect(leaderboard.summary.revenueBasis).toBe('list-price');
+    expect(leaderboard.leaderboard[0]).not.toHaveProperty('checkoutRevenue30d');
+  });
+  it('shows and ranks leaderboard revenue from Marketplace checkout only when the snapshot has the split', async () => {
+    const id = (char: string) => char.repeat(24);
+    const snapshot = buildMarketplaceSnapshot({
+      snapshotAt: '2026-09-21T16:00:00.000Z',
+      sellers: [
+        // Owner: 3 sales, 2 through links. $150 at list price, $50 through checkout.
+        { templateId: id('a'), mrpId: id('b'), name: 'Mine', sales: 3, revenue: 150, fulfillmentSales: 2, fulfillmentRevenue: 100 },
+        // Competitor: 3 sales through checkout, $120.
+        { templateId: id('c'), mrpId: id('d'), name: 'Theirs', sales: 3, revenue: 120, fulfillmentSales: 0, fulfillmentRevenue: 0 }
+      ],
+      assets: [
+        { templateId: id('a'), creatorEmail: 'owner@example.test', categories: ['Agency'] },
+        { templateId: id('c'), creatorEmail: 'competitor@example.test', categories: ['Agency'] }
+      ],
+      categories: [{ name: 'Agency', group: 'Business' }]
+    });
+    const freshness = { timestamp: snapshot.snapshotAt, source: 'field', fieldName: 'SNAPSHOT_AT' };
+    mocks.client.mockReturnValue({
+      getLeaderboard: async () => ({ records: snapshot.leaderboard, marketplaceSummary: snapshot.summary, freshness }),
+      getCreatorByEmail: async () => null,
+      getAssetsByEmail: async () => []
+    });
+    const body = (await (await leaderboardGET(event('owner@example.test'))).json()) as {
+      summary: Record<string, unknown>;
+      leaderboard: Array<Record<string, unknown>>;
+      userTemplates: Array<Record<string, unknown>>;
+    };
+    expect(body.summary.revenueBasis).toBe('marketplace-checkout');
+    // Same sales: the competitor is first, because more of its revenue went through checkout.
+    expect(body.leaderboard.map((row) => [row.templateName, row.salesRank, row.revenueRank])).toEqual([
+      ['Theirs', 1, 1],
+      ['Mine', 1, 2]
+    ]);
+    // The owner sees both numbers for their own template, and the checkout number is the one that counts.
+    expect(body.userTemplates[0]).toMatchObject({ totalSales30d: 3, fulfillmentSales30d: 2, totalRevenue30d: 150, checkoutRevenue30d: 50 });
+    expect(body.summary.userTotalRevenue).toBe(50);
+    expect(body.summary.userBestRank).toBe(2);
+    // A competitor's revenue and sales split stay private in both forms.
+    expect(body.leaderboard[0]).not.toHaveProperty('totalRevenue30d');
+    expect(body.leaderboard[0]).not.toHaveProperty('checkoutRevenue30d');
+    expect(body.leaderboard[0]).not.toHaveProperty('fulfillmentSales30d');
   });
   it('passes listed supply, the 90-day window and their totals through, and counts competition from supply', async () => {
     const id = (char: string) => char.repeat(24);

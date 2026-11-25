@@ -6,6 +6,8 @@ export interface LeaderboardEntry {
 	totalRevenue30d?: number;
 	/** Part of totalSales30d through fulfillment links; only for the viewer's own templates. */
 	fulfillmentSales30d?: number;
+	/** Revenue from Marketplace checkout only; only for the viewer's own templates, absent in older snapshots. */
+	checkoutRevenue30d?: number;
 	salesRank: number;
 	revenueRank: number;
 	isUserTemplate: boolean;
@@ -22,7 +24,7 @@ export interface CategoryEntry {
 	revenueRank: number;
 	trend?: 'up' | 'down' | 'neutral';
 	changePercent?: number;
-	/** Part of totalSales30d through fulfillment links; its revenue is assumed at list price. */
+	/** Part of totalSales30d through fulfillment links; its revenue is counted at list price, an upper limit. */
 	fulfillmentSales30d?: number;
 	/** Templates listed now or sold in a window of the snapshot. Absent when the source has no supply. */
 	listedTemplates?: number;
@@ -63,6 +65,8 @@ export interface LeaderboardResponse {
 		totalMarketplaceSales: number;
 		/** Part of totalMarketplaceSales through fulfillment links; null when the snapshot has no split. */
 		totalFulfillmentSales?: number | null;
+		/** What leaderboard revenue and revenue rank count. Older snapshots count link sales at list price. */
+		revenueBasis?: 'marketplace-checkout' | 'list-price';
     snapshotVersion?: string;
     salesSource?: 'marketplace-snapshot' | 'leaderboard-top-50';
 		userBestRank: number | null;

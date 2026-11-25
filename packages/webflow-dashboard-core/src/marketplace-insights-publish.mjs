@@ -18,6 +18,7 @@ export const SELLER_FIELDS = {
   SALES_30D: 'fldXU6c3ERnqBbvSp',
   FULFILLMENT_SALES_30D: 'fld7zlIkAV4GDW7rk',
   REVENUE_30D: 'fldxVd61LWea9SlEF',
+  FULFILLMENT_REVENUE_30D: 'fldlTdFquWfV8hiL0',
   SNAPSHOT_AT: 'fldLJlqsFaukWP4Jq',
   WINDOW_SELLERS: 'fldkJiQBUdfWUMP7Q',
   WINDOW_SALES: 'fld31oTda0kji5IDi',
@@ -44,6 +45,7 @@ const SOURCE_30D = {
   sales: 'SALES_30D',
   fulfillment: 'FULFILLMENT_SALES_30D',
   revenue: 'REVENUE_30D',
+  fulfillmentRevenue: 'FULFILLMENT_REVENUE_30D',
   windowSellers: 'WINDOW_SELLERS',
   windowSales: 'WINDOW_SALES',
   windowRevenue: 'WINDOW_REVENUE'
@@ -174,12 +176,21 @@ async function readWindow(rest, windowEnd, source) {
     fail(
       `Fivetran ${source.label} rows for ${want} carry ${source.fulfillment} on ${withFulfillment} of ${rows.length} rows`
     );
+  // Same rule for the revenue of those sales, on a source that has the column.
+  const withLinkRevenue = source.fulfillmentRevenue
+    ? rows.filter((r) => r.fields[col('fulfillmentRevenue')] !== undefined).length
+    : 0;
+  if (withLinkRevenue && withLinkRevenue !== rows.length)
+    fail(
+      `Fivetran ${source.label} rows for ${want} carry ${source.fulfillmentRevenue} on ${withLinkRevenue} of ${rows.length} rows`
+    );
   const sellers = rows.map((r) => ({
     templateId: r.fields[S.TEMPLATE_ID],
     ...(S.MRP_ID && { mrpId: r.fields[S.MRP_ID], name: r.fields[S.TEMPLATE_NAME] }),
     sales: parseMetric(r.fields[col('sales')]),
     ...(withFulfillment && { fulfillmentSales: parseMetric(r.fields[col('fulfillment')]) }),
-    revenue: parseMetric(r.fields[col('revenue')])
+    revenue: parseMetric(r.fields[col('revenue')]),
+    ...(withLinkRevenue && { fulfillmentRevenue: parseMetric(r.fields[col('fulfillmentRevenue')]) })
   }));
   const expectedSellers = parseMetric(rows[0].fields[col('windowSellers')]);
   const expectedSales = parseMetric(rows[0].fields[col('windowSales')]);

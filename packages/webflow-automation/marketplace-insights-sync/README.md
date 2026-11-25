@@ -30,6 +30,21 @@ creator on another platform; Webflow only delivered the template), counted at
 list price. Rows and the summary carry that part separately
 (`fulfillmentSales30d`, `summary.fulfillmentSales`); older snapshots have no split.
 
+Webflow does not see the price a fulfillment-link buyer paid, and creators more
+often sell below list price than above it. So list price is an upper limit:
+
+- Totals and subcategory rows keep link sales at list price. The dashboard marks
+  a subcategory `est.` when 25% or more of its sales used links, and says that
+  the revenue is an upper limit.
+- The leaderboard does not use it. The source carries the link part of revenue
+  (`FULFILLMENT_REVENUE_30D`), each leaderboard row carries
+  `checkoutRevenue30d` (revenue from Marketplace checkout only), and
+  `revenueRank` and the tie-break between templates with equal sales use that
+  number. `summary.checkoutRevenue` is the same split for the whole Marketplace.
+  Sales counts and `salesRank` still include link sales.
+- A snapshot from a source without `FULFILLMENT_REVENUE_30D` has none of these
+  fields and ranks list-price revenue, as before.
+
 Both sources refuse a window that the daily `MARKETPLACE_ORDERS` load (about
 05:30 UTC) does not cover yet. A Monday 16:05 UTC run missed the window's final
 hours of orders, so snapshots publish on Tuesday.
@@ -57,7 +72,8 @@ and it fails unless their count, summed sales and summed revenue equal
 `WINDOW_SELLERS`, `WINDOW_SALES` and `WINDOW_REVENUE`, which the query writes on
 every row. A run that starts before
 the activation finishes therefore fails instead of publishing a partial week.
-`FULFILLMENT_SALES_30D` must be on every row of the window or on none.
+`FULFILLMENT_SALES_30D` must be on every row of the window or on none, and the
+same holds for `FULFILLMENT_REVENUE_30D`.
 
 ## 90-day window (optional)
 

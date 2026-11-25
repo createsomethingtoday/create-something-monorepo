@@ -160,8 +160,11 @@
     return share !== null && share >= ESTIMATE_SHARE ? share : null;
   }
 
+  // Newer snapshots rank leaderboard revenue by Marketplace checkout only.
+  const checkoutBasis = $derived(summary.revenueBasis === 'marketplace-checkout');
+
   function getEstimateTitle(share: number): string {
-    return `${formatWholeShare(share)} of these sales went through fulfillment links. The buyer paid the creator off-platform, so this revenue is assumed at list price.`;
+    return `${formatWholeShare(share)} of these sales went through fulfillment links. The buyer paid the creator off-platform, so this revenue uses list price. List price is an upper limit: the buyer probably paid less.`;
   }
 
   const ownedUserCategorySet = $derived.by(() => {
@@ -551,7 +554,9 @@
           <dd class="summary-support">
             {summary.userBestRank ? 'out of top 50 templates' : 'not in top 50 this period'}
           </dd>
-          <dd class="summary-meta">by revenue</dd>
+          <dd class="summary-meta">
+            {checkoutBasis ? 'by Marketplace checkout revenue' : 'by revenue'}
+          </dd>
         </div>
 
         <div class="summary-item">
@@ -709,7 +714,8 @@
             <span>
               <strong>Estimate.</strong>
               {formatWholeShare(ESTIMATE_SHARE)} or more of the sales used fulfillment links. That
-              revenue is assumed at list price.
+              revenue is counted at list price, which is an upper limit. The buyer pays the creator
+              off-platform and probably paid less.
             </span>
           </li>
         </ul>
@@ -866,7 +872,7 @@
                     onclick={() => handleSort('avgRevenuePerTemplate')}
                   >
                     <span
-                      title="Revenue per template that sold. Fulfillment-link sales count at list price, because the buyer pays the creator off-platform."
+                      title="Revenue per template that sold. Fulfillment-link sales count at list price, because the buyer pays the creator off-platform. List price is an upper limit: the buyer probably paid less."
                       >Revenue / sold template</span
                     >
                     {#if sortKey === 'avgRevenuePerTemplate'}
@@ -1065,7 +1071,11 @@
     <section class="leaderboard-section">
       <h3 class="section-title">
         Top Performers (30d)
-        <span class="section-subtitle">Rolling 30-day window · includes fulfillment-link sales</span>
+        <span class="section-subtitle"
+          >{checkoutBasis
+            ? 'Rolling 30-day window · sales include fulfillment links, revenue does not'
+            : 'Rolling 30-day window · includes fulfillment-link sales'}</span
+        >
       </h3>
       <div class="leaderboard-grid">
         {#each leaderboard.slice(0, 5) as template, index (getLeaderboardKey(template, index))}
@@ -1100,7 +1110,18 @@
                     <span class="metric-value">{template.fulfillmentSales30d.toLocaleString()}</span>
                   </div>
                 {/if}
-                {#if template.isUserTemplate && template.totalRevenue30d}
+                {#if template.isUserTemplate && template.checkoutRevenue30d !== undefined}
+                  <div class="metric-row">
+                    <span
+                      class="metric-label"
+                      title="Revenue from sales through Marketplace checkout. Fulfillment-link sales are in the sales count, but not in this revenue, because the buyer pays you off-platform."
+                      >Revenue (Marketplace checkout)</span
+                    >
+                    <span class="metric-value revenue"
+                      >${template.checkoutRevenue30d.toLocaleString()}</span
+                    >
+                  </div>
+                {:else if template.isUserTemplate && template.totalRevenue30d}
                   <div class="metric-row">
                     <span class="metric-label" title="Fulfillment-link sales are counted at list price">Revenue (list price)</span>
                     <span class="metric-value revenue"
