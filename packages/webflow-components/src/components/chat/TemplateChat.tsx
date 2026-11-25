@@ -177,6 +177,9 @@ const WIDE_SURFACE_MIN_WIDTH = 720;
 const STICK_TO_BOTTOM_SLACK_PX = 80;
 /** Composer grows to roughly four rows, then scrolls. */
 const COMPOSER_MAX_HEIGHT_PX = 120;
+const RESET_CONFIRM_TIMEOUT_MS = 4000;
+/** The character counter stays quiet until the draft nears the worker limit. */
+const COUNTER_VISIBLE_RATIO = 0.8;
 /** Gap left between a host overlay and the surface that yields to it. */
 const HOST_OVERLAY_GAP_PX = 16;
 /** Docked panel height, matched to the stylesheet. */
@@ -243,6 +246,7 @@ const TemplateChatSurface: React.FC<TemplateChatProps> = ({
   const storageKey = getTemplateChatStorageKey(sessionScope);
   const inputLimitId = `tmchat-input-limit-${useId().replace(/:/g, '')}`;
   const introId = `tmchat-intro-${useId().replace(/:/g, '')}`;
+  const startersId = `tmchat-starters-${useId().replace(/:/g, '')}`;
   const titleId = `tmchat-title-${useId().replace(/:/g, '')}`;
   useMarketplaceComponentErrorTracking('TemplateChat', enableAnalytics);
   const [persisted] = useState<PersistedSession | null>(() =>
@@ -256,6 +260,13 @@ const TemplateChatSurface: React.FC<TemplateChatProps> = ({
   const [messages, setMessages] = useState<ChatMessage[]>(persisted?.messages ?? []);
   const [input, setInput] = useState('');
   const [introExpanded, setIntroExpanded] = useState(false);
+  // New chat discards the conversation, so the first click only arms it.
+  const [resetArmed, setResetArmed] = useState(false);
+  useEffect(() => {
+    if (!resetArmed) return;
+    const timer = window.setTimeout(() => setResetArmed(false), RESET_CONFIRM_TIMEOUT_MS);
+    return () => window.clearTimeout(timer);
+  }, [resetArmed]);
   const [streaming, setStreaming] = useState(false);
   const [followups, setFollowups] = useState<string[]>(persisted?.followups ?? []);
   const [turnProgress, setTurnProgress] = useState<AgentProgressState>(() => {
@@ -1234,8 +1245,22 @@ const TemplateChatSurface: React.FC<TemplateChatProps> = ({
           <h2 className="tmchat-header-title" id={titleId}>{title}</h2>
           <div className="tmchat-header-actions">
             {messages.length > 0 ? (
-              <button type="button" className="tmchat-iconbtn" aria-label={strings.newChat} title={strings.newChat} onClick={resetChat}>
-                <UiIcon name="refresh-cw" />
+              <button
+                type="button"
+                className={`tmchat-iconbtn${resetArmed ? ' armed' : ''}`}
+                aria-label={resetArmed ? strings.newChatConfirm : strings.newChat}
+                title={resetArmed ? strings.newChatConfirm : strings.newChat}
+                onBlur={() => setResetArmed(false)}
+                onClick={() => {
+                  if (!resetArmed) {
+                    setResetArmed(true);
+                    return;
+                  }
+                  setResetArmed(false);
+                  resetChat();
+                }}
+              >
+                {resetArmed ? strings.newChatConfirm : <UiIcon name="square-pen" />}
               </button>
             ) : null}
             <button
@@ -1276,7 +1301,29 @@ const TemplateChatSurface: React.FC<TemplateChatProps> = ({
           onScroll={handleScroll}
         >
           {messages.length === 0 ? (
-            <div className="tmchat-msg assistant">{welcomeMessage}</div>
+            <div className="tmchat-empty">
+              <span className="tmchat-empty-mark" aria-hidden="true"><UiIcon name="sparkles" size={20} /></span>
+              <div className="tmchat-msg assistant tmchat-welcome">{welcomeMessage}</div>
+              {showStarterChips ? (
+                <div className="tmchat-starters-wrap">
+                  <div className="tmchat-starters-label" id={startersId}>{strings.starterLabel}</div>
+                  <div className="tmchat-starters" role="group" aria-labelledby={startersId}>
+                    {starters.map((suggestion, index) => (
+                      <button
+                        key={suggestion}
+                        type="button"
+                        className="tmchat-chip tmchat-starter"
+                        style={{ animationDelay: `${120 + index * 60}ms` }}
+                        onClick={() => void send(suggestion, undefined, 'starter')}
+                      >
+                        <span>{suggestion}</span>
+                        <UiIcon name="arrow-up-right" size={16} />
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              ) : null}
+            </div>
           ) : (
             <div className="tmchat-intro">
               <button
@@ -1296,21 +1343,6 @@ const TemplateChatSurface: React.FC<TemplateChatProps> = ({
               <div id={introId} className="tmchat-intro-copy" hidden={!introExpanded}>{welcomeMessage}</div>
             </div>
           )}
-          {showStarterChips ? (
-            <div className="tmchat-followups">
-              {starters.map((suggestion, index) => (
-                <button
-                  key={suggestion}
-                  type="button"
-                  className="tmchat-chip"
-                  style={{ animationDelay: `${index * 50}ms` }}
-                  onClick={() => void send(suggestion, undefined, 'starter')}
-                >
-                  {suggestion}
-                </button>
-              ))}
-            </div>
-          ) : null}
           {messages.map((message, index) => (
             <React.Fragment key={index}>
               {message.content ? (
@@ -1347,7 +1379,7 @@ const TemplateChatSurface: React.FC<TemplateChatProps> = ({
               <div className="tmchat-turn-status" data-outcome={turnProgress.outcome}>{turnReceipt}</div>
               {undoHref ? (
                 <button type="button" className="tmchat-undo" onClick={undoLastPageAction}>
-                  <UiIcon name="refresh-cw" size={13} /> {strings.undoPageUpdate}
+                  <UiIcon name="rotate-ccw" size={13} /> {strings.undoPageUpdate}
                 </button>
               ) : null}
             </div>
@@ -1362,7 +1394,7 @@ const TemplateChatSurface: React.FC<TemplateChatProps> = ({
                   void send(retryText, getRetryBaseMessages(messages, Boolean(stoppedPrompt)), 'retry');
                 }}
               >
-                {strings.tryAgain}
+                <UiIcon name="refresh-cw" size={14} /> {strings.tryAgain}
               </button>
             </div>
           ) : null}
@@ -1414,20 +1446,45 @@ const TemplateChatSurface: React.FC<TemplateChatProps> = ({
               }}
             />
             {streaming ? (
-              <button type="button" className="tmchat-send stop" onClick={stopStreaming}>
-                Stop
+              <button
+                type="button"
+                className="tmchat-send stop"
+                aria-label={strings.stop}
+                title={strings.stop}
+                onClick={stopStreaming}
+              >
+                <UiIcon name="square" size={18} />
               </button>
             ) : (
-              <button type="button" className="tmchat-send" disabled={!input.trim()} onClick={() => void send(input)}>
-                Send
+              <button
+                type="button"
+                className="tmchat-send"
+                aria-label={strings.send}
+                title={strings.send}
+                disabled={!input.trim()}
+                onClick={() => void send(input)}
+              >
+                <UiIcon name="arrow-up" size={18} strokeWidth={2.25} />
               </button>
             )}
           </div>
-          <div id={inputLimitId} className="tmchat-inputmeta">
-            {strings.characterLimit(
-              input.length.toLocaleString(priceLocale),
-              MAX_REQUEST_MESSAGE_CHARS.toLocaleString(priceLocale),
-            )}
+          <div className="tmchat-inputmeta">
+            <span className="tmchat-hint" aria-hidden="true">{strings.composerHint}</span>
+            <span
+              id={inputLimitId}
+              className={`tmchat-counter${
+                input.length >= MAX_REQUEST_MESSAGE_CHARS
+                  ? ' full'
+                  : input.length < MAX_REQUEST_MESSAGE_CHARS * COUNTER_VISIBLE_RATIO
+                    ? ' quiet'
+                    : ''
+              }`}
+            >
+              {strings.characterLimit(
+                input.length.toLocaleString(priceLocale),
+                MAX_REQUEST_MESSAGE_CHARS.toLocaleString(priceLocale),
+              )}
+            </span>
           </div>
         </div>
 

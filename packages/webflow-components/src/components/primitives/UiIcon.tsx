@@ -4,6 +4,8 @@ export type UiIconName =
   | 'arrow-down'
   | 'arrow-left'
   | 'arrow-right'
+  | 'arrow-up'
+  | 'arrow-up-right'
   | 'check'
   | 'diamond'
   | 'external-link'
@@ -12,8 +14,11 @@ export type UiIconName =
   | 'minimize-2'
   | 'monitor'
   | 'refresh-cw'
+  | 'rotate-ccw'
   | 'smartphone'
   | 'sparkles'
+  | 'square'
+  | 'square-pen'
   | 'star'
   | 'tablet'
   | 'x';
@@ -26,6 +31,31 @@ export interface UiIconProps {
 }
 
 const ICON_PATHS: Record<UiIconName, React.ReactNode> = {
+  'arrow-up': (
+    <>
+      <path d="M12 19V5" />
+      <path d="m5 12 7-7 7 7" />
+    </>
+  ),
+  'arrow-up-right': (
+    <>
+      <path d="M7 7h10v10" />
+      <path d="M7 17 17 7" />
+    </>
+  ),
+  'rotate-ccw': (
+    <>
+      <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
+      <path d="M3 3v5h5" />
+    </>
+  ),
+  square: <rect x="6" y="6" width="12" height="12" rx="2" fill="currentColor" />,
+  'square-pen': (
+    <>
+      <path d="M12 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+      <path d="M18.375 2.625a1 1 0 0 1 3 3l-9.013 9.014a2 2 0 0 1-.853.505l-2.873.84a.5.5 0 0 1-.62-.62l.84-2.873a2 2 0 0 1 .506-.852z" />
+    </>
+  ),
   'arrow-down': (
     <>
       <path d="M12 5v14" />
