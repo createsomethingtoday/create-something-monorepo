@@ -84,7 +84,7 @@ const CHECKS: Record<ReviewNoteCheckId, Check> = {
 	'links-placeholder-href': {
 		message: (n) => `Links go nowhere ("#") on ${n} page(s)`,
 		description: 'A button, navigation link, footer link or social icon with the link "#" does nothing for the buyer\'s visitors. Reviewers ask for a real target.',
-		howToFix: 'Give each link a page, a section or an external URL. A social icon can link to the home page of its network.'
+		howToFix: 'Give each link a page, a section or an external URL. A social icon can link to the home page of its network. A link that only opens a menu or a pop-up through custom code can keep "#": ignore this warning for it.'
 	},
 	'links-own-domain-absolute': {
 		message: (n) => `Links use the full address of this template's own site on ${n} page(s)`,

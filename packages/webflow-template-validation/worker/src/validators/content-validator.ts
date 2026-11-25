@@ -271,6 +271,7 @@ export async function validateContent(
 				...generateReviewerStandardIssues(pageAnalysis.reviewerAudit ? [pageAnalysis.reviewerAudit] : []),
 				...generateReviewNoteIssues(pageAnalysis.reviewerAudit ? [pageAnalysis.reviewerAudit] : [])
 			];
+			dropReviewNoteData(pageAnalysis.reviewerAudit ? [pageAnalysis.reviewerAudit] : []);
 			const stats = calculateContentStats([pageAnalysis]);
 
 			return { issues, stats, pages: [pageAnalysis] };
@@ -334,6 +335,8 @@ export async function validateContent(
 			...(await auditDesignerUnusedStyles(options?.previewUrl, options?.previewSiteDataPath)
 				?? (maxPages === undefined && options?.pageListComplete === true && Array.isArray(pageSlugs) && pageSlugs.length > 0 ? await auditUnusedStyles(siteUrl, classUsage, excludedSlugs, allPages.map(page => page.url)) : []))
 		];
+
+		dropReviewNoteData(reviewerAudits);
 
 		// Calculate content statistics
 		const stats = {
@@ -594,6 +597,11 @@ async function analyzeItemPageSample(
 		console.warn('Item page sample stopped:', error);
 	}
 	return sampled;
+}
+
+/** The page data of the review-note checks is working data: the issues carry what the creator needs, so the result does not return it. */
+function dropReviewNoteData(audits: ReviewerPageAudit[]): void {
+	for (const audit of audits) delete audit.notes;
 }
 
 /** How many internal link targets outside the page list a run asks the site for. */

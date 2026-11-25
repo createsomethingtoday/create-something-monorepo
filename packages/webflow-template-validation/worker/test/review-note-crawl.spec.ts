@@ -54,6 +54,8 @@ describe('Review-note checks in the content crawl', () => {
 		expect(issue.severity).toBe('warning');
 		expect(issue.details?.pages).toEqual([{ url: `${SITE}/services/retired`, detail: 'linked from /, /about' }]);
 		expect(result.issues.find((entry) => entry.id === 'links-placeholder-href')?.severity).toBe('warning');
+		// The working data of the checks is not part of the result.
+		expect(result.pages.every((entry) => entry.reviewerAudit && entry.reviewerAudit.notes === undefined)).toBe(true);
 	});
 
 	it('asks for no link target on a run with a page limit', async () => {

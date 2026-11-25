@@ -544,10 +544,18 @@ test('published-site validation tool calls working validators without Airtable w
   assert.equal(validation.results.gsap_custom_code.ok, true);
   assert.equal(validation.results.gsap_custom_code.detections.legacyIx2Detected, true);
   assert.equal(validation.results.gsap_custom_code.detections.flaggedCodeCount, 1);
-  assert.equal(requests.length, 2);
-  assert.equal(requests[0]?.body.siteUrl, 'https://example-template.webflow.io/');
-  assert.deepEqual(requests[0]?.body.designerData, { components: [], styles: [], pages: [], assets: [] });
-  assert.equal(requests[1]?.body.url, 'https://example-template.webflow.io/');
+  // Two validator calls, and one read of the published home page for the submission gate status.
+  const validatorRequests = requests.filter((request) => request.url.includes('.local/'));
+  assert.equal(validatorRequests.length, 2);
+  assert.deepEqual(
+    requests.filter((request) => !request.url.includes('.local/')).map((request) => request.url),
+    ['https://example-template.webflow.io/'],
+  );
+  const webflowWay = validatorRequests.find((request) => request.url.includes('webflow-way.local'));
+  const gsap = validatorRequests.find((request) => request.url.includes('gsap.local'));
+  assert.equal(webflowWay?.body.siteUrl, 'https://example-template.webflow.io/');
+  assert.deepEqual(webflowWay?.body.designerData, { components: [], styles: [], pages: [], assets: [] });
+  assert.equal(gsap?.body.url, 'https://example-template.webflow.io/');
 });
 
 test('assign_self routes through reviewer-safe self-assignment', async () => {
