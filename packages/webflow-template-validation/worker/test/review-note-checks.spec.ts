@@ -129,6 +129,23 @@ describe('Review-note checks', () => {
 			expect(detail('links-other-webflow-site', [licenses, instructions])).toBeUndefined();
 		});
 
+		it('allows a footer credit to the creator in the other words creators use', () => {
+			for (const credit of [
+				'© 2026 Example by <a href="https://studio-name.webflow.io">Studio Name</a>.',
+				'<a href="https://studio-name.webflow.io">© All rights reserved by Studio Name</a>',
+				'Template by <a href="https://studio-name.webflow.io">Studio Name</a>',
+				'Copyright <a href="https://studio-name.webflow.io">Studio Name</a>'
+			]) {
+				const home = page('/', `${NAV}<footer class="footer"><div>${credit}</div> Powered by <a href="https://webflow.com">Webflow</a></footer>`);
+				expect(detail('links-other-webflow-site', [home]), credit).toBeUndefined();
+			}
+		});
+
+		it('still reports a footer navigation link that opens another webflow.io site', () => {
+			const home = page('/', `${NAV}<footer class="footer"><div class="footer-links"><a href="https://another-template.webflow.io/">Home</a><a href="/about">About</a></div></footer>`);
+			expect(detail('links-other-webflow-site', [home])![0].detail).toBe('another-template.webflow.io');
+		});
+
 		it('allows the one "Designed by" credit in the footer to open the creator\'s site', () => {
 			const home = page('/', `${NAV}<footer class="footer"><div>Designed &amp; Developed by <a href="https://studio-name.webflow.io">Studio Name</a></div> Powered by <a href="https://webflow.com">Webflow</a></footer>`);
 			expect(detail('links-other-webflow-site', [home])).toBeUndefined();

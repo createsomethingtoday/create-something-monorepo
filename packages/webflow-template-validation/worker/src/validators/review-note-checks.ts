@@ -69,8 +69,12 @@ const BACK_TO_TOP = /\b(?:to|at)\s+(?:the\s+)?top\b|^(?:top|up)$|^[↑⬆▲]+$/
  */
 const CONTROL_CLASS_WORD = /(?:^|[-_])(?:menu|hamburger|burger|close|toggle|modal|popup|accordion|tabs?|slider|carousel|swiper|prev|previous|next|play|pause|search|filter|switch|trigger|dismiss|cookie)(?:[-_]|$)/i;
 const CONTROL_LABEL = /^(?:open|close|menu|toggle|submit|send|search|play|pause|next|prev(?:ious)?|share|copy|print|filter|apply|add to cart|remove|clear|dismiss|accept|decline|show (?:more|less|all)|load more|view more|see more)\b/i;
-/** A "Designed by" credit in the footer is allowed, and it can link to the creator's own site. */
-const DESIGN_CREDIT = /\b(?:design|develop|ma[dk]e|built|build|creat|craft)\w*(?:\s*(?:&|and|\+)\s*\w+)?\s+by\b/i;
+/**
+ * One credit to the creator in the footer is allowed, and it can link to the creator's own site.
+ * Creators word it in many ways: "Designed by Studio", "Template by Studio", "© 2026 Name by Studio",
+ * "All rights reserved by Studio".
+ */
+const FOOTER_CREDIT = /\bby\b|©|\(c\)|\bcopyright\b|\ball rights reserved\b/i;
 const SOCIAL = /facebook|instagram|twitter|linkedin|youtube|tiktok|dribbble|behance|pinterest|github|whatsapp|telegram|threads|social/i;
 const BUTTON_CLASS = /(?:^|[-_])(?:button|btn|cta)(?:[-_]|$)/i;
 
@@ -384,7 +388,7 @@ function isControl(link: MarkupNode): boolean {
 
 function isDesignCredit(link: MarkupNode): boolean {
 	if (!ancestors(link).some(isFooter)) return false;
-	return DESIGN_CREDIT.test(normalize(text(link))) || (link.parent ? DESIGN_CREDIT.test(normalize(text(link.parent)).slice(0, 240)) : false);
+	return FOOTER_CREDIT.test(normalize(text(link))) || (link.parent ? FOOTER_CREDIT.test(normalize(text(link.parent)).slice(0, 240)) : false);
 }
 
 function linkLabel(link: MarkupNode): string {
