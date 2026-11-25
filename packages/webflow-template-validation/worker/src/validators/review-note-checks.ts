@@ -164,6 +164,7 @@ const CHECKS: Record<ReviewNoteCheckId, Check> = {
 /** Read one published page. `elements` is the rendered element list of the parsed page. */
 export function auditReviewNotes(elements: MarkupNode[], root: MarkupNode, pageUrl: URL, path: string): ReviewNotePageData {
 	const data: ReviewNotePageData = {
+		isCmsItemPage: false,
 		placeholderLinks: [],
 		ownDomainLinks: [],
 		otherWebflowSites: [],
@@ -181,7 +182,10 @@ export function auditReviewNotes(elements: MarkupNode[], root: MarkupNode, pageU
 	const specimenPage = SPECIMEN_PATHS.has(path);
 
 	for (const el of elements) {
-		if (el.name === 'html') data.siteId = attr(el, 'data-wf-site').toLowerCase() || undefined;
+		if (el.name === 'html') {
+			data.siteId = attr(el, 'data-wf-site').toLowerCase() || undefined;
+			data.isCmsItemPage = attr(el, 'data-wf-collection') !== '';
+		}
 		if (el.name === 'script' && GSAP_SCRIPT.test(attr(el, 'src'))) data.loadsGsap = true;
 		if (el.name === 'video' || classes(el).includes('w-background-video') || classes(el).includes('w-video')) data.usesVideo = true;
 		if (attr(el, 'data-animation-type') === 'lottie' || el.name === 'lottie-player' || el.name === 'dotlottie-player') data.usesLottie = true;
@@ -302,6 +306,7 @@ export function generateReviewNoteIssues(audits: ReviewerPageAudit[], context: R
 
 	// An asset folder is this project's (the site id) or the CMS database's. The CMS folder shows in collection lists and
 	// Rich Text, or only on CMS item pages (an image bound to the item). A folder that is neither is another project's.
+	// The platform marks an item page on its html element, so a run that reads one item page alone knows what it reads.
 	const siteId = home?.notes.siteId ?? pages.find((page) => page.notes.siteId)?.notes.siteId;
 	if (siteId) {
 		const itemPages = new Set(pages.flatMap((page) => page.notes.cmsItemPaths));
@@ -312,7 +317,7 @@ export function generateReviewNoteIssues(audits: ReviewerPageAudit[], context: R
 				prefixes.set(prefix, {
 					count: entry.count + use.count,
 					cms: entry.cms || use.inCollectionList,
-					offItemPages: entry.offItemPages || !itemPages.has(page.path),
+					offItemPages: entry.offItemPages || !(page.notes.isCmsItemPage || itemPages.has(page.path)),
 					page: entry.page
 				});
 			}

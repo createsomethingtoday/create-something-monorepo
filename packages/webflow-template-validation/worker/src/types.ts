@@ -562,6 +562,8 @@ export type ReviewNoteCheckId =
 export interface ReviewNotePageData {
 	/** Site id on the html element. */
 	siteId?: string;
+	/** The page is a CMS item page: the platform writes data-wf-collection on its html element. */
+	isCmsItemPage: boolean;
 	/** Links with the target "#" that are not controls (tabs, lightboxes, menu buttons, interaction triggers). */
 	placeholderLinks: Array<{ context: 'navigation' | 'footer' | 'button' | 'social' | 'other'; label: string }>;
 	/** Links that hold the full address of the page's own host (samples). */

@@ -8,9 +8,14 @@ const NAV = '<div class="navbar w-nav"><nav class="w-nav-menu"><a href="/">Home<
 const FOOTER = '<footer class="footer"><a href="/licenses">Licenses</a> Powered by <a href="https://webflow.com">Webflow</a></footer>';
 const NOW = new Date('2026-11-25T12:00:00Z');
 
-function page(path: string, body: string, head = '') {
-	const html = `<!DOCTYPE html><html data-wf-site="${SITE_ID}"><head><title>t</title>${head}</head><body>${body}</body></html>`;
+function page(path: string, body: string, head = '', htmlAttributes = '') {
+	const html = `<!DOCTYPE html><html data-wf-site="${SITE_ID}"${htmlAttributes}><head><title>t</title>${head}</head><body>${body}</body></html>`;
 	return auditReviewerStandards(html, new URL(path, SITE).href)!;
+}
+
+/** A CMS item page, as the platform marks it. */
+function itemPage(path: string, body: string) {
+	return page(path, body, '', ` data-wf-collection="${'e'.repeat(24)}" data-wf-item-slug="${path.split('/').pop()}"`);
 }
 
 function issues(audits: ReturnType<typeof page>[], context: ReviewNoteContext = {}) {
@@ -301,6 +306,18 @@ describe('Review-note checks', () => {
 			const blog = page('/blog', `${NAV}<div class="w-dyn-item"><a href="/blog/first-post">First post</a></div>${img(SITE_ID)}${FOOTER}`);
 			const post = page('/blog/first-post', `${NAV}${img(SITE_ID)}${img(CMS)}${FOOTER}`);
 			expect(detail('assets-other-project', [blog, post])).toBeUndefined();
+		});
+
+		it('accepts a CMS image on an item page that is read alone, as a current-page run does', () => {
+			expect(detail('assets-other-project', [itemPage('/blog/first-post', `${NAV}${img(SITE_ID)}${img(CMS)}${FOOTER}`)])).toBeUndefined();
+		});
+
+		it('still reports another project\'s folder when a static page uses it too, on a run that reads item pages by their mark', () => {
+			const home = page('/', `${NAV}${img(OTHER)}${FOOTER}`);
+			const post = itemPage('/blog/first-post', `${NAV}${img(OTHER)}${img(CMS)}${FOOTER}`);
+			const result = detail('assets-other-project', [home, post])!;
+			expect(result).toHaveLength(1);
+			expect(result[0].detail).toContain(OTHER);
 		});
 
 		it('reports another project\'s folder that item pages and static pages both use, for example in a shared component', () => {
