@@ -63,7 +63,9 @@ async function get(url: string, accept: string, config: Required<Pick<Submission
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), config.timeoutMs);
   try {
-    const response = await config.fetcher(url, { headers: { Accept: accept }, signal: controller.signal });
+    // Call fetch as a plain function. The Workers runtime rejects a fetch that is called as a method of another object.
+    const { fetcher } = config;
+    const response = await fetcher(url, { headers: { Accept: accept }, signal: controller.signal });
     return { ok: response.ok, status: response.status, body: await response.text() };
   } finally {
     clearTimeout(timeout);
