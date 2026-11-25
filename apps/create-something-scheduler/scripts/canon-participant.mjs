@@ -9,13 +9,20 @@ import {
   unlink,
   readdir,
   access,
-  realpath
+  realpath,
+  stat
 } from 'node:fs/promises';
 import { dirname, resolve, basename } from 'node:path';
 import { homedir } from 'node:os';
+import { createInterface } from 'node:readline/promises';
 import { pathToFileURL } from 'node:url';
 import { runPilot } from './canon-pilot.mjs';
 import { zoomBrowserUrl, guardedZoomJoin } from './canon-zoom-participant.mjs';
+import {
+  cameraPilotPolicy,
+  installVirtualCameraGate,
+  guardedCameraEnable
+} from './canon-participant-camera.mjs';
 const assert = (ok, message) => {
   if (!ok) throw new Error(message);
 };
@@ -36,8 +43,15 @@ export function validateProfile(profile) {
 export function planParticipant(selection, config, state = {}, now = Date.now()) {
   const zoom = selection.platform === 'zoom';
   const profile = validateProfile(config.profile_dir);
+  const camera_pilot = cameraPilotPolicy(selection, config);
   assert(
-    (selection.internal_test === true ||
+    ((selection.internal_test === true &&
+      !String(selection.selection_scope ?? '').startsWith('halfdozen') &&
+      (!zoom ||
+        (selection.selection_scope === 'internal-zoom-occurrence' &&
+          selection.calendar_verified === true &&
+          selection.organizer_email === 'micah@createsomething.io' &&
+          selection.calendar_id))) ||
       (zoom &&
         selection.selection_scope === 'halfdozen-guest-occurrence' &&
         selection.canon_rsvp === 'accepted' &&
@@ -95,6 +109,7 @@ export function planParticipant(selection, config, state = {}, now = Date.now())
   return {
     action: start > now ? 'scheduled' : 'open-prejoin',
     platform: zoom ? 'zoom' : 'meet',
+    camera_pilot,
     starts_at: new Date(start).toISOString(),
     profile_dir: profile,
     meeting_url: selection.meeting_url,
@@ -232,15 +247,24 @@ export async function runParticipant({
   }
   await save({ ...next, opening: true }); // An interrupted/ambiguous launch blocks duplicate opens.
   const join_result = await launch(plan, config);
-  await save({ ...next, opening: false, opened: true, opened_at: new Date(now).toISOString() });
+  await save({
+    ...next,
+    opening: false,
+    opened: true,
+    opened_at: new Date(now).toISOString(),
+    camera_result: join_result?.camera_result ?? { camera_enabled: false }
+  });
   return {
     ...plan,
     action: 'prejoin-opened',
     admitted: join_result?.admitted === true,
     join_submitted: join_result?.join_submitted === true,
-    media_state: join_result?.join_submitted
-      ? 'microphone and camera off verified immediately before Join; current state requires readback'
-      : plan.media_state,
+    camera_result: join_result?.camera_result ?? { camera_enabled: false },
+    media_state: join_result?.camera_result?.camera_enabled
+      ? 'approved virtual camera enabled after admission; microphone muted; no recording started'
+      : join_result?.join_submitted
+        ? 'microphone and camera off verified immediately before Join; current state requires readback'
+        : plan.media_state,
     join_result: join_result ?? { admitted: false, human_required: true },
     next_step:
       plan.platform === 'zoom'
@@ -336,6 +360,8 @@ export async function launchChrome(plan, config) {
   const browser = await puppeteer.launch(chromeLaunchOptions(plan.profile_dir));
   try {
     const page = (await browser.pages())[0] ?? (await browser.newPage());
+    if (plan.camera_pilot)
+      await page.evaluateOnNewDocument(installVirtualCameraGate, plan.camera_pilot.device_label);
     try {
       await page.goto(
         plan.platform === 'zoom'
@@ -386,7 +412,95 @@ export async function launchChrome(plan, config) {
         await matches[0].click();
       }
     };
-    if (plan.platform === 'zoom') return await guardedZoomJoin(ui);
+    if (plan.camera_pilot) {
+      ui.confirmCamera = async (policy) => {
+        if (!process.stdin.isTTY || !process.stderr.isTTY) return false;
+        const prompt = createInterface({ input: process.stdin, output: process.stderr });
+        const abort = new AbortController();
+        const timeout = setTimeout(() => abort.abort(), 60_000);
+        try {
+          const answer = await prompt.question(
+            `Internal occurrence ${policy.event_id} is admitted. In this meeting tab, open the capture controller and intended Canon tile. Bind OBS to that exact tile and visually verify the approved Canon scene and virtual-camera preview. Capture remains a separate consented action. Type ENABLE CANON ${policy.event_id} to attest this source and enable virtual video within 60 seconds (anything else cancels): `,
+            { signal: abort.signal }
+          );
+          return answer.trim() === `ENABLE CANON ${policy.event_id}`;
+        } catch {
+          return false;
+        } finally {
+          clearTimeout(timeout);
+          prompt.close();
+        }
+      };
+      ui.cameraEvidence = async (label) => {
+        const frames = await Promise.all(
+          page.frames().map((frame) =>
+            frame
+              .evaluate(async () => {
+                const gate = globalThis.__canonVirtualCamera;
+                return gate ? await gate.evidence() : null;
+              })
+              .catch(() => null)
+          )
+        );
+        return {
+          selected_label: frames.some((e) => e?.gate_ready && e.selected_label === label)
+            ? label
+            : null,
+          gate_ready: frames.some((e) => e?.gate_ready),
+          active_labels: frames.flatMap((e) => e?.active_labels ?? [])
+        };
+      };
+      ui.armCamera = async () => {
+        const ready = await Promise.all(
+          page.frames().map((frame) =>
+            frame.evaluate(async () => {
+              const gate = globalThis.__canonVirtualCamera;
+              if (gate && (await gate.evidence()).gate_ready) {
+                await gate.arm();
+                return true;
+              }
+              return false;
+            })
+          )
+        );
+        assert(ready.some(Boolean), 'No approved virtual-camera frame ready');
+      };
+      ui.stopCamera = async () => {
+        await Promise.all(
+          page
+            .frames()
+            .map((frame) =>
+              frame.evaluate(() => globalThis.__canonVirtualCamera?.stop()).catch(() => {})
+            )
+        );
+      };
+    }
+    const finishJoin = async (result) => {
+      if (!plan.camera_pilot) return result;
+      // Meet may render host admission after the initial Join readback. Never
+      // infer admission from submission or bypass an operator challenge.
+      if (plan.platform === 'meet' && result.join_submitted && !result.admitted) {
+        for (let attempt = 0; attempt < 20; attempt++) {
+          const nodes = await ui.snapshot();
+          if (nodes.some((n) => /sign in|verify your|captcha|recording.*consent/i.test(n.name)))
+            break;
+          if (
+            nodes.filter(
+              (n) => n.role === 'button' && !n.disabled && /^Leave call(?: \(.*\))?$/.test(n.name)
+            ).length === 1
+          ) {
+            result = { ...result, admitted: true, human_required: false };
+            break;
+          }
+          if (attempt < 19) await new Promise((resolve) => setTimeout(resolve, 1000));
+        }
+      }
+      return {
+        ...result,
+        camera_result: await guardedCameraEnable(ui, plan.platform, plan.camera_pilot, result)
+      };
+    };
+    if (plan.platform === 'zoom') return await finishJoin(await guardedZoomJoin(ui));
     if (!(await waitForPrejoin(ui)))
       return {
         join_submitted: false,
@@ -394,7 +508,9 @@ export async function launchChrome(plan, config) {
         human_required: true,
         reason: 'Normal prejoin did not render within 20 seconds or sign-in requires a human'
       };
-    return await guardedJoin(ui, { email: config.identity_email, name: config.identity_name });
+    return await finishJoin(
+      await guardedJoin(ui, { email: config.identity_email, name: config.identity_name })
+    );
   } finally {
     browser.disconnect();
   } // Keep ordinary visible Chrome open for host admission/human handling.
@@ -415,9 +531,12 @@ async function main() {
     return;
   }
   const flags = args.slice(2);
-  let verifyConfigPath;
+  let verifyConfigPath, cameraPilotConfigPath;
   for (let i = 0; i < flags.length; i++) {
-    if (flags[i] === '--verify-config') {
+    if (flags[i] === '--camera-pilot-config') {
+      assert(flags[i + 1], '--camera-pilot-config requires a private JSON path');
+      cameraPilotConfigPath = resolve(flags[++i]);
+    } else if (flags[i] === '--verify-config') {
       assert(flags[i + 1], '--verify-config requires a private JSON path');
       verifyConfigPath = resolve(flags[++i]);
     } else assert(['--execute', '--wait', '--stop'].includes(flags[i]), 'Unknown participant flag');
@@ -430,6 +549,18 @@ async function main() {
   assert(
     !args.includes('--wait') || verifyConfigPath,
     'Autonomous --wait requires --verify-config for fresh read-only Google verification'
+  );
+  if (cameraPilotConfigPath) {
+    const info = await stat(cameraPilotConfigPath);
+    assert(
+      info.isFile() && (info.mode & 0o077) === 0,
+      'Camera pilot config must be private (0600)'
+    );
+    config.camera_pilot = JSON.parse(await readFile(cameraPilotConfigPath, 'utf8'));
+  }
+  assert(
+    !config.camera_pilot?.enabled || !args.includes('--execute') || verifyConfigPath,
+    'Camera execution requires --verify-config for canonical Calendar readback'
   );
   const verifyOptions = verifyConfigPath
     ? JSON.parse(await readFile(verifyConfigPath, 'utf8'))

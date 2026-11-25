@@ -25,7 +25,13 @@ export function validMeetingURL(value) {
   }
 }
 export function matchesCaptureSource(value, reference) {
-  const canonical = validMeetingURL(value);
+  // Signed-in Meet adds a numeric account selector to its joined tab.
+  // Keep the stored reference credential-free and validate every other URL component.
+  let source = value;
+  if (typeof value === 'string' && value.startsWith('https://meet.google.com/')) {
+    source = value.replace(/\?authuser=\d+$/, '');
+  }
+  const canonical = validMeetingURL(source);
   if (!canonical || canonical !== reference) return false;
   // The Zoom /j route can launch the native application: only an already joined web client is a source.
   return (
