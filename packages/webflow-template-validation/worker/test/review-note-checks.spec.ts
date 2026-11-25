@@ -129,6 +129,34 @@ describe('Review-note checks', () => {
 			expect(detail('links-other-webflow-site', [licenses, instructions])).toBeUndefined();
 		});
 
+		it('allows a footer credit to the creator in the other words creators use', () => {
+			for (const credit of [
+				'© 2026 Example by <a href="https://studio-name.webflow.io">Studio Name</a>.',
+				'<a href="https://studio-name.webflow.io">© All rights reserved by Studio Name</a>',
+				'Template by <a href="https://studio-name.webflow.io">Studio Name</a>',
+				'Copyright <a href="https://studio-name.webflow.io">Studio Name</a>',
+				'© 2025 Copyright - Example | Designed by “<a href="https://studio-name.webflow.io">Studio Name</a>”'
+			]) {
+				const home = page('/', `${NAV}<footer class="footer"><div>${credit}</div> Powered by <a href="https://webflow.com">Webflow</a></footer>`);
+				expect(detail('links-other-webflow-site', [home]), credit).toBeUndefined();
+			}
+		});
+
+		it('does not read a navigation link next to a copyright line as the credit', () => {
+			const home = page('/', `${NAV}<footer class="footer"><span>© 2026 Example Inc. All rights reserved.</span><a href="https://another-template.webflow.io/about">About</a></footer>`);
+			expect(detail('links-other-webflow-site', [home])![0].detail).toBe('another-template.webflow.io');
+		});
+
+		it('reads a credit whose link is wrapped in another element', () => {
+			const home = page('/', `${NAV}<footer class="footer"><div>Designed by <span><a href="https://studio-name.webflow.io">Studio Name</a></span></div> Powered by <a href="https://webflow.com">Webflow</a></footer>`);
+			expect(detail('links-other-webflow-site', [home])).toBeUndefined();
+		});
+
+		it('still reports a footer navigation link that opens another webflow.io site', () => {
+			const home = page('/', `${NAV}<footer class="footer"><div class="footer-links"><a href="https://another-template.webflow.io/">Home</a><a href="/about">About</a></div></footer>`);
+			expect(detail('links-other-webflow-site', [home])![0].detail).toBe('another-template.webflow.io');
+		});
+
 		it('allows the one "Designed by" credit in the footer to open the creator\'s site', () => {
 			const home = page('/', `${NAV}<footer class="footer"><div>Designed &amp; Developed by <a href="https://studio-name.webflow.io">Studio Name</a></div> Powered by <a href="https://webflow.com">Webflow</a></footer>`);
 			expect(detail('links-other-webflow-site', [home])).toBeUndefined();
@@ -231,6 +259,13 @@ describe('Review-note checks', () => {
 
 		it('reports a site that loads GSAP and has no Instructions page', () => {
 			expect(detail('gsap-interactions-instructions-page', [page('/', NAV + FOOTER + gsap)], { missingPaths: ['/instructions'] })).toBeDefined();
+		});
+
+		it('names the exact address, because a page in a folder does not count', () => {
+			const inFolder = page('/info/instructions', '<h1>How to edit</h1>');
+			const issue = issues([page('/', NAV + FOOTER + gsap), inFolder], { missingPaths: ['/instructions'] }).find((entry) => entry.id === 'gsap-interactions-instructions-page')!;
+			expect(issue.message).toBe('The site loads GSAP, but there is no Instructions page at /instructions');
+			expect(issue.howToFix).toContain('move it to the root slug /instructions');
 		});
 
 		it('says nothing when the page exists, when its status is unknown, or when the blocking check already reports inline GSAP', () => {

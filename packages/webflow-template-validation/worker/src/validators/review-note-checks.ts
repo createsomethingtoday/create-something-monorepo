@@ -69,8 +69,14 @@ const BACK_TO_TOP = /\b(?:to|at)\s+(?:the\s+)?top\b|^(?:top|up)$|^[↑⬆▲]+$/
  */
 const CONTROL_CLASS_WORD = /(?:^|[-_])(?:menu|hamburger|burger|close|toggle|modal|popup|accordion|tabs?|slider|carousel|swiper|prev|previous|next|play|pause|search|filter|switch|trigger|dismiss|cookie)(?:[-_]|$)/i;
 const CONTROL_LABEL = /^(?:open|close|menu|toggle|submit|send|search|play|pause|next|prev(?:ious)?|share|copy|print|filter|apply|add to cart|remove|clear|dismiss|accept|decline|show (?:more|less|all)|load more|view more|see more)\b/i;
-/** A "Designed by" credit in the footer is allowed, and it can link to the creator's own site. */
-const DESIGN_CREDIT = /\b(?:design|develop|ma[dk]e|built|build|creat|craft)\w*(?:\s*(?:&|and|\+)\s*\w+)?\s+by\b/i;
+/**
+ * One credit to the creator in the footer is allowed, and it can link to the creator's own site.
+ * Creators word it in many ways: "Designed by Studio", "Template by Studio", "© 2026 Name by Studio",
+ * "All rights reserved by Studio".
+ */
+const CREDIT_IN_LINK = /©|\(c\)|\bcopyright\b|\ball rights reserved\b|\b(?:design|develop|ma[dk]e|built|build|creat|craft|power|template|theme|site|website)\w*\b[^.]{0,30}\bby\b/i;
+/** The words right before the link, which the link completes: "… by", "©", "Copyright 2026". */
+const CREDIT_BEFORE_LINK = /(?:\bby|©|\(c\)|\bcopyright)\s*(?:\d{4}\s*)?[:\-–—]?\s*["'“‘«(\[]?\s*$/i;
 const SOCIAL = /facebook|instagram|twitter|linkedin|youtube|tiktok|dribbble|behance|pinterest|github|whatsapp|telegram|threads|social/i;
 const BUTTON_CLASS = /(?:^|[-_])(?:button|btn|cta)(?:[-_]|$)/i;
 
@@ -142,9 +148,9 @@ const CHECKS: Record<ReviewNoteCheckId, Check> = {
 		howToFix: 'Set the link to https://webflow.com.'
 	},
 	'gsap-interactions-instructions-page': {
-		message: () => 'The site loads GSAP, but there is no Instructions page',
-		description: 'A template that uses GSAP, also through Webflow Interactions, needs an Instructions page at /instructions that tells the buyer how to edit or remove the animations.',
-		howToFix: 'Create a page at /instructions that lists the animated elements and how to change or remove each animation.'
+		message: () => 'The site loads GSAP, but there is no Instructions page at /instructions',
+		description: 'A template that uses GSAP, also through Webflow Interactions, needs an Instructions page at exactly /instructions that tells the buyer how to edit or remove the animations. A page in a folder, for example /info/instructions, does not count.',
+		howToFix: 'Create a page at /instructions that lists the animated elements and how to change or remove each animation. If the page is in a folder, move it to the root slug /instructions.'
 	},
 	'licenses-asset-type-not-listed': {
 		message: () => 'The Licenses page does not list an asset type that the template uses',
@@ -384,7 +390,20 @@ function isControl(link: MarkupNode): boolean {
 
 function isDesignCredit(link: MarkupNode): boolean {
 	if (!ancestors(link).some(isFooter)) return false;
-	return DESIGN_CREDIT.test(normalize(text(link))) || (link.parent ? DESIGN_CREDIT.test(normalize(text(link.parent)).slice(0, 240)) : false);
+	// The credit is the link itself or the phrase the link completes. A navigation link next to a copyright line is not a credit.
+	return CREDIT_IN_LINK.test(normalize(text(link))) || CREDIT_BEFORE_LINK.test(textBefore(link));
+}
+
+/** The text that comes right before a node in its parent. A node that starts its parent takes the text before the parent. */
+function textBefore(node: MarkupNode): string {
+	let current = node;
+	for (let level = 0; level < 3 && current.parent; level++) {
+		const siblings = current.parent.children ?? [];
+		const before = normalize(siblings.slice(0, siblings.indexOf(current)).map((sibling) => text(sibling)).join(''));
+		if (before) return before.slice(-60);
+		current = current.parent;
+	}
+	return '';
 }
 
 function linkLabel(link: MarkupNode): string {
