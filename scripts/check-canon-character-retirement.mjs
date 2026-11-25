@@ -27,9 +27,9 @@ if (artifact) {
   };
   walk(artifact);
 } else {
-  const tracked = execFileSync('git', ['ls-files', '-z'], { cwd: root, encoding: 'utf8' }).split('\0').filter(Boolean);
+  const tracked = execFileSync('git', ['ls-files', '-z', '--', ':(glob)packages/*/static/**'], { cwd: root, encoding: 'utf8' }).split('\0').filter(Boolean);
   for (const path of tracked) {
-    if (/^packages\/[^/]+\/static\//.test(path) && existsSync(join(root, path))) files.push(join(root, path));
+    if (existsSync(join(root, path))) files.push(join(root, path));
   }
 }
 const findings = [];
