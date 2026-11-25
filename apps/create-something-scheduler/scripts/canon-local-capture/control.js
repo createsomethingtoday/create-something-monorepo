@@ -54,9 +54,11 @@ const status = (text) => {
   $('status').textContent = text;
 };
 function buttons() {
-  $('start').disabled = recording || stopping || starting;
-  $('configure').disabled = recording || stopping || starting;
-  $('meeting').disabled = recording || stopping || starting;
+  const busy = recording || stopping || starting;
+  $('open-tile').disabled = busy;
+  $('start').disabled = busy;
+  $('configure').disabled = busy;
+  $('meeting').disabled = busy;
   $('stop').disabled = !recording && !starting;
 }
 async function cleanup() {
@@ -135,6 +137,7 @@ async function stop(save = true, flush = false) {
 }
 $('selection').textContent = 'OBS window: Canon meeting notes · ' + occurrence.slice(0, 8);
 $('open-tile').onclick = () => {
+  if ($('open-tile').disabled) return;
   visualMode = true;
   void chrome.windows.create({
     url: chrome.runtime.getURL(`tile/tile.html#${occurrence}`),

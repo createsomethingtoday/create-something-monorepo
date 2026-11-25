@@ -80,6 +80,7 @@ test('controller state rejects consent/source mismatch before opening audio; exp
     poll,
     missingTab = false;
   const chrome = {
+    windows: { create: () => new Promise(() => {}) },
     storage: {
       local: {
         get: async () => ({ testURL: selectedURL }),
@@ -241,10 +242,16 @@ test('controller state rejects consent/source mismatch before opening audio; exp
     'same-origin same-meeting ephemeral update keeps capture'
   );
   node.port.onmessage({ data: new Float32Array([0, 0.5, -0.5]) });
+  get('open-tile').onclick();
+  await poll();
+  await new Promise((resolve) => setImmediate(resolve));
+  assert.equal(aborted, 0, 'opening a tile cannot discard an audio-only capture');
+  assert.equal(get('open-tile').disabled, true);
   get('stop').onclick();
   await new Promise((resolve) => setImmediate(resolve));
   await new Promise((resolve) => setImmediate(resolve));
   assert.equal(ended, 1);
+  assert.equal(get('open-tile').disabled, false);
   assert.equal(written.byteLength, 52, 'explicit Stop includes the last partial worklet block');
   assert.equal(get('stop').disabled, true);
   assert.match(get('status').textContent, /Saved private local WAV/);
