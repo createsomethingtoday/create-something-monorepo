@@ -1,8 +1,13 @@
 /**
  * Review-note checks: published-site findings that reviewers wrote in
  * creator-facing review notes again and again (177 notes, November 2026) and
- * that no check reported. Each one is a warning: it shows the finding to the
- * creator before review and does not block the submission gate.
+ * that no check reported.
+ *
+ * Eight of them block the submission gate (BLOCKING below). Each of those ran
+ * on 118 reviewed sites, and two reviewers with no context judged every hit:
+ * no wrong hit and no unsure hit. The others are warnings, because a published
+ * page cannot settle them (a "#" link can be a control, a collection can be a
+ * helper) or because review practice is not uniform.
  *
  * The page data is read from the tree the reviewer standards already parsed,
  * so a page is parsed once.
@@ -24,6 +29,18 @@ const PLATFORM_ASSET_PREFIX = '6022af993a6b2191db3ed10c';
 /** A main collection holds 3 to 7 items (guideline cms-and-ecommerce-09). */
 const COLLECTION_ITEM_LIMIT = 7;
 const MAX_SAMPLES = 5;
+
+/** Checks that block the submission gate. Every other check in this file is a warning. */
+const BLOCKING = new Set<ReviewNoteCheckId>([
+	'links-own-domain-absolute',
+	'links-other-webflow-site',
+	'links-internal-not-found',
+	'changelog-future-date',
+	'powered-by-webflow-target',
+	'gsap-interactions-instructions-page',
+	'licenses-flaticon-attribution',
+	'assets-other-project'
+]);
 
 /** Link classes and attributes that mark a control, not a link that should go somewhere. */
 const CONTROL_CLASS = /^(?:w-lightbox|w-tab-link|w-dropdown-toggle|w-nav-button|w-slider-.+|w-pagination-.+|w-commerce-.+)$/;
@@ -62,7 +79,8 @@ const AI_IDENTIFIED = new RegExp(
 	'i'
 );
 const FLATICON = /\bflaticon\b/i;
-const FLATICON_COVERED = /\bpremium\b|\battribut|\b(?:made|designed|created)\s+by\b/i;
+/** Words that show the page deals with the Flaticon license: a paid plan, or a credit to the icon author. */
+const FLATICON_COVERED = /\bpremium\b|\bpaid\b|\bsubscription\b|\battribut|\bcredit|\b(?:made|designed|created)\s+by\b/i;
 const VIDEO_WORDS = /\bvideos?\b|\bfootage\b|\bclips?\b|\bshowreel\b/i;
 const LOTTIE_WORDS = /\blottie|\banimations?\b/i;
 
@@ -191,7 +209,8 @@ export function auditReviewNotes(elements: MarkupNode[], root: MarkupNode, pageU
 			if (sitePath && !ERROR_STATUS_PATHS.has(targetPath)) internal.add(targetPath);
 			if (sitePath && targetPath.split('/').length === 3 && ancestors(el).some((parent) => classes(parent).includes('w-dyn-item'))) items.add(targetPath);
 		} else if (/\.webflow\.io$/i.test(targetHost)) {
-			if (!isDesignCredit(el)) otherSites.add(targetHost);
+			// The Licenses and Instructions pages name sources and guides, and one of those can be a webflow.io site.
+			if (!specimenPage && !isDesignCredit(el)) otherSites.add(targetHost);
 		} else if (ancestors(el).some(isFooter)) {
 			// The footer credit: a link to webflow.com, or a link that reads "Webflow" and opens another address.
 			const label = normalize(text(el)).slice(0, 60);
@@ -229,7 +248,7 @@ export interface ReviewNoteContext {
 	now?: Date;
 }
 
-/** One warning per check, listing every page that shows the finding. */
+/** One issue per check, listing every page that shows the finding. A check in BLOCKING is an error; the others are warnings. */
 export function generateReviewNoteIssues(audits: ReviewerPageAudit[], context: ReviewNoteContext = {}): ValidationIssue[] {
 	const pages = audits.filter((audit) => audit.notes).map((audit) => ({ ...audit, notes: audit.notes! }));
 	if (pages.length === 0) return [];
@@ -281,18 +300,25 @@ export function generateReviewNoteIssues(audits: ReviewerPageAudit[], context: R
 		if (loader) add('gsap-interactions-instructions-page', loader.url, 'GSAP script found; /instructions was not found');
 	}
 
-	// An asset folder is this project's (the site id) or the CMS database's (its images show in collection lists and Rich Text).
+	// An asset folder is this project's (the site id) or the CMS database's. The CMS folder shows in collection lists and
+	// Rich Text, or only on CMS item pages (an image bound to the item). A folder that is neither is another project's.
 	const siteId = home?.notes.siteId ?? pages.find((page) => page.notes.siteId)?.notes.siteId;
 	if (siteId) {
-		const prefixes = new Map<string, { count: number; inCollectionList: boolean; page: string }>();
+		const itemPages = new Set(pages.flatMap((page) => page.notes.cmsItemPaths));
+		const prefixes = new Map<string, { count: number; cms: boolean; offItemPages: boolean; page: string }>();
 		for (const page of pages) {
 			for (const [prefix, use] of Object.entries(page.notes.assetPrefixes)) {
-				const entry = prefixes.get(prefix) ?? { count: 0, inCollectionList: false, page: page.url };
-				prefixes.set(prefix, { count: entry.count + use.count, inCollectionList: entry.inCollectionList || use.inCollectionList, page: entry.page });
+				const entry = prefixes.get(prefix) ?? { count: 0, cms: false, offItemPages: false, page: page.url };
+				prefixes.set(prefix, {
+					count: entry.count + use.count,
+					cms: entry.cms || use.inCollectionList,
+					offItemPages: entry.offItemPages || !itemPages.has(page.path),
+					page: entry.page
+				});
 			}
 		}
 		for (const [prefix, use] of [...prefixes].sort()) {
-			if (prefix !== siteId && !use.inCollectionList) add('assets-other-project', use.page, `${use.count} asset reference(s) in cdn.prod.website-files.com/${prefix}/`);
+			if (prefix !== siteId && !use.cms && use.offItemPages) add('assets-other-project', use.page, `${use.count} asset reference(s) in cdn.prod.website-files.com/${prefix}/`);
 		}
 	}
 
@@ -317,7 +343,7 @@ export function generateReviewNoteIssues(audits: ReviewerPageAudit[], context: R
 			{
 				id,
 				category: CATEGORY,
-				severity: 'warning' as const,
+				severity: BLOCKING.has(id) ? ('error' as const) : ('warning' as const),
 				message: check.message(failing.length),
 				description: check.description,
 				howToFix: check.howToFix,

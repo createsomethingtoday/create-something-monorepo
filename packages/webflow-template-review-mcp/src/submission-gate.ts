@@ -58,13 +58,23 @@ function record(value: unknown): Record<string, unknown> {
   return value && typeof value === 'object' && !Array.isArray(value) ? (value as Record<string, unknown>) : {};
 }
 
+/** One GET with its body. The timeout covers the body too: a response that sends headers and then stalls must not hold the tool. */
 async function get(url: string, accept: string, config: Required<Pick<SubmissionGateConfig, 'timeoutMs' | 'fetcher'>>) {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), config.timeoutMs);
   try {
-    return await config.fetcher(url, { headers: { Accept: accept }, signal: controller.signal });
+    const response = await config.fetcher(url, { headers: { Accept: accept }, signal: controller.signal });
+    return { ok: response.ok, status: response.status, body: await response.text() };
   } finally {
     clearTimeout(timeout);
+  }
+}
+
+function parseJson(body: string): unknown {
+  try {
+    return JSON.parse(body);
+  } catch {
+    return null;
   }
 }
 
@@ -74,7 +84,7 @@ export async function readSubmissionGateStatus(publishedUrl: string, config: Sub
   try {
     const page = await get(new URL('/', publishedUrl).href, 'text/html', settings);
     if (!page.ok) return { status: 'unavailable', summary: `The published home page answered HTTP ${page.status}, so the gate status is not known.` };
-    const html = await page.text();
+    const html = page.body;
     const siteId = SITE_ID.exec(html)?.[1].toLowerCase();
     const lastPublishedAt = readLastPublishedAt(html);
     if (!siteId) return { status: 'unavailable', summary: 'The page has no Webflow site id, so the gate status is not known.', lastPublishedAt };
@@ -92,7 +102,7 @@ export async function readSubmissionGateStatus(publishedUrl: string, config: Sub
     const lookup = new URL(config.validatorResultUrl ?? DEFAULT_VALIDATOR_RESULT_URL);
     lookup.searchParams.set('siteId', siteId);
     const response = await get(lookup.href, 'application/json', settings);
-    const data = record(await response.json().catch(() => null));
+    const data = record(parseJson(response.body));
     if (response.status === 404 || data.status === 'missing') {
       return { status: 'no_result', summary: 'No stored Validator result exists for this site.', siteId, lastPublishedAt };
     }

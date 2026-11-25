@@ -51,7 +51,7 @@ describe('Review-note checks in the content crawl', () => {
 
 		expect(linkChecks.sort()).toEqual(['/services/design', '/services/retired']);
 		const issue = result.issues.find((entry) => entry.id === 'links-internal-not-found')!;
-		expect(issue.severity).toBe('warning');
+		expect(issue.severity).toBe('error');
 		expect(issue.details?.pages).toEqual([{ url: `${SITE}/services/retired`, detail: 'linked from /, /about' }]);
 		expect(result.issues.find((entry) => entry.id === 'links-placeholder-href')?.severity).toBe('warning');
 		// The working data of the checks is not part of the result.

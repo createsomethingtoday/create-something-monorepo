@@ -97,6 +97,22 @@ test('no stored result, an unreadable page and a page without a publish time eac
   assert.match(noStamp.summary, /no publish time/);
 });
 
+test('a page that sends headers and then stalls ends as unavailable, inside the timeout', async () => {
+  const stalled = (async (_input: unknown, init?: { signal?: AbortSignal }) => {
+    const body = new ReadableStream<Uint8Array>({
+      start(controller) {
+        init?.signal?.addEventListener('abort', () => controller.error(Object.assign(new Error('aborted'), { name: 'AbortError' })));
+      }
+    });
+    return new Response(body, { status: 200, headers: { 'content-type': 'text/html' } });
+  }) as unknown as typeof fetch;
+  const started = Date.now();
+  const report = await readSubmissionGateStatus(SITE, { fetcher: stalled, timeoutMs: 50 });
+  assert.equal(report.status, 'unavailable');
+  assert.match(report.summary, /timed out/);
+  assert.ok(Date.now() - started < 2_000);
+});
+
 test('the published-site validation result carries the gate status', async () => {
   const { fn } = fetcher(page({ published: 'Thu Nov 26 2026 16:35:00 GMT+0000 (Coordinated Universal Time)' }), stored());
   const result = await runPublishedSiteValidation({ published_url: SITE, checks: ['gsap_custom_code'] }, { fetcher: fn });

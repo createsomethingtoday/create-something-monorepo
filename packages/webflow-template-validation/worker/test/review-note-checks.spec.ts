@@ -28,11 +28,34 @@ describe('Review-note checks', () => {
 		expect(issues([home, licenses], { missingPaths: [], notFoundTargets: [] })).toEqual([]);
 	});
 
-	it('reports every finding as a warning, never as an error', () => {
-		const home = page('/', `${NAV}<a href="#" class="button w-button">Get started</a><a href="${SITE}/about">About</a><footer class="footer"><a href="https://webflow.com/templates">Powered by Webflow</a></footer>`);
-		const result = issues([home]);
-		expect(result.map((issue) => issue.id)).toEqual(['links-placeholder-href', 'links-own-domain-absolute', 'powered-by-webflow-target']);
-		expect(result.every((issue) => issue.severity === 'warning' && issue.category === 'Content & Accessibility')).toBe(true);
+	it('blocks on the eight checks that had no wrong hit in the review corpus, and warns on the other four', () => {
+		const OTHER = 'd'.repeat(24);
+		const list = Array.from({ length: 8 }, (_, i) => `<div class="w-dyn-item"><a href="/blog/item-${i}">Item ${i}</a></div>`).join('');
+		const home = page(
+			'/',
+			`${NAV}<a href="#" class="button w-button">Get started</a><a href="${SITE}/about">About</a><a href="https://another-template.webflow.io/x">Other</a>` +
+				`<a href="/services/gone">Gone</a><video autoplay muted></video><img src="https://cdn.prod.website-files.com/${OTHER}/a.webp" alt="A"/>${list}` +
+				`<footer class="footer"><a href="https://webflow.com/templates">Powered by Webflow</a></footer>` +
+				`<script src="https://cdn.prod.website-files.com/gsap/3.13.0/gsap.min.js"></script>`
+		);
+		const licenses = page('/licenses', '<p>Icons: Flaticon. Images: Lummi.</p>');
+		const changelog = page('/changelog', '<p>December 23, 2026</p>');
+		const result = issues([home, licenses, changelog], { missingPaths: ['/instructions'], notFoundTargets: ['/services/gone'] });
+		const ids = (severity: string) => result.filter((issue) => issue.severity === severity).map((issue) => issue.id).sort();
+
+		expect(ids('error')).toEqual([
+			'assets-other-project',
+			'changelog-future-date',
+			'gsap-interactions-instructions-page',
+			'licenses-flaticon-attribution',
+			'links-internal-not-found',
+			'links-other-webflow-site',
+			'links-own-domain-absolute',
+			'powered-by-webflow-target'
+		]);
+		expect(ids('warning')).toEqual(['cms-collection-over-item-limit', 'licenses-ai-not-identified', 'licenses-asset-type-not-listed', 'links-placeholder-href']);
+		expect(result).toHaveLength(12);
+		expect(result.every((issue) => issue.category === 'Content & Accessibility')).toBe(true);
 	});
 
 	describe('links-placeholder-href', () => {
@@ -93,6 +116,12 @@ describe('Review-note checks', () => {
 		it('reports a link to a different webflow.io site', () => {
 			const home = page('/', `${NAV}<a href="https://another-template.webflow.io/services">Services</a>${FOOTER}`);
 			expect(detail('links-other-webflow-site', [home])![0].detail).toBe('another-template.webflow.io');
+		});
+
+		it('does not report a webflow.io link on the Licenses or the Instructions page, where sources and guides are named', () => {
+			const licenses = page('/licenses', '<p>Icons: <a href="https://icon-set.webflow.io">Icon Set</a>, free license.</p>');
+			const instructions = page('/instructions', '<p>Guide: <a href="https://a-guide.webflow.io">how to edit</a>.</p>');
+			expect(detail('links-other-webflow-site', [licenses, instructions])).toBeUndefined();
 		});
 
 		it('allows the one "Designed by" credit in the footer to open the creator\'s site', () => {
@@ -231,6 +260,8 @@ describe('Review-note checks', () => {
 			expect(detail('licenses-flaticon-attribution', [page('/licenses', '<p>Icons from Flaticon, used under a Flaticon Premium license.</p>')])).toBeUndefined();
 			expect(detail('licenses-flaticon-attribution', [page('/licenses', '<p>Icons made by Sample Author from www.flaticon.com</p>')])).toBeUndefined();
 			expect(detail('licenses-flaticon-attribution', [page('/licenses', '<p>Flaticon free license, attribution below.</p>')])).toBeUndefined();
+			expect(detail('licenses-flaticon-attribution', [page('/licenses', '<p>Flaticon icons, each author is credited on this page.</p>')])).toBeUndefined();
+			expect(detail('licenses-flaticon-attribution', [page('/licenses', '<p>Flaticon, used with a paid subscription.</p>')])).toBeUndefined();
 		});
 
 		it('reports an AI image source that the page does not identify as AI', () => {
@@ -264,6 +295,20 @@ describe('Review-note checks', () => {
 			const result = detail('assets-other-project', [home])!;
 			expect(result).toHaveLength(1);
 			expect(result[0].detail).toContain(`cdn.prod.website-files.com/${OTHER}/`);
+		});
+
+		it('accepts a folder that only CMS item pages use: an image bound to the item, with no list that shows it', () => {
+			const blog = page('/blog', `${NAV}<div class="w-dyn-item"><a href="/blog/first-post">First post</a></div>${img(SITE_ID)}${FOOTER}`);
+			const post = page('/blog/first-post', `${NAV}${img(SITE_ID)}${img(CMS)}${FOOTER}`);
+			expect(detail('assets-other-project', [blog, post])).toBeUndefined();
+		});
+
+		it('reports another project\'s folder that item pages and static pages both use, for example in a shared component', () => {
+			const blog = page('/blog', `${NAV}<div class="w-dyn-item"><a href="/blog/first-post">First post</a></div>${img(OTHER)}${FOOTER}`);
+			const post = page('/blog/first-post', `${NAV}${img(OTHER)}${img(CMS)}${FOOTER}`);
+			const result = detail('assets-other-project', [blog, post])!;
+			expect(result).toHaveLength(1);
+			expect(result[0].detail).toContain(OTHER);
 		});
 
 		it('accepts CMS images shown outside a list when another page shows that folder in a list, and the platform video control', () => {
