@@ -52,11 +52,13 @@ export function ancestors(node: MarkupNode): MarkupNode[] {
  * Inline elements join without a gap, as a browser renders them
  * ("specific <strong>asset</strong>, please" reads "specific asset, please");
  * block elements and <br> are separated by a space. CSS-hidden text is included.
+ * `skip` leaves out the subtrees it matches, for example the navbar and the footer.
  */
-export function text(node: MarkupNode): string {
+export function text(node: MarkupNode, skip?: (node: MarkupNode) => boolean): string {
 	if (node.type === 'text') return node.data ?? '';
 	if (node.name && NO_TEXT_TAGS.has(node.name)) return '';
-	const inner = (node.children ?? []).map(text).join('');
+	if (skip?.(node)) return ' ';
+	const inner = (node.children ?? []).map((child) => text(child, skip)).join('');
 	return node.name && BLOCK_TAGS.has(node.name) ? ` ${inner} ` : inner;
 }
 

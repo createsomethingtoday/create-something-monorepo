@@ -60,12 +60,19 @@ describe('Review-note checks', () => {
 				'<a href="#" class="w-commerce-commercecartopenlink">Cart</a>',
 				'<a href="#" class="mobile-menu-button w-inline-block"></a>',
 				'<a href="#" class="w-inline-block">Close</a>',
+				'<a href="#" data-modal-open="intro" class="button w-button">Book an intro call</a>',
+				'<a href="#" class="team-arrow w-inline-block"><img src="https://cdn.example.com/arrow.svg" alt=""/></a>',
 				'<a href="#" class="w-inline-block">Add to cart</a>',
 				'<a href="#" class="w-inline-block">Back to top</a>',
 				'<div class="w-condition-invisible"><a href="#">Hidden by a condition</a></div>',
 				'<a href="#" aria-hidden="true">Decoration</a>'
 			].join('');
 			expect(detail('links-placeholder-href', [page('/', NAV + controls + FOOTER)])).toBeUndefined();
+		});
+
+		it('counts a link with text and an arrow icon, and a link with a Webflow variant attribute', () => {
+			const home = page('/', '<a href="#" class="link-arrow w-inline-block"><div>Learn more</div></a><a href="#" data-wf--button--variant="dark" class="button w-inline-block">Start</a>');
+			expect(detail('links-placeholder-href', [home])![0].detail).toContain('"Learn more", "Start"');
 		});
 
 		it('does not read the Style Guide, where links are samples', () => {
@@ -122,6 +129,11 @@ describe('Review-note checks', () => {
 			expect(entry.detail).toBe('at least 8 items');
 		});
 
+		it('does not report a collection that sorts or labels other content', () => {
+			const blog = page('/blog', NAV + list('blog-tag', 9) + list('categories', 12) + list('author', 8) + FOOTER);
+			expect(detail('cms-collection-over-item-limit', [blog])).toBeUndefined();
+		});
+
 		it('accepts 7 items, and does not count static links', () => {
 			const home = page('/', `${NAV}${list('blog', 7)}${Array.from({ length: 9 }, (_, i) => `<a href="/services/s-${i}">S</a>`).join('')}${FOOTER}`);
 			expect(detail('cms-collection-over-item-limit', [home])).toBeUndefined();
@@ -153,6 +165,10 @@ describe('Review-note checks', () => {
 
 		it('reports a footer whose only webflow.com link is a designer profile', () => {
 			expect(detail('powered-by-webflow-target', [home('Designed by <a href="https://webflow.com/templates/designers/studio">Studio</a> - Powered by Webflow')])).toBeDefined();
+		});
+
+		it('accepts a footer with a credit to the home page and a second Webflow link', () => {
+			expect(detail('powered-by-webflow-target', [home('<a href="https://www.webflow.com">Webflow</a> <a href="https://webflow.com/templates/html/example">Example - Webflow template</a>')])).toBeUndefined();
 		});
 
 		it('accepts a credit to the home page, with a profile link next to it and with a tracking query', () => {
@@ -196,6 +212,13 @@ describe('Review-note checks', () => {
 			const home = page('/', NAV + video + lottie + FOOTER);
 			const licenses = page('/licenses', '<p>Hero footage: Pexels license. Animations: LottieFiles Simple License.</p>');
 			expect(detail('licenses-asset-type-not-listed', [home, licenses])).toBeUndefined();
+		});
+
+		it('reads the content of the Licenses page, not its navbar or footer', () => {
+			const home = page('/', NAV + video + FOOTER);
+			const licenses = page('/licenses', '<div class="w-nav"><a href="/videos">Video library</a></div><p>Photos: Unsplash license.</p><footer class="footer">Designed by Studio. All icons from Flaticon.</footer>');
+			expect(detail('licenses-asset-type-not-listed', [home, licenses])![0].detail).toContain('video');
+			expect(detail('licenses-flaticon-attribution', [home, licenses])).toBeUndefined();
 		});
 
 		it('reports Flaticon with no attribution and no Premium license', () => {

@@ -32,6 +32,11 @@ const CONTROL_ATTRIBUTES = [
 	'aria-controls', 'aria-expanded', 'aria-haspopup', 'aria-pressed'
 ];
 const CONTROL_ROLES = new Set(['button', 'tab', 'switch', 'menuitem']);
+/** A data attribute that is not Webflow's own is a hook for custom code ("data-modal-open"). */
+const CUSTOM_DATA_ATTRIBUTE = /^data-(?!wf-|w-)/;
+const ICON_CONTROL_CLASS = /(?:^|[-_])(?:arrow|chevron|caret)s?(?:[-_]|$)/i;
+/** Collections that sort or label other content. They can hold more than the item limit. */
+const HELPER_COLLECTION = /(?:^|-)(?:tags?|categor(?:y|ies)|authors?|topics?|types?|labels?)(?:-|$)/i;
 const HIDDEN_CLASS = /^(?:w-condition-invisible|w-dyn-hide)$/;
 const BACK_TO_TOP = /\b(?:to|at)\s+(?:the\s+)?top\b|^(?:top|up)$|^[↑⬆▲]+$/i;
 /**
@@ -199,7 +204,8 @@ export function auditReviewNotes(elements: MarkupNode[], root: MarkupNode, pageU
 	data.cmsItemPaths = [...items];
 	data.otherWebflowSites = [...otherSites];
 	if (path === LICENSES_PATH || path === CHANGELOG_PATH) {
-		data.pageText = normalize(text(elements.find((el) => el.name === 'body') ?? root));
+		// The page's own content: a word in the navbar or the footer does not list an asset.
+		data.pageText = normalize(text(elements.find((el) => el.name === 'body') ?? root, (el) => isNav(el) || isFooter(el)));
 	}
 	return data;
 }
@@ -252,7 +258,7 @@ export function generateReviewNoteIssues(audits: ReviewerPageAudit[], context: R
 		}
 	}
 	for (const [collection, items] of [...collections].sort()) {
-		if (items.size > COLLECTION_ITEM_LIMIT) add('cms-collection-over-item-limit', new URL(`/${collection}`, siteUrl).href, `at least ${items.size} items`);
+		if (items.size > COLLECTION_ITEM_LIMIT && !HELPER_COLLECTION.test(collection)) add('cms-collection-over-item-limit', new URL(`/${collection}`, siteUrl).href, `at least ${items.size} items`);
 	}
 
 	const changelog = byPath.get(CHANGELOG_PATH);
@@ -260,12 +266,12 @@ export function generateReviewNoteIssues(audits: ReviewerPageAudit[], context: R
 	if (changelog && futureDate) add('changelog-future-date', changelog.url, futureDate);
 
 	if (home) {
-		// The link that reads "Webflow" is the credit. With no such link, a footer that links to webflow.com only through another page has no credit to the home page.
-		const credit = home.notes.footerWebflowLinks.filter((link) => /webflow/i.test(link.text));
-		const links = credit.length ? credit : home.notes.footerWebflowLinks;
-		const isHome = (link: { target: string }) => link.target === 'webflow.com';
-		const wrong = credit.length ? links.filter((link) => !isHome(link)) : links.every((link) => !isHome(link)) ? links : [];
-		if (wrong.length) add('powered-by-webflow-target', home.url, `the footer link opens ${wrong[0].target}, not https://webflow.com`);
+		// One footer link to the Webflow home page is the credit. A footer that names or links Webflow without it has the wrong target.
+		const links = home.notes.footerWebflowLinks;
+		if (links.length && !links.some((link) => link.target === 'webflow.com')) {
+			const credit = links.find((link) => /webflow/i.test(link.text)) ?? links[0];
+			add('powered-by-webflow-target', home.url, `the footer link opens ${credit.target}, not https://webflow.com`);
+		}
 	}
 
 	if (context.missingPaths?.includes(INSTRUCTIONS_PATH) && !byPath.has(INSTRUCTIONS_PATH) && !pages.some((page) => page.usesCustomGsap)) {
@@ -325,9 +331,13 @@ function isControl(link: MarkupNode): boolean {
 	if (CONTROL_ROLES.has(attr(link, 'role').toLowerCase()) || attr(link, 'type').toLowerCase() === 'button') return true;
 	if (attr(link, 'aria-hidden') === 'true') return true;
 	if ([link, ...ancestors(link)].some((el) => classes(el).some((name) => HIDDEN_CLASS.test(name)))) return true;
+	if (Object.keys(link.attribs ?? {}).some((name) => CUSTOM_DATA_ATTRIBUTE.test(name))) return true;
 	const label = linkLabel(link);
 	if (CONTROL_LABEL.test(label) || CONTROL_LABEL.test(attr(link, 'aria-label').trim())) return true;
-	if (classes(link).some((name) => !name.startsWith('w-') && CONTROL_CLASS_WORD.test(name))) return true;
+	const ownClasses = classes(link).filter((name) => !name.startsWith('w-'));
+	if (ownClasses.some((name) => CONTROL_CLASS_WORD.test(name))) return true;
+	// An arrow with no text is the control of a slider or a carousel. An arrow next to text is a link with an icon.
+	if (!normalize(text(link)) && !attr(link, 'aria-label').trim() && ownClasses.some((name) => ICON_CONTROL_CLASS.test(name))) return true;
 	// "#" is a valid target for a link that returns to the top of the page.
 	return BACK_TO_TOP.test(label);
 }
