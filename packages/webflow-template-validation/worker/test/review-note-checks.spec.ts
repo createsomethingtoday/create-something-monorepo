@@ -250,6 +250,13 @@ describe('Review-note checks', () => {
 			expect(detail('gsap-interactions-instructions-page', [page('/', NAV + FOOTER + gsap)], { missingPaths: ['/instructions'] })).toBeDefined();
 		});
 
+		it('names the exact address, because a page in a folder does not count', () => {
+			const inFolder = page('/info/instructions', '<h1>How to edit</h1>');
+			const issue = issues([page('/', NAV + FOOTER + gsap), inFolder], { missingPaths: ['/instructions'] }).find((entry) => entry.id === 'gsap-interactions-instructions-page')!;
+			expect(issue.message).toBe('The site loads GSAP, but there is no Instructions page at /instructions');
+			expect(issue.howToFix).toContain('move it to the root slug /instructions');
+		});
+
 		it('says nothing when the page exists, when its status is unknown, or when the blocking check already reports inline GSAP', () => {
 			const home = page('/', NAV + FOOTER + gsap);
 			expect(detail('gsap-interactions-instructions-page', [home, page('/instructions', '<h1>How to edit</h1>')], { missingPaths: [] })).toBeUndefined();

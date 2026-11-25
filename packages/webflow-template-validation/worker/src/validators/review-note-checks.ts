@@ -146,9 +146,9 @@ const CHECKS: Record<ReviewNoteCheckId, Check> = {
 		howToFix: 'Set the link to https://webflow.com.'
 	},
 	'gsap-interactions-instructions-page': {
-		message: () => 'The site loads GSAP, but there is no Instructions page',
-		description: 'A template that uses GSAP, also through Webflow Interactions, needs an Instructions page at /instructions that tells the buyer how to edit or remove the animations.',
-		howToFix: 'Create a page at /instructions that lists the animated elements and how to change or remove each animation.'
+		message: () => 'The site loads GSAP, but there is no Instructions page at /instructions',
+		description: 'A template that uses GSAP, also through Webflow Interactions, needs an Instructions page at exactly /instructions that tells the buyer how to edit or remove the animations. A page in a folder, for example /info/instructions, does not count.',
+		howToFix: 'Create a page at /instructions that lists the animated elements and how to change or remove each animation. If the page is in a folder, move it to the root slug /instructions.'
 	},
 	'licenses-asset-type-not-listed': {
 		message: () => 'The Licenses page does not list an asset type that the template uses',
