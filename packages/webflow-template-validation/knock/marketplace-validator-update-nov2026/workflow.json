@@ -1,0 +1,22 @@
+{
+  "name": "Marketplace Validator update (Nov 2026)",
+  "description": "One-time announcement to template creators: Webflow Way Validator 1.3.14 report layout, with a reminder of the Template CLI. The copy is in the template; the workflow takes no trigger data. Owner: Marketplace reviews.",
+  "steps": [
+    {
+      "type": "channel",
+      "template": {
+        "subject": "The Webflow Way Validator has a shorter report",
+        "settings": { "layout_key": "default", "attachment_key": "attachments" },
+        "is_mjml": false,
+        "preview_text": "See what blocks your submission first. Plus a reminder: the Template CLI runs the same checks from your terminal.",
+        "html_body@": "email_1/html_body.html"
+      },
+      "ref": "email_1",
+      "channel_type": "email",
+      "channel_key": "postmark"
+    }
+  ],
+  "categories": ["Marketplace"],
+  "trigger_frequency": "every_trigger",
+  "$schema": "https://schemas.knock.app/cli/workflow.json"
+}
