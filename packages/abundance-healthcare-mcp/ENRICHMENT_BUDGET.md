@@ -1,8 +1,8 @@
-# NPG three-provider enrichment and spend tracking — CRE-2451
+# NPG provider enrichment and spend tracking — CRE-2451
 
 The owner explicitly removed inherited Dify spend limits on November 13, 2026. The custom implementation tracks spending; it does not enforce a shared $100 allowance, per-lookup dollar ceilings or daily spending caps. Historical uncertainty and missing USD conversion do not prevent enrichment. The historical Dify prompt is preserved only as provenance and is superseded by the current host policy.
 
-`enrich_candidate_complete_profile` prepares one exact-NPI review covering PDL professional/personal data, Exa public research, and Apify Skip Trace personal-contact candidates. Approval belongs to the current owner, exact candidate and immutable operation ID. Each provider receives an independent attempt; an unavailable provider produces a partial profile without suppressing other providers. Returned fields remain provider-reported evidence, not verified identity, current employment or permission to contact.
+`enrich_candidate_complete_profile` prepares one exact-NPI review covering PDL professional/personal data, Exa public research, Apify Skip Trace personal-contact candidates, and Treg phone and work-email lookup with line and mailbox checks. Approval belongs to the current owner, exact candidate and immutable operation ID. Each provider receives an independent attempt; an unavailable provider produces a partial profile without suppressing other providers. Returned fields remain provider-reported evidence, not verified identity, current employment or permission to contact.
 
 ## Spending records
 
@@ -10,7 +10,7 @@ The Agency database records each operation and provider attempt before vendor di
 
 Confirmed USD, estimates, provider credits and unresolved amounts are distinct. A credit count is never implicitly converted to dollars. Recorded USD is a subtotal for the known ledger coverage, not a claim of lifetime account spending. Unknown pre-ledger history is explicit. Provider data success and charge reconciliation are separate states.
 
-`GET /api/abundance/enrichment-budget?provider=pdl` (also `clay`, `exa`, `apify`) returns tracking availability and the all-provider `spend` summary. `confirmed_usd` sums the latest confirmed amount per tracked operation/provider; `estimated_usd` includes estimates only for operations without confirmed USD. `pending_count` counts operations still lacking a USD receipt. `by_provider` retains separate totals and credit units. `history_complete:false` and `historical_usd:null` explicitly exclude unverified pre-ledger history. The legacy URL is retained for internal compatibility; it does not enforce a budget.
+`GET /api/abundance/enrichment-budget?provider=pdl` (also `exa`, `apify`, `treg`) returns tracking availability and the all-provider `spend` summary. `confirmed_usd` sums the latest confirmed amount per tracked operation/provider; `estimated_usd` includes estimates only for operations without confirmed USD. `pending_count` counts operations still lacking a USD receipt. `by_provider` retains separate totals and credit units. `history_complete:false` and `historical_usd:null` explicitly exclude unverified pre-ledger history. The legacy URL is retained for internal compatibility; it does not enforce a budget.
 
 The internal authenticated tracking API records sanitized billing receipts and reads spending summaries. It must not accept credentials, raw contact payloads or a request to erase history. POST accepts only tracking creation, one-use claim and append-only receipt records. An ordinary signed-in session is not sufficient internal API authority. Original accounting evidence stays available when later receipts reconcile an amount.
 
@@ -35,3 +35,7 @@ Deploy through the reviewed production PR, additive Agency migration, Agency API
 Rollback the deployed code through the previous Worker/Pages artifact. Preserve all ledger, receipt, grant, audit and Skip Trace Durable Object data. Never delete accounting or retry an uncertain operation as a rollback.
 
 Clay has been retired from the active catalog, readiness, dispatch and recovery. Historical D1 audit records remain preserved; former authenticated endpoints return HTTP 410.
+
+## Treg receipts and deployment
+
+Configure the Healthcare MCP Worker secret `TREG_TOKEN` for the intended team. Apply Agency migration `0068_npg_treg_enrichment_provider.sql` before releasing the new scope. The ledger retains historical grants and events. Treg returns a separate call ID for each routed lookup. Settled costs are expressed in micro-USD. An unknown charge remains pending for reconciliation. A line check reports reachability at lookup time. Current subscriber ownership and contact permission require separate evidence.

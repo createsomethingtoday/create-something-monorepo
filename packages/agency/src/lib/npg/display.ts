@@ -1,3 +1,4 @@
+import { associatedPhones } from './phones';
 // Plain text plus validated links. Model output never becomes HTML.
 export function readDrafts(raw: string | null): Record<string, string> {
   const drafts: Record<string, string> = Object.create(null);
@@ -275,6 +276,7 @@ export function sourceArtifact(data: unknown) {
         )
       : [];
   const sections = [
+    { title: 'Treg contact evidence · vendor verification only; ownership, reachability and consent unknown', value: record.verification === 'unverified' && record.contacts && typeof record.contacts === 'object' && 'phone' in record.contacts ? record.contacts : undefined },
     { title: 'Public registry record · unverified', value: record.provider ?? record.registry },
     { title: 'Registry contact · outreach authority not established', value: record.contact },
     { title: 'Recruiting readiness and unknowns', value: record.readiness },
@@ -340,8 +342,9 @@ export function sourceArtifact(data: unknown) {
       pdl: 'PDL',
       clay: 'Clay',
       exa: 'Exa',
-      apify: 'Skip Trace'
+      apify: 'Skip Trace', treg: 'Treg'
     })) {
+      if (provider === 'treg' && !(provider in results) && !(Array.isArray(record.active_providers) && record.active_providers.includes('treg'))) continue;
       if (!(provider in results)) {
         sections.push({ title: label + ' · not started or no result supplied', fields: [] });
         continue;
@@ -398,6 +401,19 @@ export function sourceArtifact(data: unknown) {
       for (const section of artifact.sections)
         sections.push({ title: label + ' · ' + section.title, fields: section.fields });
     }
+  }
+  for (const phone of associatedPhones(record)) {
+    sections.unshift({
+      title: phone.kind === 'associated' ? 'Associated phone candidate · ownership, reachability and consent unknown' : phone.kind === 'fax' ? 'Fax evidence · separate from phone candidates' : 'Shared practice line · separate from personal phone candidates',
+      fields: [
+        {label:'Number',value:phone.number},
+        {label:'Sources and roles',value:phone.sources.join('\n')},
+        {label:'Reported roles',value:phone.roles.join(' · ')},
+        {label:'Line type · vendor reported',value:phone.lineType},
+        {label:'Reachability / ownership / consent',value:'Unknown / Unknown / Unknown'},
+        ...phone.vendorReports.map(value => ({label:'Vendor verification report · does not establish ownership or permission',value}))
+      ]
+    });
   }
   const tracking =
     record.spend_tracking && typeof record.spend_tracking === 'object'
@@ -503,7 +519,7 @@ export function reviewFields(value: unknown): Array<{ label: string; value: stri
         )
           text = formatUsd(v);
         else if (key === 'providers' && Array.isArray(v) && v.every((provider) => typeof provider === 'string'))
-          text = v.map((provider) => ({pdl:'PDL', exa:'Exa', apify:'Skip Trace', clay:'Clay'}[provider] ?? provider)).join(', ');
+          text = v.map((provider) => ({pdl:'PDL', exa:'Exa', apify:'Skip Trace', treg:'Treg', clay:'Clay'}[provider] ?? provider)).join(', ');
         else if (key === 'providerEstimates' && Array.isArray(v))
           text = v
             .map((p) => {
@@ -511,7 +527,7 @@ export function reviewFields(value: unknown): Array<{ label: string; value: stri
                 pdl: 'PDL',
                 clay: 'Clay',
                 exa: 'Exa',
-                apify: 'Skip Trace'
+                apify: 'Skip Trace', treg: 'Treg'
               };
               return (
                 (names[p?.provider] ?? 'Provider') +

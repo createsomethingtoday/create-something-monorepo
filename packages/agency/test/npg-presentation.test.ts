@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { decisionSummary, registryName } from '../src/lib/npg/astryx/presentation';
+import { decisionSummary, registryName, enrichmentSummary } from '../src/lib/npg/astryx/presentation';
 import type { NpgView } from '../src/lib/npg/display';
 const registry = (npi: string, name: string) => ({
   tool: 'search_registry_sourcing',
@@ -282,4 +282,15 @@ test('unknown, ambiguous, unstarted and partial composites cannot claim lookup c
   const pending = {tool:'enrich_candidate_complete_profile', arguments:{npi:'1234567890'}, review:{providers:['pdl','exa','apify']}} as any;
   assert.equal(decisionSummary(pending, []).title, 'Complete profile · three providers');
   assert.equal(decisionSummary({...pending, review:{}}, []).title, 'Complete profile · four providers');
+});
+
+test('Treg exact scope remains visible and partial verification never completes the lookup', () => {
+  const pending:any = {tool:'enrich_candidate_complete_profile',arguments:{npi:'1234567890'},review:{providers:['pdl','exa','apify','treg']}};
+  assert.equal(decisionSummary(pending,[]).providerScope,'PDL · Exa · Skip Trace · Treg');
+  for (const status of ['complete','partial','unavailable']) {
+    const summary = enrichmentSummary([{tool:'enrich_candidate_complete_profile',data:{active_providers:['pdl','exa','apify','treg'],status:status === 'complete' ? 'complete':'partial',providers:{pdl:{status:'no_match'},exa:{status:'no_match'},apify:{status:'no_contact'},treg:{status,contacts:{phone:{status:'found',value:'555-555-0100',verification:{line_type:'unknown',verdict:'unknown'}}}}}}}])!;
+    assert.equal(summary.rows.length,4);
+    assert.equal(summary.rows[3].label,'Treg');
+    assert.equal(summary.complete,status === 'complete');
+  }
 });

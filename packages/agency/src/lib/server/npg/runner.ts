@@ -344,7 +344,7 @@ async function review(
   if (name === 'enrich_candidate_complete_profile') {
     const readiness = tools.find((tool) => tool.name === 'get_enrichment_readiness');
     const observations = [];
-    for (const provider of ['pdl', 'exa', 'apify']) {
+    for (const provider of ['pdl', 'exa', 'apify', 'treg']) {
       let result: unknown;
       try {
         if (readiness) {
@@ -359,8 +359,8 @@ async function review(
     }
     const spend = observations.find((item) => item.confirmedTrackedUsd !== null);
     return {
-      provider: 'PDL + Exa + Skip Trace',
-      providers: ['pdl','exa','apify'],
+      provider: 'PDL + Exa + Skip Trace + Treg',
+      providers: ['pdl','exa','apify','treg'],
       currency: 'USD',
       confirmedTrackedUsd: spend?.confirmedTrackedUsd ?? null,
       pendingReceipts: spend?.pendingReceipts ?? null,
@@ -372,9 +372,9 @@ async function review(
       spendPolicy:
         'Spend tracking only. Estimates are separate from confirmed USD; unknown estimates do not block this request. No application spend limit.',
       contactScope:
-        'One exact selected NPI. PDL professional profile and personal contacts; Exa public professional research; Skip Trace broker personal-contact candidates and home city/state. All contacts, identity associations and consent remain unverified.',
+        'One exact selected NPI. PDL professional profile and personal contacts; Exa public professional research; Skip Trace broker personal-contact candidates and home city/state; Treg provider-reported enrichment candidates. All contacts, identity associations and consent remain unverified.',
       execution:
-        'One approval attempts PDL, Exa and Skip Trace independently. Missing access or failed providers remain explicit outcomes. No automatic retry of uncertain operations; reconcile exact existing receipts.'
+        'One approval attempts PDL, Exa, Skip Trace and Treg independently. Missing access or failed providers remain explicit outcomes. No automatic retry of uncertain operations; reconcile exact existing receipts.'
     };
   }
   if (name === 'enrich_candidate_skip_trace')
@@ -681,11 +681,11 @@ export async function executeCommand(
     }
     if (action) {
       const outdatedScope = command.type === 'approve' &&
-        ((action.tool === 'enrich_candidate_complete_profile' && JSON.parse(action.review_json).providers?.join(',') !== 'pdl,exa,apify') || action.tool === 'request_professional_contact_enrichment');
+        ((action.tool === 'enrich_candidate_complete_profile' && JSON.parse(action.review_json).providers?.join(',') !== 'pdl,exa,apify,treg') || action.tool === 'request_professional_contact_enrichment');
       if (outdatedScope) {
         await store.consume(row, action, 'reject');
         delete state.pendingId; delete state.responseId;
-        state.messages.push({role:'assistant',text:'This saved approval has an outdated provider scope. Prepare a fresh three-provider review for PDL, Exa and Skip Trace. No dispatch was made.'});
+        state.messages.push({role:'assistant',text:'This saved approval has an outdated provider scope. Prepare a fresh four-provider review for PDL, Exa, Skip Trace and Treg. No dispatch was made.'});
         await store.finish(row,state,'idle',0);
         return store.view(owner,row.id);
       }
@@ -734,7 +734,7 @@ export async function executeCommand(
       const originalResult = await providers.call(tool.name, args);
       const result =
         tool.name === 'enrich_candidate_complete_profile'
-          ? recomputeProfile(originalResult)
+          ? recomputeProfile(originalResult, true)
           : originalResult;
       toolCount++;
       if (tool.name === 'enrich_candidate_complete_profile') {
@@ -778,7 +778,7 @@ export async function executeCommand(
           role: 'assistant',
           text:
             receipt.status === 'complete'
-              ? 'All three providers returned results. Review each provider’s evidence below; identity, contact ownership and consent remain unverified. ' +
+              ? 'All four providers returned results. Review each provider’s evidence below; identity, contact ownership and consent remain unverified. ' +
                 (receipt.billing_reconciliation_required === true
                   ? 'Billing receipts need reconciliation; unrelated candidate requests remain available.'
                   : 'Preserve each provider receipt.')

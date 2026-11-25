@@ -1,3 +1,4 @@
+import { associatedPhones } from '../phones';
 import { actionLabel, sourceArtifact, formatUsd, type NpgView } from '../display';
 
 type Pending = NonNullable<NpgView['pending']>;
@@ -57,11 +58,13 @@ export function decisionSummary(pending: Pending, sources: NpgView['sources']) {
         ? npis[0]
         : null;
   const name = npi ? registryName(npi, sources) : null;
+  const scope = Array.isArray(review.providers) ? review.providers.filter((key): key is string => typeof key === 'string') : [];
+  const providerScope = scope.map(key => ({pdl:'PDL',exa:'Exa',apify:'Skip Trace',clay:'Clay',treg:'Treg'}[key] ?? key)).join(' · ');
   const title =
     (
       {
         enrich_candidate_skip_trace: 'Skip Trace lookup',
-        enrich_candidate_complete_profile: hasThreeProviderScope(review.providers)
+        enrich_candidate_complete_profile: scope.includes('treg') ? `Complete profile · ${scope.length} providers` : hasThreeProviderScope(review.providers)
           ? 'Complete profile · three providers' : 'Complete profile · four providers',
         estimate_registry_travel: 'Travel estimate',
         enrich_candidate_profile: 'Profile lookup',
@@ -82,7 +85,7 @@ export function decisionSummary(pending: Pending, sources: NpgView['sources']) {
       : null;
   const price = estimate === null ? 'Unknown' : formatUsd(estimate);
   const priceLabel = 'Estimate';
-  return { title, target, name, price, priceLabel };
+  return { title, target, name, price, priceLabel, providerScope };
 }
 
 // Only known projection labels get friendlier names; unknown fields and every
@@ -156,7 +159,8 @@ export function enrichmentSummary(sources: NpgView['sources']) {
   const providers = record(data.providers);
   const activeProviders = data.active_providers;
   const threeProviders = hasThreeProviderScope(activeProviders);
-  const knownScope = activeProviders === undefined || threeProviders ||
+  const tregScope = Array.isArray(activeProviders) && activeProviders.length === 4 && ['pdl','exa','apify','treg'].every(key => activeProviders.includes(key));
+  const knownScope = tregScope || activeProviders === undefined || threeProviders ||
     (Array.isArray(activeProviders) && activeProviders.length === 4 &&
       ['pdl', 'clay', 'exa', 'apify'].every((key) => activeProviders.includes(key)));
   const count = (value: unknown) =>
@@ -168,7 +172,8 @@ export function enrichmentSummary(sources: NpgView['sources']) {
         .filter((value): value is string => typeof value === 'string' && Boolean(value.trim()))
         .map((value) => value.trim().toLowerCase())
     ).size;
-  const rows = (['pdl', 'exa', 'apify'] as const).map((key) => {
+  const providerKeys = tregScope || 'treg' in providers ? ['pdl', 'exa', 'apify', 'treg'] as const : ['pdl', 'exa', 'apify'] as const;
+  const rows = providerKeys.map((key) => {
     const value = record(providers[key]);
     const state = String(value.status ?? value.match_status ?? 'not_returned');
     const professional = record(value.professional_contact);
@@ -176,7 +181,9 @@ export function enrichmentSummary(sources: NpgView['sources']) {
     const direct = record(value.contacts);
     const result = record(value.result);
     const contacts = Array.isArray(result.contacts) ? result.contacts.map(record) : [];
-    const emails =
+    const tregEmail = record(direct.email);
+    const tregPhone = record(direct.phone);
+    const emails = (key === 'treg' && tregEmail.status === 'found' ? count(tregEmail.value) : 0) +
       (key === 'pdl'
         ? uniqueContactCount(
             personal.personal_emails,
@@ -187,7 +194,7 @@ export function enrichmentSummary(sources: NpgView['sources']) {
       count(direct.emails) +
       count(professional.email) +
       contacts.filter((contact) => contact.type === 'email').length;
-    const phones =
+    const phones = (key === 'treg' && tregPhone.status === 'found' ? count(tregPhone.value) : 0) +
       (key === 'pdl'
         ? uniqueContactCount(personal.phone_numbers, personal.mobile_phone)
         : count(personal.phones)) +
@@ -235,7 +242,7 @@ export function enrichmentSummary(sources: NpgView['sources']) {
                         : `${key === 'pdl' && Object.keys(record(value.professional)).length ? 'Profile returned · ' : ''}${emails} email${emails === 1 ? '' : 's'} · ${phones} phone${phones === 1 ? '' : 's'}`;
     return {
       key,
-      label: { pdl: 'PDL', clay: 'Clay', exa: 'Exa', apify: 'Skip Trace' }[key],
+      label: { pdl: 'PDL', clay: 'Clay', exa: 'Exa', apify: 'Skip Trace', treg:'Treg' }[key],
       state,
       outcome: pending
         ? 'Pending'
@@ -270,12 +277,13 @@ export function enrichmentSummary(sources: NpgView['sources']) {
       : 'Receipt status unknown';
   return {
     npi: String(data.npi ?? ''),
-    scope: 'PDL, Exa and Skip Trace',
+    scope: providerKeys.length === 3 ? 'PDL, Exa and Skip Trace' : 'PDL, Exa, Skip Trace and Treg',
     rows,
+    phones: associatedPhones(data),
     pending: rows.some((row) => row.pending),
     complete:
       knownScope && rows.every((row) => row.terminal && !row.blocked) &&
-      (threeProviders || !Object.keys(record(providers.clay)).length ||
+      (tregScope || threeProviders || !Object.keys(record(providers.clay)).length ||
         ['matched','complete','completed','review_required','no_contact','no_match'].includes(String(record(providers.clay).status))) &&
       (data.status === undefined || data.status === 'complete') &&
       data.uncertain_dispatch !== true &&

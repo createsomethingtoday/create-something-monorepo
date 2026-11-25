@@ -1,3 +1,4 @@
+import { runTregContact, tregIdentity, tregEvidenceFromExa, type TregIdentityEvidence } from './treg.js';
 import { readEnrichmentReadiness, reserveBudget, claimBudget, recordSpend, finiteAmount, type BudgetGrant } from './enrichment-budget.js';
 import { skipIdentity, type SkipIdentity, type SkipResult } from './skip-trace.js';
 import { type PdlInput, type PdlResult } from './pdl.js';
@@ -41,6 +42,9 @@ export interface HealthcareApiResponse {
   data: { report: HealthcareCoverageReport; providers: HealthcareProvider[]; readiness: HealthcareReadiness[]; total: number; limit: number; offset: number; run?: Record<string, unknown> };
 }
 export interface HealthcareClientOptions {
+  readRegistryPhones?: typeof import('./registry-phones.js').readRegistryPhones;
+  tregToken?: string;
+  tregIdentity?: (npi: string) => Promise<TregIdentityEvidence | undefined>;
   skipTraceReadiness?:()=>Promise<{ready:boolean;reason?:string}>;
   budgetGrant?: BudgetGrant;
   skipTrace?: (input: SkipIdentity, trackingGrant?: BudgetGrant) => Promise<SkipResult>;
@@ -152,6 +156,8 @@ const exaStructuredOutputSchema = z.object({
   match_status: z.enum(['verified_match', 'plausible_match', 'ambiguous', 'no_match']),
   identity_reason: z.string().max(600),
   professional_profile_url: z.string().url().nullable().optional(),
+  employer_domain: z.string().max(253).nullable().optional(),
+  employer_staff_source_url: z.string().url().nullable().optional(),
   professional_email: z.string().email().nullable().optional(),
   professional_phone: z.string().max(80).nullable().optional(),
   evidence_summary: z.string().max(600).nullable().optional(),
@@ -190,6 +196,7 @@ const providerEnrichmentOutputSchema = z.object({
   }),
   evidence_summary: z.string().optional(),
   source_citations: z.array(z.object({ url: z.string() })),
+  employer_identity: z.object({domain:z.string(),source_url:z.string()}).optional(),
   contact_route_status: z.enum(['unverified_enrichment_candidate', 'no_contact_candidate_found']),
   identity_verification_status: z.enum(['source_grounded', 'operator_review_required']),
   outreach_authority_status: z.literal('not_established'),
@@ -356,12 +363,14 @@ export async function enrichProviderProfessionalContact(input: z.input<typeof pr
       match_status: { type: 'string', enum: ['verified_match', 'plausible_match', 'ambiguous', 'no_match'] },
       identity_reason: { type: 'string', maxLength: 600 },
       professional_profile_url: { type: ['string', 'null'], format: 'uri' },
+      employer_domain: {type:['string','null']},
+      employer_staff_source_url: {type:['string','null'],format:'uri'},
       ...contactProperties,
       evidence_summary: { type: ['string', 'null'], maxLength: 600 },
     },
   };
   const createBody = {
-    query: 'Find public professional profile and requested professional contact candidates for exactly the one healthcare practitioner in input.data. Resolve identity using the NPI, full name, Family Nurse Practitioner taxonomy, and listed market. Do not return residential addresses. Use verified_match only when evidence connects the source to this exact practitioner; otherwise use plausible_match, ambiguous, or no_match. Unsupported fields must be null.',
+    query: 'Find public professional profile and requested professional contact candidates for exactly the one healthcare practitioner in input.data. Resolve identity using the NPI, full name, Family Nurse Practitioner taxonomy, and listed market. Do not return residential addresses. Use verified_match only when evidence connects the source to this exact practitioner; otherwise use plausible_match, ambiguous, or no_match. For a verified exact candidate, also return employer_domain and employer_staff_source_url only when an official practice staff or biography page explicitly attributes this practitioner to that practice. Cite that exact page in grounding. Never derive a domain from an employer name, email guess, registry or provider directory. Unsupported fields must be null.',
     systemPrompt: 'Return only source-grounded professional information for the one supplied practitioner. Never infer employment, availability, interest, consent, advertising eligibility, or recruiting readiness. Prefer official employer, licensing, professional association, and clearly attributable professional profile sources. Treat name-only similarity as ambiguous.',
     effort: 'minimal',
     input: { data: [{
@@ -417,6 +426,7 @@ export async function enrichProviderProfessionalContact(input: z.input<typeof pr
     }),
     evidence_summary: `Exa returned ${sourceCitations.length} validated citation URL${sourceCitations.length === 1 ? '' : 's'} for operator review.`,
     source_citations: sourceCitations,
+    ...(structured.match_status==='verified_match'&&structured.employer_domain&&structured.employer_staff_source_url&&sourceCitations.some(c=>c.url===structured.employer_staff_source_url)?{employer_identity:{domain:structured.employer_domain,source_url:structured.employer_staff_source_url}}:{}),
     contact_route_status: hasCandidate ? 'unverified_enrichment_candidate' : 'no_contact_candidate_found',
     identity_verification_status: structured.match_status === 'verified_match' && hasGroundedEvidence ? 'source_grounded' : 'operator_review_required',
     outreach_authority_status: 'not_established',
@@ -765,7 +775,29 @@ export async function enrichCandidateProfile(input: z.input<typeof candidateProf
   const spendRecorded=await retainSpend(options,spendGrant,{event_id:`${spendGrant.id}:pdl:result`,status:result.status==='unavailable'?'uncertain':result.status==='pending'?'pending':'complete',actual_usd:result.cached?0:null,estimated_usd:null,credits:result.cached?0:finiteAmount(result.billing?.credits_used),credit_unit:'pdl_credit',receipt_ref:result.billing?.request_id??null});
   return compactObject({ ...result, spend_tracking:{recorded:spendRecorded,...(!spendRecorded?{warning:'Provider receipt is available; ledger update is pending.'}:{})},registry, match_input: 'profile_url' in pdlInput ? { profile_url: pdlInput.profile_url } : compactObject({ name: pdlInput.name, locality: pdlInput.locality, region: pdlInput.region, company: pdlInput.company }) });
 }
-/** Each approved operation attempts three active sources independently, retaining provenance and spend uncertainty. */
+export async function enrichTregContact(input:{npi:string;operation_id:string;confirm_paid_enrichment:true},options:HealthcareClientOptions){
+ const parsed=z.object({npi:z.string().regex(/^\d{10}$/),operation_id:z.string().uuid(),confirm_paid_enrichment:z.literal(true)}).strict().parse(input);
+ if(!options.tregToken?.trim())throw Error('Treg professional enrichment is not configured.');
+ const record=await getHealthcarePractitioner({market_id:'npg-family-np-nationwide',npi:parsed.npi},options);
+ const p=record.provider as Record<string,string>;
+ if(p.npi!==parsed.npi)throw Error('Registry identity association failed.');
+ const evidence=await options.tregIdentity?.(parsed.npi);
+ if(!evidence){
+  const grant=await claimBudget('treg',{npi:parsed.npi,operation_id:parsed.operation_id},parsed.npi,options,options.budgetGrant);
+  const recorded=await retainSpend(options,grant,{event_id:`${grant.id}:treg:identity-unavailable`,status:'failed',actual_usd:0,estimated_usd:null,credits:null,credit_unit:null,receipt_ref:null});
+  return {status:'unavailable',reason:'No corroborated employer domain or attributed professional profile. No paid dispatch made.',actual_cost_usd:0,uncertain_dispatch:false,spend_tracking:{recorded}};
+ }
+ tregIdentity(parsed.npi,p.first_name,p.last_name,evidence);
+ const grant=await claimBudget('treg',{npi:parsed.npi,operation_id:parsed.operation_id},parsed.npi,options,options.budgetGrant);
+ const result=await runTregContact({npi:parsed.npi,first:p.first_name,last:p.last_name,operation_id:parsed.operation_id,evidence},{token:options.tregToken.trim(),fetchFn:options.fetchFn});
+ const receiptWrites=await Promise.all((['phone','email'] as const).map(kind=>{
+  const receipt=result.contacts[kind].receipt;
+  return retainSpend(options,grant,{event_id:`${grant.id}:treg:${kind}`,status:receipt.settled?'complete':'uncertain',actual_usd:receipt.actual_usd,estimated_usd:null,credits:null,credit_unit:null,receipt_ref:receipt.call_id});
+ }));
+ const recorded=receiptWrites.every(Boolean);
+ return {...result,spend_tracking:{recorded}};
+}
+/** Use the operation grants to preserve the approved provider scope and its receipts. */
 export async function enrichCompleteProfile(input:{npi:string;confirm_paid_enrichment:true;operation_id?:string},options:HealthcareClientOptions){
  const parsed=z.object({npi:z.string().regex(/^\d{10}$/),confirm_paid_enrichment:z.literal(true),operation_id:z.string().uuid().optional()}).strict().parse(input);
  if(!parsed.operation_id)throw new Error('An approved operation identifier is required before dispatch.');
@@ -777,17 +809,23 @@ export async function enrichCompleteProfile(input:{npi:string;confirm_paid_enric
  const providers:Record<string,any>={};
  const charges:Record<string,number|null>={};
  let uncertain=false;
- for(const provider of ['pdl','exa','apify'] as const){
+ const activeProviders = reservation.grants.treg ? ['pdl','exa','apify','treg'] as const : ['pdl','exa','apify'] as const;
+ for(const provider of activeProviders){
   const grant=reservation.grants[provider];
   if(!grant)throw new Error('Tracking grant unavailable; no dispatch authorized.');
   try{
    let result:any;
-   if((provider==='pdl'&&!options.pdlEnrich)||(provider==='exa'&&!options.exaApiKey)||(provider==='apify'&&!options.skipTrace)){
+   if((provider==='pdl'&&!options.pdlEnrich)||(provider==='exa'&&!options.exaApiKey)||(provider==='apify'&&!options.skipTrace)||(provider==='treg'&&!options.tregToken?.trim())){
     await claimBudget(provider,parsed.operation_id,parsed.npi,options,grant);
     await retainSpend(options,grant,{event_id:`${grant.id}:${provider}:unconfigured`,status:'failed',actual_usd:0,estimated_usd:null,credits:null,credit_unit:null,receipt_ref:null});
     providers[provider]={status:'unavailable',reason:'Provider is not configured; no dispatch was made.'};charges[provider]=0;continue;
    }
    if(provider==='pdl') result=await enrichCandidateProfile({...providerInput,include_personal_contact:true,require_contact:false}, {...options,budgetGrant:grant});
+   else if(provider==='treg') {
+    // Only exact grounded Exa profile citations from this operation can seed the routed lookup.
+    const evidence=tregEvidenceFromExa(parsed.npi,providers.exa);
+    result=await enrichTregContact({...providerInput,operation_id:parsed.operation_id},{...options,budgetGrant:grant,tregIdentity:evidence?async()=>evidence:options.tregIdentity});
+   }
    else if(provider==='exa') result=await enrichProviderProfessionalContact({...providerInput,purpose:'recruiting_outreach',contact_types:['email','phone']},{...options,budgetGrant:grant});
    else {
     const skipInput=skipIdentity.parse({npi:parsed.npi,first:p.first_name,last:p.last_name,full_name:[p.first_name,p.middle_name,p.last_name].filter(Boolean).join(' '),practice_city:p.practice_city,practice_state:p.practice_state,confirm_paid_enrichment:true});
@@ -804,6 +842,7 @@ export async function enrichCompleteProfile(input:{npi:string;confirm_paid_enric
    }
    providers[provider]=result;
    charges[provider]=result.cached||result.cache_hit?0:finiteAmount(result.actual_cost_usd??result.charge_usd);
+   if(result.uncertain_dispatch===true)uncertain=true;
    if(['delivery_unknown','unavailable','unresolved','association_failure','privacy_blocked_review','billing_review'].includes(result.status)||(provider==='pdl'&&result.status==='pending'))uncertain=true;
   }catch(error){
    const knownCharge=error instanceof KnownEnrichmentChargeError?error.actualCostUsd:null;
@@ -812,11 +851,16 @@ export async function enrichCompleteProfile(input:{npi:string;confirm_paid_enric
    try{await retainSpend(options,grant,{event_id:`${grant.id}:${provider}:uncertain`,status:'uncertain',actual_usd:knownCharge,estimated_usd:null,credits:null,credit_unit:null,receipt_ref:error instanceof KnownEnrichmentChargeError?error.receiptId:null})}catch{/* Original durable dispatch record remains pending. */}
   }
  }
- const pending=Object.values(providers).some(r=>['pending','unavailable','unresolved','delivery_unknown','privacy_blocked'].includes(r.status));
- const known=Object.values(charges).filter((n):n is number=>n!==null);
+ const pending=Object.values(providers).some(r=>['partial','pending','unavailable','unresolved','delivery_unknown','privacy_blocked'].includes(r.status));
+ const known=Object.entries(charges).map(([provider,charge])=>
+  charge??(provider==='treg'?finiteAmount(providers.treg?.confirmed_subtotal_usd):null)
+ ).filter((n):n is number=>n!==null);
  const pendingReceipts=Object.values(charges).filter(n=>n===null).length;
- return {status:uncertain||pending?'partial':'complete',npi:parsed.npi,active_providers:['pdl','exa','apify'],
-  profile:{registry:record.provider,provider_results:providers,verification:'unverified',conflict_policy:'Retain differing provider values with their sources. No source establishes contact permission or identity by itself.'},
+ const registryPhones = reservation.grants.treg && options.readRegistryPhones
+  ? await options.readRegistryPhones(parsed.npi).catch(() => ({ status: 'unavailable' as const, phones: [] }))
+  : undefined;
+ return {status:uncertain||pending?'partial':'complete',npi:parsed.npi,active_providers:activeProviders,
+  profile:{registry:{...record.provider,...(registryPhones ? {phone_evidence:registryPhones} : {})},provider_results:providers,verification:'unverified',conflict_policy:'Retain differing provider values with their sources. No source establishes contact permission or identity by itself.'},
   providers,unstarted:[],uncertain_dispatch:uncertain,billing_reconciliation_required:pendingReceipts>0,
   spend_tracking:{operation_id:parsed.operation_id,receipt_id:reservation.id,actual_usd:known.length?Math.round(known.reduce((a,b)=>a+b,0)*1e6)/1e6:null,estimated_usd:null,pending_receipts:pendingReceipts,historical_status:'unknown',scope:'Confirmed charges for this operation only; missing receipts and historical spending are excluded.'},
   recovery:'Read existing provider receipts. Do not repeat this operation to recover a run. Refresh an existing Skip Trace run with its exact receipt.',
@@ -824,15 +868,15 @@ export async function enrichCompleteProfile(input:{npi:string;confirm_paid_enric
 }
 export function registerAbundanceHealthcareTools(server: McpServer, options: HealthcareClientOptions): void {
   server.registerTool('enrich_candidate_complete_profile', {
-    description:'After exact paid approval, request one consolidated profile for one registry NPI from PDL, Exa and Apify Skip Trace. Attempts the three active providers independently, includes professional and personal contacts, retains separate sources and tracks spend. Unknown prices or historical spending do not block. No bulk lookup, automatic retry or outreach.',
+    description:'After exact paid approval, request one consolidated profile for one registry NPI from PDL, Exa, Apify Skip Trace and Treg (for new approved operations). Attempts active providers independently, includes professional and personal contacts, retains separate sources and tracks spend. Unknown prices or historical spending do not block. No bulk lookup, automatic retry or outreach.',
     inputSchema:z.object({npi:z.string().regex(/^\d{10}$/),confirm_paid_enrichment:z.literal(true),operation_id:z.string().uuid().optional().describe('Immutable server-derived approved operation ID, required for dispatch and duplicate prevention.')}).strict(),
     annotations:{readOnlyHint:false,destructiveHint:false,idempotentHint:false,openWorldHint:true},
   },async input=>structuredJson(await enrichCompleteProfile(input,options)));
   server.registerTool('get_enrichment_readiness', {
     description: 'Read enrichment spend tracking and provider accounting status. Confirmed USD, estimates, credit units and missing receipts remain distinct. Unknown historical spend does not block enrichment. Does not make a paid vendor call.',
-    inputSchema: z.object({ provider: z.enum(['pdl', 'exa', 'apify']) }).strict(),
+    inputSchema: z.object({ provider: z.enum(['pdl', 'exa', 'apify', 'treg']) }).strict(),
     annotations: readOnlyAnnotations(),
-  }, async ({ provider }) => structuredJson(await readEnrichmentReadiness(provider,options)));
+  }, async ({ provider }) => { const readiness=await readEnrichmentReadiness(provider,options); return structuredJson(provider==='treg'?{...readiness,ready:readiness.ready===true&&!!options.tregToken?.trim(),configured:!!options.tregToken?.trim(),identity_requirement:'Exact NPI with a grounded employer staff page or attributed LinkedIn profile from the same operation.'}:readiness); });
 
   server.registerTool('enrich_candidate_skip_trace', {
     description: 'Explicit optional paid Apify broker lookup for an approved existing registry candidate NPI. Repeating the same input reads or reconciles its cached run, never broadens or dispatches a second lookup. For strict read-only recovery, reconcile_receipt requires the existing receipt id and run_id; a missing or changed receipt fails without paid dispatch. Practice geography is not home. All contacts require identity review, ownership and consent remain unverified; never recruiter-ready. No outreach or registry writes.',

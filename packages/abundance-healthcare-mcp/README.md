@@ -11,7 +11,7 @@ NPG coverage, practitioner discovery and explicitly approved enrichment over the
 - NPPES records remain `coverage_candidate` unless all seven current evidence gates pass.
 - Bulk search includes available practice phone and full practice address, explicitly labeled unverified registry data. This does not establish personal ownership, employment or permission to contact.
 - NPPES is the no-cost first lookup. NPIProfile is not queried because it republishes the same public NPPES source already stored in the owned nationwide mirror.
-- Complete-profile enrichment attempts PDL, Exa and Skip Trace independently for one approved candidate. Exa uses fixed `minimal` effort; its confirmed run cost is recorded separately from any estimate. Missing prices do not impose a spending gate. See [spend tracking](ENRICHMENT_BUDGET.md).
+- New complete-profile approvals cover PDL, Exa, Skip Trace and Treg for one exact NPI. Treg uses a corroborated identity from the same operation. The results retain partial provider outcomes and distinguish phone line checks from subscriber ownership. Exa uses fixed `minimal` effort; its confirmed run cost is recorded separately from any estimate. Missing prices do not impose a spending gate. See [spend tracking](ENRICHMENT_BUDGET.md).
 - Registry and enrichment contacts remain unverified. Neither tool establishes employment, availability, consent, advertising eligibility, or recruiting readiness.
 - Daily locale monitoring is disabled unless NPG explicitly opts a locale in later.
 
@@ -37,7 +37,7 @@ The client MCP exposes no refresh, evidence-write, outreach, advertising-activat
 3. Only when the registry route is absent or unsuitable, call `enrich_provider_professional_contact` with `confirm_paid_enrichment: true` and one or both supported `contact_types`.
 4. Resolve identity and validate the professional route under the operator's outreach or advertising policy. Tool output does not itself authorize use.
 
-`EXA_API_KEY` is a Worker secret. Never place it in Wrangler variables, client configuration, Dify prompts, logs, or repository files.
+`TREG_TOKEN` and `EXA_API_KEY` are Healthcare MCP Worker secrets. Keep both out of Wrangler variables, client configuration, Dify prompts, logs, or repository files.
 
 ## September 11 recruiter workflow
 

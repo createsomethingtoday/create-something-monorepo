@@ -218,7 +218,7 @@ test('chat availability does not imply paid provider readiness', () => {
     'utf8'
   ).replace(/\s+/g, ' ');
   assert.match(ui, /Enrichment availability/);
-  assert.match(ui, /Complete enrichment attempts PDL, Exa and Skip Trace/);
+  assert.match(ui, /Complete enrichment attempts PDL, Exa, Skip Trace and Treg/);
   assert.match(ui, /There are no application spending limits/);
   assert.match(ui, /Skip Trace review/);
   assert.match(ui, /unknown estimate does not block your review/);
@@ -449,4 +449,44 @@ test('unaccepted Exa or Clay identity states do not project professional contact
 test('approval scope array names providers without presenting cost maximums', () => {
   const fields = display.reviewFields({providers:['pdl','exa','apify']});
   assert.deepEqual(fields, [{label:'Providers in this approval',value:'PDL, Exa, Skip Trace'}]);
+});
+
+
+test('Treg is a named provider in exact approval scope and estimates', () => {
+  const fields = display.reviewFields({providers:['pdl','exa','apify','treg'], providerEstimates:[{provider:'treg',estimated_usd:null}]});
+  assert.equal(fields[0].value, 'PDL, Exa, Skip Trace, Treg');
+  assert.equal(fields[1].value, 'Treg: Estimate unknown');
+  const artifact = display.sourceArtifact({providers:{treg:{status:'no_contact',reason:'Synthetic lookup returned no associated numbers'}}});
+  assert.ok(artifact.sections.some(s => s.title.startsWith('Treg · provider outcome') && s.fields.some(f => f.value.includes('Synthetic lookup'))));
+});
+
+test('associated phones deduplicate formats, retain sources and separate fax/shared evidence', async () => {
+  const { associatedPhones } = await import('../src/lib/npg/phones.ts');
+  const rows = associatedPhones({registry:{practice_phone:'(555) 555-0100',practice_fax:'555-555-0101'},providers:{
+    pdl:{status:'matched',personal_contact:{phone_numbers:['+1 555 555 0100','5555550100'],mobile_phone:'5555550100'}},
+    treg:{status:'complete',contacts:{phone:{status:'found',value:'555-555-0100',source:{served_by:'Synthetic provider',identity_source_url:'https://example.invalid/profile'},verification:{line_type:'mobile',verdict:'valid',checked:true}}}}
+  }});
+  assert.equal(rows.length,2);
+  const associated = rows.find(row => row.kind === 'associated')!;
+  assert.equal(associated.sources.length,3);
+  assert.equal(associated.lineType,'mobile');
+  assert.equal(associated.reachability,'Unknown');
+  assert.equal(associated.ownership,'Unknown');
+  assert.equal(associated.consent,'Unknown');
+  assert.deepEqual(associated.vendorReports,['valid']);
+  assert.ok(associated.sources.some(source => source.includes('practice')));
+  assert.ok(rows.some(row => row.kind === 'fax'));
+  assert.deepEqual(associatedPhones({providers:{pdl:{status:'ambiguous',personal_contact:{phone_numbers:['5555550100']}},treg:{contacts:{phone:{status:'unresolved',value:'5555550100'}}}}}),[]);
+});
+
+test('registry phone roles retain conflicts while extensions and international formats stay distinct', async () => {
+  const {associatedPhones} = await import('../src/lib/npg/phones.ts');
+  const rows = associatedPhones({profile:{registry:{phone_evidence:{status:'available',phones:[
+    {number:'5555550100',role:'practice'}, {number:'+1 (555) 555-0100',role:'mailing fax'},
+    {number:'5555550100 x12',role:'mailing'}, {number:'+44 5555550100',role:'mailing'}
+  ]}}}});
+  assert.equal(rows.length,3);
+  assert.ok(rows.some(row=>row.roles.includes('Fax') && row.roles.includes('Associated phone candidate') && row.sources.length===2));
+  assert.ok(rows.some(row=>row.number.endsWith('x12')));
+  assert.ok(rows.some(row=>row.number.startsWith('+44')));
 });

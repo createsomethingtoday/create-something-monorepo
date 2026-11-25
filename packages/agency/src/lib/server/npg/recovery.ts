@@ -9,7 +9,7 @@ export type EnrichmentRecovery = {
   deadlineAt: number;
   reason?: string;
 };
-const names = ['pdl', 'exa', 'apify'] as const;
+const legacyNames = ['pdl', 'exa', 'apify'] as const;
 const holds = new Set([
   'blocked_review',
   'privacy_blocked_review',
@@ -34,8 +34,11 @@ function needsRead(provider: string, r: any, npi: string) {
   return provider === 'apify' && skipAnchor(r,npi) && (!holds.has(r.status) || (r.status === 'blocked_review' && r.charge_reconciled === false)) && (r.status === 'pending' || r.charge_reconciled !== true);
 }
 // Result completion is deliberately independent of the billing ledger.
-export function recomputeProfile(data: any): any {
+export function recomputeProfile(data: any, requireTreg = false): any {
   const providers = data.providers ?? {};
+  // Historical receipts keep their approved scope; new dispatches require all four.
+  const names = requireTreg || data.active_providers?.includes('treg') || Object.hasOwn(providers, 'treg')
+    ? [...legacyNames, 'treg'] : [...legacyNames];
   const blocked = Object.values(providers).some(
     (r: any) => holds.has(r?.status) || r?.match_status === 'ambiguous'
   );
@@ -61,8 +64,10 @@ export function recomputeProfile(data: any): any {
     );
   const settled = (name: string) =>
     Boolean(providers[name]) &&
-    (exaResult(name) || holds.has(providers[name].status) || terminal.has(providers[name].status));
-  const pending = names.some((name) => !settled(name));
+    (exaResult(name) || holds.has(providers[name].status) || terminal.has(providers[name].status) ||
+      (name === 'treg' && ['partial', 'unavailable'].includes(providers[name].status) && providers[name].uncertain_dispatch !== true));
+  const pending = names.some((name) => !settled(name)) ||
+    ['partial', 'unavailable'].includes(providers.treg?.status);
   const unstarted = Array.isArray(data.unstarted) && data.unstarted.length > 0;
   // A known Skip Trace pending receipt is recoverable. Unknown synchronous or
   // dispatch outcomes stay unresolved; successful exact reads replace stale flags.
@@ -72,16 +77,23 @@ export function recomputeProfile(data: any): any {
       !(providers[name]?.status === 'pending' && name === 'apify')
   );
   const historicalRetired = providers.clay && !terminal.has(providers.clay.status);
-  const charges = [...names,...(providers.clay?['clay']:[])].map((name) => {
+  const chargeProviders = [...names, ...(providers.clay ? ['clay'] : [])];
+  const charges = chargeProviders.map((name) => {
     const r = providers[name];
     return operationCacheHit(r)
       ? 0
       : amount(r?.operation_charge_usd ?? r?.actual_cost_usd ?? r?.charge_usd);
   });
-  const known = charges.filter((n): n is number => n !== null);
+  const known = charges.map((charge, index) =>
+    charge ?? (chargeProviders[index] === 'treg'
+      ? amount(providers.treg?.confirmed_subtotal_usd) : null)
+  ).filter((n): n is number => n !== null);
+  const confirmedSubtotal = known.length
+    ? Math.round(known.reduce((a, b) => a + b, 0) * 1e6) / 1e6 : null;
   const unsettled = charges.filter((n) => n === null).length;
   return {
     ...data,
+    ...(requireTreg ? { active_providers: names } : {}),
     ...(providers.clay ? {retired_providers:['clay']} : {}),
     status: blocked ? 'blocked' : pending || unstarted ? 'partial' : historicalRetired ? 'retired' : 'complete',
     uncertain_dispatch: uncertain,
@@ -108,8 +120,8 @@ export function recomputeProfile(data: any): any {
           spend_tracking: {
             ...data.spend_tracking,
             actual_usd:
-              amount(data.spend_tracking?.actual_usd) ??
-              (known.length ? Math.round(known.reduce((a, b) => a + b, 0) * 1e6) / 1e6 : null),
+              confirmedSubtotal === null ? amount(data.spend_tracking?.actual_usd)
+                : Math.max(amount(data.spend_tracking?.actual_usd) ?? 0, confirmedSubtotal),
             pending_receipts: data.spend_tracking?.pending_receipts ?? unsettled
           }
         }

@@ -1,3 +1,4 @@
+import { readRegistryPhones } from '../src/registry-phones.js';
 import { recordSpend, finiteAmount, type BudgetGrant } from '../src/enrichment-budget.js';
 import { triggerEnrichmentRecovery } from './recovery-trigger.js';
 import { skipTrace, skipTraceReadiness, skipIdentity, type SkipResult } from '../src/skip-trace.js';
@@ -15,6 +16,7 @@ import {
 } from '../src/index.js';
 
 interface Env {
+  TREG_TOKEN?: string;
   APIFY_PRIVACY_DATASET_ID?: string;
   APIFY_API_TOKEN?: string;
   SKIP_TRACE: DurableObjectNamespace;
@@ -63,9 +65,11 @@ export class AbundanceHealthcareMCP extends McpAgent<Env> {
       enabled: false,
     });
     registerAbundanceHealthcareTools(this.server, {
+      readRegistryPhones,
       agencyApiKey: this.env.AGENCY_INTERNAL_API_KEY,
       agencyBaseUrl: this.env.AGENCY_BASE_URL?.trim() || DEFAULT_AGENCY_BASE_URL,
       exaApiKey: this.env.EXA_API_KEY,
+      tregToken: this.env.TREG_TOKEN,
       skipTraceReadiness: async()=>{
         const stub=this.env.SKIP_TRACE.get(this.env.SKIP_TRACE.idFromName('npg-skip-trace-v1'));
         const response=await stub.fetch('https://skip.internal/readiness');

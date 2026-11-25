@@ -1,6 +1,6 @@
 # Retired enrichment integration
 
-Clay has been removed from the active NPG integration. PDL, Exa and Skip Trace are the three supported providers. The MCP catalog and readiness schema no longer advertise Clay tools or provider options; new combined profiles contain only the three supported provider results.
+Clay has been removed from the active NPG integration. New complete-profile approvals cover PDL, Exa, Skip Trace and Treg. The MCP catalog and readiness schema no longer advertise Clay tools or provider options; new combined profiles contain only the approved provider results.
 
 The former Agency request/read endpoint returns HTTP 410 after internal bearer authentication. The former callback verifies the original job token read-only and returns HTTP 410; it accepts no result writes. No new dispatch, paid request, automatic callback retry, or account upgrade is authorized by retirement.
 

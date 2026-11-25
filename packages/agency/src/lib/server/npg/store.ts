@@ -314,7 +314,7 @@ export class NpgStore {
       AND json_extract(s.value,'$.data.npi')=?
       AND (? IS NULL OR (c.id=? AND a.id=?))
       AND (? IS NOT NULL OR EXISTS(SELECT 1 FROM json_each(s.value,'$.data.providers') p
-        WHERE p.key IN ('pdl','exa','apify') AND
+        WHERE p.key IN ('pdl','exa','apify','treg') AND
         (json_extract(p.value,'$.status') IN ('pending','blocked_review','privacy_blocked_review','association_failure','billing_review','ambiguous')
           OR (p.key='apify' AND json_extract(p.value,'$.charge_reconciled')=0))))
       ORDER BY c.updated_at DESC LIMIT 1`
@@ -339,13 +339,13 @@ export class NpgStore {
     if (!source)
       return 'This candidate has an existing receipt hold. Ask your operator to reconcile the original receipt. No new paid lookup was sent.';
     const providers = (source.data as any)?.providers ?? {};
-    const statuses = ['pdl', 'exa', 'apify']
+    const statuses = Object.keys(providers).filter((name) => ['pdl', 'exa', 'apify', 'treg'].includes(name))
       .map(
         (name) =>
           `${name === 'apify' ? 'Skip Trace' : name.toUpperCase()}: ${providers[name]?.status ?? providers[name]?.match_status ?? 'unknown'}`
       )
       .join('; ');
-    const blocked = ['pdl', 'exa', 'apify'].some((name) =>
+    const blocked = Object.keys(providers).filter((name) => ['pdl', 'exa', 'apify', 'treg'].includes(name)).some((name) =>
       ['blocked_review', 'privacy_blocked_review', 'association_failure', 'ambiguous'].includes(
         providers[name]?.status
       )
@@ -413,7 +413,7 @@ export class NpgStore {
           AND json_extract(s.value,'$.data.npi')=json_extract(current.arguments_json,'$.npi')
           AND (json_extract(s.value,'$.data.providers.apify.status')='pending'
             OR json_extract(s.value,'$.data.providers.apify.charge_reconciled')=0
-            OR EXISTS (SELECT 1 FROM json_each(s.value,'$.data.providers') p WHERE p.key IN ('pdl','exa','apify') AND json_extract(p.value,'$.status') IN ('blocked_review','privacy_blocked_review','association_failure','billing_review','ambiguous')))) LIMIT 1`
+            OR EXISTS (SELECT 1 FROM json_each(s.value,'$.data.providers') p WHERE p.key IN ('pdl','exa','apify','treg') AND json_extract(p.value,'$.status') IN ('blocked_review','privacy_blocked_review','association_failure','billing_review','ambiguous')))) LIMIT 1`
         )
         .bind(actionId)
         .first();

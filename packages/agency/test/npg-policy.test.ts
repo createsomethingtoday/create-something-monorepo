@@ -9,3 +9,8 @@ test('custom spend tracking supersedes Dify limits without removing exact approv
   assert.match(NPG_SKIP_TRACE_POLICY, /host creates operation_id/);
   assert.match(NPG_SKIP_TRACE_POLICY, /No calls, email, text/);
 });
+
+test('generic enrichment explicitly includes Treg in the single owner review', () => {
+  assert.match(NPG_SKIP_TRACE_POLICY, /four active providers/);
+  assert.match(NPG_SKIP_TRACE_POLICY, /Treg provider-reported/);
+});

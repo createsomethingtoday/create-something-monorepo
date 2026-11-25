@@ -1,5 +1,5 @@
 /** Spend tracking and dispatch idempotency. There is no financial admission ceiling. */
-export type Provider = 'pdl' | 'clay' | 'exa' | 'apify';
+export type Provider = 'pdl' | 'clay' | 'exa' | 'apify' | 'treg';
 export type BudgetGrant = { id: string; provider: Provider; token: string; npi: string };
 export type BudgetOptions = {
   agencyApiKey?: string;
