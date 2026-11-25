@@ -24,18 +24,21 @@ const call = (query = '', headers: Record<string, string> = { authorization: 'Be
   } as never);
 };
 
+const receipt = {
+  snapshotAt: '2026-11-09T16:00:00.000Z',
+  summary: { totalSales: 5, totalRevenue: 230, sellingTemplates: 2, fulfillmentSales: 1 },
+  leaderboardRows: 2,
+  categoryRows: 3,
+  recordId: 'recFixture0000000',
+  taxonomyNotes: [{ kind: 'unmapped', name: 'x', used: 'Other' }],
+  creatorEmailNotes: [],
+  windowNotes: []
+};
+
 beforeEach(() => {
   vi.resetAllMocks();
   mocks.rest.mockReturnValue({ fixture: true });
-  mocks.publish.mockResolvedValue({
-    snapshotAt: '2026-11-09T16:00:00.000Z',
-    summary: { totalSales: 5, totalRevenue: 230, sellingTemplates: 2, fulfillmentSales: 1 },
-    leaderboardRows: 2,
-    categoryRows: 3,
-    recordId: 'recFixture0000000',
-    taxonomyNotes: [{ kind: 'unmapped', name: 'x', used: 'Other' }],
-    creatorEmailNotes: []
-  });
+  mocks.publish.mockResolvedValue(receipt);
 });
 
 describe('POST /api/cron/insights', () => {
@@ -59,7 +62,19 @@ describe('POST /api/cron/insights', () => {
     const [, options] = mocks.publish.mock.calls[0];
     expect(options.snapshotTable).toBe('tblFixture0000000');
     expect(options.asOf.toISOString()).toMatch(/T16:00:00.000Z$/);
-    expect(body).toMatchObject({ success: true, recordId: 'recFixture0000000', taxonomyNotes: 1, creatorEmailNotes: 0 });
+    expect(body).toMatchObject({
+      success: true,
+      recordId: 'recFixture0000000',
+      taxonomyNotes: 1,
+      creatorEmailNotes: 0,
+      windowNotes: []
+    });
+  });
+
+  it('reports why a 90-day window was left out', async () => {
+    const reason = 'Fivetran 90-day sellers activation has no rows for window 2026-11-09T16:00:00.000Z';
+    mocks.publish.mockResolvedValueOnce({ ...receipt, windowNotes: [{ kind: '90-day-source-left-out', reason }] });
+    expect(await (await call()).json()).toMatchObject({ success: true, windowNotes: [reason] });
   });
 
   it('republishes a requested window end', async () => {

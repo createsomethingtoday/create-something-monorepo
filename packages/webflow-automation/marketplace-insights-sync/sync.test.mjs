@@ -19,7 +19,8 @@ const tables = {
   categories: 'tblSygBX7adZ4VNjK',
   creators: 'tbljt0plqxdMARZXb',
   snapshot: 'tblSnapshotTest01',
-  sellers: 'tblkyKZ5nGOcEqb5r'
+  sellers: 'tblkyKZ5nGOcEqb5r',
+  sellers90: 'tblAlUQbYfyQZ81hK'
 };
 const fixture = () => ({
   sellers: [
@@ -337,4 +338,84 @@ test('airtable source fails when only some rows carry fulfillment-link sales', (
   assert.notEqual(result.status, 0);
   assert.match(result.stderr, /FULFILLMENT_SALES_30D on 1 of 2 rows/);
   assert.deepEqual(result.writes, []);
+});
+
+// Fivetran → Airtable 90-day source. It is an extra: a window that is missing or
+// fails a check is left out with a note, and the 30-day snapshot is still published.
+const seller90Row = (overrides = {}) => ({
+  id: 'recNinety' + Math.random().toString(36).slice(2, 8),
+  fields: {
+    fldfJICjIS6eofVt6: 'a'.repeat(24),
+    fldpxJApQWqim37qz: 7,
+    fldPyxD0llHujBU3O: 2,
+    fldTGr1pXKuiABrpk: 350,
+    fldrmaKXTVX3FCVTy: '2026-09-21T16:00:00.000Z',
+    fldEG1qLSCRTSULI9: 1,
+    fldq4EZZJ38MH7naO: 7,
+    fld1kUy9e4XD68Tib: 350,
+    ...overrides
+  }
+});
+const ninetyFixture = (rows90, rows30 = [sellerRow({ fld7zlIkAV4GDW7rk: 1 })]) => {
+  const data = airtableFixture(rows30);
+  data.records[tables.sellers90] = rows90;
+  return data;
+};
+// The last log line is "<ISO time> <receipt JSON>".
+const receiptOf = (result) => {
+  const line = result.stdout.trim().split('\n').at(-1);
+  return JSON.parse(line.slice(line.indexOf('{')));
+};
+const published = (result) => {
+  assert.equal(result.status, 0, result.stderr);
+  assert.equal(result.writes.length, 1);
+  assert.equal(result.snapshot.summary.totalSales, 3);
+  return receiptOf(result);
+};
+test('airtable source adds the 90-day window when its table holds the complete window', () => {
+  const second = { fldfJICjIS6eofVt6: 'c'.repeat(24), fldpxJApQWqim37qz: 2, fldPyxD0llHujBU3O: 0, fldTGr1pXKuiABrpk: 98 };
+  const totals = { fldEG1qLSCRTSULI9: 2, fldq4EZZJ38MH7naO: 9, fld1kUy9e4XD68Tib: 448 };
+  const stale = seller90Row({ fldfJICjIS6eofVt6: 'd'.repeat(24), fldrmaKXTVX3FCVTy: '2026-09-14T16:00:00.000Z' });
+  const result = run(ninetyFixture([seller90Row(totals), seller90Row({ ...second, ...totals }), stale]), ['--execute', '--source', 'airtable']);
+  const receipt = published(result);
+  assert.deepEqual(receipt.windowNotes, []);
+  assert.equal(result.snapshot.summary.totalSales90d, 9);
+  assert.equal(result.snapshot.summary.totalRevenue90d, 448);
+  assert.equal(result.snapshot.summary.sellingTemplates90d, 2);
+  const agency = result.snapshot.categories.find((row) => row.subcategory === 'Agency');
+  assert.equal(agency.totalSales90d, 7);
+  assert.equal(agency.fulfillmentSales90d, 2);
+});
+test('a 90-day table with no rows for the window is left out and noted', () => {
+  const result = run(ninetyFixture([seller90Row({ fldrmaKXTVX3FCVTy: '2026-09-14T16:00:00.000Z' })]), ['--execute', '--source', 'airtable']);
+  const receipt = published(result);
+  assert.equal(result.snapshot.summary.totalSales90d, undefined);
+  assert.equal(receipt.windowNotes.length, 1);
+  assert.equal(receipt.windowNotes[0].kind, '90-day-source-left-out');
+  assert.match(receipt.windowNotes[0].reason, /90-day sellers activation has no rows for window 2026-09-21T16:00:00.000Z/);
+});
+test('a partly written 90-day window is left out and noted', () => {
+  const result = run(ninetyFixture([seller90Row({ fldEG1qLSCRTSULI9: 2, fldq4EZZJ38MH7naO: 9 })]), ['--execute', '--source', 'airtable']);
+  const receipt = published(result);
+  assert.equal(result.snapshot.summary.totalSales90d, undefined);
+  assert.match(receipt.windowNotes[0].reason, /90-day sellers rows are incomplete/);
+});
+test('a 90-day window that does not contain a 30-day seller is left out and noted', () => {
+  const other = { fldfJICjIS6eofVt6: 'c'.repeat(24) };
+  const result = run(ninetyFixture([seller90Row(other)]), ['--execute', '--source', 'airtable']);
+  const receipt = published(result);
+  assert.equal(result.snapshot.summary.totalSales90d, undefined);
+  assert.match(receipt.windowNotes[0].reason, /90-day sales below 30-day sales/);
+});
+test('a 90-day table that cannot be read does not stop the 30-day snapshot', () => {
+  // The fixture has no 90-day table, so the mock rejects the read.
+  const result = run(airtableFixture([sellerRow()]), ['--execute', '--source', 'airtable']);
+  const receipt = published(result);
+  assert.equal(receipt.windowNotes[0].kind, '90-day-source-left-out');
+});
+test('snowflake source does not read the 90-day table', () => {
+  const result = run(fixture());
+  assert.equal(result.status, 0, result.stderr);
+  assert.equal(result.calls.some((call) => call.table === tables.sellers90), false);
+  assert.deepEqual(receiptOf(result).windowNotes, []);
 });

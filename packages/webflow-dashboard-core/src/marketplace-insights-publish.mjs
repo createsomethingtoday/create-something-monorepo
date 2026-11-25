@@ -23,6 +23,42 @@ export const SELLER_FIELDS = {
   WINDOW_SALES: 'fld31oTda0kji5IDi',
   WINDOW_REVENUE: 'fldzB6kawJH32fDmA'
 };
+// 90-day sellers, written by the Fivetran activation "Marketplace Insights
+// sellers (90d) → Airtable" (SQL: fivetran-sellers-90d.sql).
+export const SELLERS_90D_TABLE = 'tblAlUQbYfyQZ81hK';
+export const SELLER_90D_FIELDS = {
+  TEMPLATE_ID: 'fldfJICjIS6eofVt6',
+  SALES_90D: 'fldpxJApQWqim37qz',
+  FULFILLMENT_SALES_90D: 'fldPyxD0llHujBU3O',
+  REVENUE_90D: 'fldTGr1pXKuiABrpk',
+  SNAPSHOT_AT: 'fldrmaKXTVX3FCVTy',
+  WINDOW_SELLERS_90D: 'fldEG1qLSCRTSULI9',
+  WINDOW_SALES_90D: 'fldq4EZZJ38MH7naO',
+  WINDOW_REVENUE_90D: 'fld1kUy9e4XD68Tib'
+};
+// The two seller sources have one shape. Only the table and the column names differ.
+const SOURCE_30D = {
+  label: 'sellers',
+  table: SELLERS_TABLE,
+  fields: SELLER_FIELDS,
+  sales: 'SALES_30D',
+  fulfillment: 'FULFILLMENT_SALES_30D',
+  revenue: 'REVENUE_30D',
+  windowSellers: 'WINDOW_SELLERS',
+  windowSales: 'WINDOW_SALES',
+  windowRevenue: 'WINDOW_REVENUE'
+};
+const SOURCE_90D = {
+  label: '90-day sellers',
+  table: SELLERS_90D_TABLE,
+  fields: SELLER_90D_FIELDS,
+  sales: 'SALES_90D',
+  fulfillment: 'FULFILLMENT_SALES_90D',
+  revenue: 'REVENUE_90D',
+  windowSellers: 'WINDOW_SELLERS_90D',
+  windowSales: 'WINDOW_SALES_90D',
+  windowRevenue: 'WINDOW_REVENUE_90D'
+};
 const CATEGORIES_TABLE = 'tblSygBX7adZ4VNjK';
 const ASSETS_TABLE = 'tblRwzpWoLgE9MrUm';
 const CREATORS_TABLE = 'tbljt0plqxdMARZXb';
@@ -108,53 +144,76 @@ export function createAirtableRest({ apiKey, baseId, fetchImpl = fetch, requestD
 }
 
 /**
- * Sellers for one window from the table the Fivetran activation writes. The
+ * Sellers for one window from a table that a Fivetran activation writes. The
  * activation upserts on TEMPLATE_ID, so the table holds the latest window plus
  * stale rows for templates that stopped selling. Use only the requested window,
  * and prove the set is complete: every row carries the window totals computed
  * in the same query.
  */
-export async function readSellersFromAirtable(rest, windowEnd) {
+async function readWindow(rest, windowEnd, source) {
   const want = windowEnd.toISOString();
-  const S = SELLER_FIELDS;
-  const records = await rest.listAll(SELLERS_TABLE, Object.values(S));
+  const S = source.fields;
+  const col = (name) => S[source[name]];
+  const records = await rest.listAll(source.table, Object.values(S));
   const stamps = [...new Set(records.map((r) => r.fields[S.SNAPSHOT_AT]).filter(Boolean))].sort();
   const rows = records.filter((r) => r.fields[S.SNAPSHOT_AT] === want);
   // The dataset emits no rows until Snowflake holds every order in the window,
   // so a missing window can also mean the daily orders load has not run yet.
   if (!rows.length)
     fail(
-      `Fivetran sellers activation has no rows for window ${want} (newest: ${stamps.at(-1) ?? 'none'}); the orders load may not cover the window end yet`
+      `Fivetran ${source.label} activation has no rows for window ${want} (newest: ${stamps.at(-1) ?? 'none'}); the orders load may not cover the window end yet`
     );
   const totals = new Set(
-    rows.map((r) => `${r.fields[S.WINDOW_SELLERS]}/${r.fields[S.WINDOW_SALES]}/${r.fields[S.WINDOW_REVENUE]}`)
+    rows.map((r) => `${r.fields[col('windowSellers')]}/${r.fields[col('windowSales')]}/${r.fields[col('windowRevenue')]}`)
   );
-  if (totals.size !== 1) fail(`Fivetran sellers rows disagree on window totals for ${want}`);
-  // FULFILLMENT_SALES_30D is all-or-nothing per window; a partial column would
-  // understate fulfillment-link sales without saying so.
-  const withFulfillment = rows.filter((r) => r.fields[S.FULFILLMENT_SALES_30D] !== undefined).length;
+  if (totals.size !== 1) fail(`Fivetran ${source.label} rows disagree on window totals for ${want}`);
+  // The fulfillment-link column is all-or-nothing per window; a partial column
+  // would understate fulfillment-link sales without saying so.
+  const withFulfillment = rows.filter((r) => r.fields[col('fulfillment')] !== undefined).length;
   if (withFulfillment && withFulfillment !== rows.length)
-    fail(`Fivetran sellers rows for ${want} carry FULFILLMENT_SALES_30D on ${withFulfillment} of ${rows.length} rows`);
+    fail(
+      `Fivetran ${source.label} rows for ${want} carry ${source.fulfillment} on ${withFulfillment} of ${rows.length} rows`
+    );
   const sellers = rows.map((r) => ({
     templateId: r.fields[S.TEMPLATE_ID],
-    mrpId: r.fields[S.MRP_ID],
-    name: r.fields[S.TEMPLATE_NAME],
-    sales: parseMetric(r.fields[S.SALES_30D]),
-    ...(withFulfillment && { fulfillmentSales: parseMetric(r.fields[S.FULFILLMENT_SALES_30D]) }),
-    revenue: parseMetric(r.fields[S.REVENUE_30D])
+    ...(S.MRP_ID && { mrpId: r.fields[S.MRP_ID], name: r.fields[S.TEMPLATE_NAME] }),
+    sales: parseMetric(r.fields[col('sales')]),
+    ...(withFulfillment && { fulfillmentSales: parseMetric(r.fields[col('fulfillment')]) }),
+    revenue: parseMetric(r.fields[col('revenue')])
   }));
-  const expectedSellers = parseMetric(rows[0].fields[S.WINDOW_SELLERS]);
-  const expectedSales = parseMetric(rows[0].fields[S.WINDOW_SALES]);
-  const expectedRevenue = parseMetric(rows[0].fields[S.WINDOW_REVENUE]);
+  const expectedSellers = parseMetric(rows[0].fields[col('windowSellers')]);
+  const expectedSales = parseMetric(rows[0].fields[col('windowSales')]);
+  const expectedRevenue = parseMetric(rows[0].fields[col('windowRevenue')]);
   const sales = sellers.reduce((sum, row) => sum + row.sales, 0);
   // Revenue is compared in cents so a rerun that changed only revenue cannot
   // pass with a mix of old and new rows.
   const cents = Math.round(sellers.reduce((sum, row) => sum + row.revenue, 0) * 100);
   if (sellers.length !== expectedSellers || sales !== expectedSales || cents !== Math.round(expectedRevenue * 100))
     fail(
-      `Fivetran sellers rows are incomplete for ${want}: ${sellers.length}/${expectedSellers} sellers, ${sales}/${expectedSales} sales, ${cents / 100}/${expectedRevenue} revenue`
+      `Fivetran ${source.label} rows are incomplete for ${want}: ${sellers.length}/${expectedSellers} sellers, ${sales}/${expectedSales} sales, ${cents / 100}/${expectedRevenue} revenue`
     );
   return sellers;
+}
+
+/** The 30-day sellers of the window that ends at `windowEnd`. A missing or incomplete window fails. */
+export const readSellersFromAirtable = (rest, windowEnd) => readWindow(rest, windowEnd, SOURCE_30D);
+
+/** Every template with a delivered sale in the 90 days to `windowEnd`. Same checks as the 30-day source. */
+export const readSellers90FromAirtable = (rest, windowEnd) => readWindow(rest, windowEnd, SOURCE_90D);
+
+const leftOut = (error) => ({ kind: '90-day-source-left-out', reason: String(error?.message ?? error) });
+
+/**
+ * The 90-day window is an extra. A source that is missing, incomplete or
+ * unreadable is left out and named in a note; it never stops the weekly 30-day
+ * snapshot. The dashboard hides its 90-day switch for a snapshot without it.
+ */
+export async function readSellers90OrNote(rest, windowEnd) {
+  try {
+    return { sellers90: await readSellers90FromAirtable(rest, windowEnd), windowNotes: [] };
+  } catch (error) {
+    return { sellers90: undefined, windowNotes: [leftOut(error)] };
+  }
 }
 
 /**
@@ -253,15 +312,15 @@ export async function buildSnapshotFromAirtable(rest, { sellers, snapshotAt, sel
       )
     )
   };
-  // The 90-day window is an extra. A source that fails its checks is left out
-  // and named in the receipt; it never stops the weekly 30-day snapshot.
+  // A 90-day source that fails the snapshot's own checks (for example, it does
+  // not contain every 30-day seller) is left out in the same way.
   const windowNotes = [];
   let snapshot;
   if (sellers90) {
     try {
       snapshot = buildMarketplaceSnapshot({ ...input, sellers90 });
     } catch (error) {
-      windowNotes.push({ kind: '90-day-source-left-out', reason: String(error?.message ?? error) });
+      windowNotes.push(leftOut(error));
     }
   }
   snapshot ??= buildMarketplaceSnapshot(input);
@@ -287,14 +346,16 @@ export async function publishSnapshot(rest, snapshotTable, snapshot) {
 }
 
 /**
- * End to end from the Fivetran sellers table: read the window, build, publish,
- * verify. Returns the receipt the CLI also writes to runs/.
+ * End to end from the Fivetran sellers tables: read the window (30 days, plus
+ * the 90 days when that source is complete), build, publish, verify. Returns the receipt the CLI also writes to runs/.
  */
 export async function publishMarketplaceInsights(rest, { snapshotTable, asOf = latestMondayBoundary(), execute = true }) {
   const sellers = await readSellersFromAirtable(rest, asOf);
-  const { snapshot, taxonomyNotes, creatorEmailNotes } = await buildSnapshotFromAirtable(rest, {
+  const ninety = await readSellers90OrNote(rest, asOf);
+  const { snapshot, taxonomyNotes, creatorEmailNotes, windowNotes } = await buildSnapshotFromAirtable(rest, {
     sellers,
-    snapshotAt: asOf.toISOString()
+    snapshotAt: asOf.toISOString(),
+    sellers90: ninety.sellers90
   });
   const recordId = execute ? await publishSnapshot(rest, snapshotTable, snapshot) : undefined;
   return {
@@ -308,6 +369,7 @@ export async function publishMarketplaceInsights(rest, { snapshotTable, asOf = l
     legacyTablesModified: false,
     taxonomyNotes,
     creatorEmailNotes,
+    windowNotes: [...ninety.windowNotes, ...windowNotes],
     ranAt: new Date().toISOString()
   };
 }

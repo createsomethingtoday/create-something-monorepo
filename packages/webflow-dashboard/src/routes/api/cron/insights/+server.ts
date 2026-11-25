@@ -2,8 +2,8 @@
  * Weekly Marketplace Insights publication.
  *
  * Reads the 30-day sellers window that the Fivetran activation writes to
- * Airtable, builds the complete snapshot, publishes it to the snapshot table and
- * verifies the readback. Same code as the CLI
+ * Airtable (plus the 90-day window when that source is complete), builds the
+ * complete snapshot, publishes it to the snapshot table and verifies the readback. Same code as the CLI
  * (webflow-automation/marketplace-insights-sync), from webflow-dashboard-core.
  *
  * Called by the marketplace-insights-cron Worker on Tuesdays (Pages projects
@@ -43,7 +43,9 @@ export const POST: RequestHandler = async ({ request, url, platform }) => {
       asOf
     });
     // Source-data substitutions go to the Worker logs as counts only; the
-    // record-level notes stay in the CLI's local receipts.
+    // record-level notes stay in the CLI's local receipts. A 90-day window that
+    // was left out is the exception: its reason goes to the logs, so the cause
+    // can be found without a local run.
     return json({
       success: true,
       snapshotAt: receipt.snapshotAt,
@@ -52,7 +54,8 @@ export const POST: RequestHandler = async ({ request, url, platform }) => {
       categoryRows: receipt.categoryRows,
       recordId: receipt.recordId,
       taxonomyNotes: receipt.taxonomyNotes.length,
-      creatorEmailNotes: receipt.creatorEmailNotes.length
+      creatorEmailNotes: receipt.creatorEmailNotes.length,
+      windowNotes: (receipt.windowNotes ?? []).map((note) => note.reason)
     });
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Unknown error';
