@@ -24,6 +24,13 @@ const INSTRUCTIONS_PATH = '/instructions';
 const SPECIMEN_PATHS = new Set(['/style-guide', '/styleguide', '/instructions', '/licenses', '/changelog', '/401', '/404']);
 /** Internal targets that answer with an error status by design. */
 const ERROR_STATUS_PATHS = new Set(['/401', '/404']);
+/**
+ * Internal targets that are not pages of the template, so a 404 from them is not a broken link:
+ * files that only a hosted site serves (sitemap.xml, a collection's rss.xml), CDN paths, and
+ * "/sample-result", the target of the sample results the platform shows on a Search results
+ * page of a site with no search index.
+ */
+const NOT_A_PAGE_TARGET = /^\/cdn-cgi\/|\.[a-z0-9]{2,5}$|^\/sample-result$/i;
 /** Webflow's own asset for the Background Video play/pause control. */
 const PLATFORM_ASSET_PREFIX = '6022af993a6b2191db3ed10c';
 /** A main collection holds 3 to 7 items (guideline cms-and-ecommerce-09). */
@@ -210,7 +217,7 @@ export function auditReviewNotes(elements: MarkupNode[], root: MarkupNode, pageU
 			if (/^(?:https?:)?\/\//i.test(href) && data.ownDomainLinks.length < MAX_SAMPLES) data.ownDomainLinks.push(href.slice(0, 120));
 			// A path that starts with "//" resolves to another host when it is joined to the site again, so it is not a target of this site.
 			const sitePath = !targetPath.startsWith('//');
-			if (sitePath && !ERROR_STATUS_PATHS.has(targetPath)) internal.add(targetPath);
+			if (sitePath && !ERROR_STATUS_PATHS.has(targetPath) && !NOT_A_PAGE_TARGET.test(targetPath)) internal.add(targetPath);
 			if (sitePath && targetPath.split('/').length === 3 && ancestors(el).some((parent) => classes(parent).includes('w-dyn-item'))) items.add(targetPath);
 		} else if (/\.webflow\.io$/i.test(targetHost)) {
 			// The Licenses and Instructions pages name sources and guides, and one of those can be a webflow.io site.

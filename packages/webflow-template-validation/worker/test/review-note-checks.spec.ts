@@ -148,6 +148,16 @@ describe('Review-note checks', () => {
 			expect(uncheckedInternalTargets([home, page('/about', NAV + FOOTER)], 10)).toEqual(['/licenses']);
 		});
 
+		it('does not list targets that are not pages: platform sample search results, files and CDN paths', () => {
+			const search = page(
+				'/search',
+				`${NAV}<a href="/sample-result" class="search-result-item w-inline-block">You're viewing sample results.</a>` +
+					`<a href="/sitemap.xml">Sitemap</a><a href="/blog/rss.xml">RSS</a><a href="/cdn-cgi/l/email-protection#abc">Email</a><a href="/services/design">Design</a>${FOOTER}`
+			);
+			expect(uncheckedInternalTargets([search], 10)).toEqual(['/', '/about', '/licenses', '/services/design']);
+			expect(detail('links-internal-not-found', [search], { notFoundTargets: ['/sample-result', '/sitemap.xml'] })).toBeUndefined();
+		});
+
 		it('reports a target the site answered with 404, and the pages that link to it', () => {
 			const home = page('/', `${NAV}<a href="/services/design">Design</a>${FOOTER}`);
 			const [entry] = detail('links-internal-not-found', [home], { notFoundTargets: ['/services/design'] })!;
