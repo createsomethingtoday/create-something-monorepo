@@ -316,7 +316,9 @@ export class NpgStore {
       AND (? IS NOT NULL OR EXISTS(SELECT 1 FROM json_each(s.value,'$.data.providers') p
         WHERE p.key IN ('pdl','exa','apify','treg') AND
         (json_extract(p.value,'$.status') IN ('pending','blocked_review','privacy_blocked_review','association_failure','billing_review','ambiguous')
-          OR (p.key='apify' AND json_extract(p.value,'$.charge_reconciled')=0))))
+          OR (p.key='apify' AND json_extract(p.value,'$.charge_reconciled')=0)
+          OR (p.key='treg' AND (json_extract(p.value,'$.contacts.phone.status')='pending'
+            OR json_extract(p.value,'$.contacts.email.status')='pending')))))
       ORDER BY c.updated_at DESC LIMIT 1`
       )
       .bind(
@@ -413,6 +415,8 @@ export class NpgStore {
           AND json_extract(s.value,'$.data.npi')=json_extract(current.arguments_json,'$.npi')
           AND (json_extract(s.value,'$.data.providers.apify.status')='pending'
             OR json_extract(s.value,'$.data.providers.apify.charge_reconciled')=0
+            OR json_extract(s.value,'$.data.providers.treg.contacts.phone.status')='pending'
+            OR json_extract(s.value,'$.data.providers.treg.contacts.email.status')='pending'
             OR EXISTS (SELECT 1 FROM json_each(s.value,'$.data.providers') p WHERE p.key IN ('pdl','exa','apify','treg') AND json_extract(p.value,'$.status') IN ('blocked_review','privacy_blocked_review','association_failure','billing_review','ambiguous')))) LIMIT 1`
         )
         .bind(actionId)
