@@ -3330,11 +3330,11 @@ function createValidationScopeHTML(data: ValidationResponse): string {
   }
 
   return `
-    <div class="validation-scope">
-      <div class="validation-scope-header">
-        <h3>Validation Scope</h3>
-        <span>${scope?.publishedChecks === 'full' ? 'Full coverage' : 'Partial coverage'}</span>
-      </div>
+    <details class="validation-scope">
+      <summary class="validation-scope-header">
+        <h3>Validation scope</h3>
+        <span>${scope ? `${scope.pageScope === 'current' ? 'Current page' : 'All published pages'}, ${scope.publishedChecks === 'full' ? 'full coverage' : 'partial coverage'}` : ''}</span>
+      </summary>
       <div class="validation-scope-grid">
         ${scopeRows.map(row => `
           <div class="validation-scope-row">
@@ -3343,7 +3343,7 @@ function createValidationScopeHTML(data: ValidationResponse): string {
           </div>
         `).join('')}
       </div>
-    </div>
+    </details>
   `;
 }
 

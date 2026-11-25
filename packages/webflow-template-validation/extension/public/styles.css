@@ -2802,3 +2802,34 @@ body {
 .validate-btn[aria-busy="true"]:disabled {
   opacity: 0.85;
 }
+
+/* Validation scope: one closed line; the details are for support questions */
+.results-display details.validation-scope {
+  margin: 0 0 var(--space-2);
+  padding: 0;
+}
+
+.results-display .validation-scope > summary.validation-scope-header {
+  justify-content: flex-start;
+  gap: var(--space-2);
+  margin: 0;
+  padding: var(--space-2) var(--space-3);
+  color: var(--text-muted);
+  list-style: none;
+}
+
+.validation-scope > summary::-webkit-details-marker {
+  display: none;
+}
+
+.validation-scope-header h3 {
+  font-size: 0.8125rem;
+}
+
+.validation-scope-header span {
+  margin-left: auto;
+}
+
+.validation-scope-grid {
+  padding: 0 var(--space-3) var(--space-3);
+}

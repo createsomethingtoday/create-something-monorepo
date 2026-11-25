@@ -9,6 +9,7 @@
 - New empty state before the first run on a site, with the three steps to a result.
 - The main button follows the state. With a report on screen, "Open Fix List" is the blue button and the run button reads "Run again". During script setup, "Copy Validator script" is the blue button.
 - Finding badges use one word set in both tabs: Error, Warning, Note.
+- "Validation scope" is one closed line; open it for the published URL, publish time and checks.
 - Categories with no findings fold into one line ("11 categories with no findings").
 - "Flag as incorrect" shows on the row in use (hover or keyboard focus).
 - The status line says "Running the Validator..." during a run and goes back to the script state after it.
