@@ -65,6 +65,9 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Reject retired Canon character assets
+        run: node scripts/check-canon-character-retirement.mjs
+
       - name: Build Canon package
         run: pnpm --filter @create-something/canon package
 
@@ -73,6 +76,9 @@ jobs:
 
       - name: Build Agency
         run: pnpm --filter @create-something/agency build
+
+      - name: Verify Canon character release artifact
+        run: node scripts/check-canon-character-retirement.mjs --artifact packages/agency/.svelte-kit/cloudflare
 
       - name: Require matching Ground release before production deploy
         if: steps.deploy.outputs.eligible == 'true' && github.ref_name == 'main'

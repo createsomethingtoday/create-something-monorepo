@@ -3,11 +3,25 @@ import { z } from 'zod';
 import { createHash } from 'node:crypto';
 
 import type { AirtableClient, AppReviewVersion, CollaboratorRef } from './airtable.js';
-import { AirtableClientError, assertReviewerAssignmentReadOnly } from './airtable.js';
+import { AirtableClientError, assertReviewerAssignmentReadOnly, compareExceptionItems } from './airtable.js';
+import type { LiveListing, LiveListingConfig } from './live-listing.js';
+import { LIVE_LISTING_STATUSES, LIVE_LISTING_VISIBILITIES, readLiveListing, writeLiveListing } from './live-listing.js';
 import type { ZendeskClient } from './zendesk.js';
 import { ZENDESK_WRITABLE_STATUSES, ZendeskClientError, renderCreatorFacingHtml } from './zendesk.js';
 import {
+  buildReleaseNotice,
+  ReviewCommentsClientError,
+  type ReleaseNotice,
+  type ReleaseNotification,
+  type ReviewComment,
+  type ReviewCommentsClient,
+  type ReviewOutcome,
+  splitCommentBody,
+} from './review-comments.js';
+import {
   APP_REVIEW_FIELD_MAP,
+  BACKEND_HOSTING_MODEL_OPTIONS,
+  BACKEND_RUNTIME_OPTIONS,
   CAPABILITIES_OPTIONS,
   EXCEPTION_STATUS_OPTIONS,
   EXCEPTION_TYPE_OPTIONS,
@@ -26,8 +40,12 @@ import {
 } from './schema.js';
 
 type ClientFactory = () => AirtableClient;
-type ReviewerFactory = () => unknown;
+/** The signed-in reviewer. Only the Cloudflare Access route carries one; the legacy bearer route does not. */
+type ReviewerFactory = () => { email?: string | null } | null;
 type ZendeskFactory = () => ZendeskClient | null;
+type ReviewCommentsFactory = () => ReviewCommentsClient | null;
+/** Config for the live Marketplace listing route. No apiKey = the live listing tools refuse to run. */
+type LiveListingFactory = () => LiveListingConfig;
 
 const collaboratorRefSchema = z.object({
   id: z.string().min(1),
@@ -37,6 +55,33 @@ const statusChangeSchema = z.object({
   confirmed: z.literal(true).describe('True only when the operator explicitly requested this Airtable status change. A request to prepare, start, or kick off an MCP review cycle is not confirmation.'),
   expected_status: z.string().nullable().describe('Exact current reviewStatus from a fresh app_review_get_review_context read; null only when unset.'),
 });
+
+const expectedDecisionDraftsSchema = z
+  .array(z.object({ id: z.string().min(1).max(64), edited_at: z.string().max(40).nullable() }))
+  .max(200)
+  .describe(
+    'Drafts the reviewer saw and confirmed. Changed drafts refuse the status write; release atomically checks these plus newly added feedback.'
+  );
+type DecisionDrafts = z.infer<typeof expectedDecisionDraftsSchema>;
+async function checkDecisionDrafts(
+  comments: ReviewCommentsClient | null,
+  versionId: string,
+  actor: string | null,
+  expected?: DecisionDrafts
+) {
+  if (!comments || !actor || expected === undefined) return;
+  const actual = (await comments.listVersion(versionId, actor))
+    .filter((c) => c.visibility === 'draft')
+    .map((c) => ({ id: c.id, edited_at: c.editedAt }));
+  const canonical = (drafts: DecisionDrafts) =>
+    JSON.stringify([...drafts].sort((a, b) => a.id.localeCompare(b.id)));
+  if (canonical(actual) !== canonical(expected))
+    throw new AirtableClientError(
+      'REVIEW_DRAFTS_CHANGED',
+      'Pending feedback changed. Read every draft and reconfirm the decision.',
+      409
+    );
+}
 
 type StatusChange = z.infer<typeof statusChangeSchema>;
 
@@ -106,7 +151,7 @@ function asSuccess(data: unknown) {
 }
 
 function asError(error: unknown) {
-  if (error instanceof AirtableClientError || error instanceof ZendeskClientError) {
+  if (error instanceof AirtableClientError || error instanceof ZendeskClientError || error instanceof ReviewCommentsClientError) {
     return jsonContent({
       ok: false,
       error: {
@@ -150,7 +195,7 @@ async function requireAppAsset(client: AirtableClient, assetId: string) {
   return asset;
 }
 
-async function requireAppVersion(client: AirtableClient, versionId: string): Promise<AppReviewVersion> {
+async function requireAppVersionWithAsset(client: AirtableClient, versionId: string) {
   const version = await client.getVersionById(versionId);
   if (!version) {
     throw new AirtableClientError('VERSION_NOT_FOUND', 'Version not found.', 404, { versionId });
@@ -158,9 +203,143 @@ async function requireAppVersion(client: AirtableClient, versionId: string): Pro
   if (!version.assetId) {
     throw new AirtableClientError('VERSION_SCOPE_ERROR', 'Version is missing linked asset ID.', 400, { versionId });
   }
-  await requireAppAsset(client, version.assetId);
-  return version;
+  return { version, asset: await requireAppAsset(client, version.assetId) };
 }
+
+async function requireAppVersion(client: AirtableClient, versionId: string): Promise<AppReviewVersion> {
+  return (await requireAppVersionWithAsset(client, versionId)).version;
+}
+
+/** Review comments are attributed by email, so the session must carry the reviewer's. */
+function requireReviewerEmail(getReviewer: ReviewerFactory): string {
+  const email = getReviewer()?.email?.trim();
+  if (!email) {
+    throw new AirtableClientError(
+      'REVIEWER_EMAIL_UNAVAILABLE',
+      'Review comments need a signed-in reviewer. Connect through the Cloudflare Access endpoint (/access/mcp); the shared bearer route carries no reviewer identity.',
+      503,
+    );
+  }
+  return email;
+}
+
+function requireVersionAssetId(version: AppReviewVersion): string {
+  if (!version.assetId) {
+    throw new AirtableClientError('VERSION_SCOPE_ERROR', 'Version is missing linked asset ID.', 400, { versionId: version.versionId });
+  }
+  return version.assetId;
+}
+
+/**
+ * The "send feedback" step after a decision. Posts the decision's feedback as
+ * a reviewer comment (once; a retried decision does not repeat it) and
+ * releases every draft on the version to the developer. Airtable is already
+ * updated when this runs, so a comments failure is reported in the result,
+ * never thrown.
+ */
+async function releaseFeedbackAfterDecision(
+  decisionTool: string,
+  comments: ReviewCommentsClient,
+  versionId: string,
+  assetId: string,
+  actorEmail: string,
+  feedback?: string,
+  notice?: ReleaseNotice,
+  expectedDrafts?: DecisionDrafts
+): Promise<Record<string, unknown>> {
+  try {
+    let added = false;
+    const expected = expectedDrafts?.map((d) => ({ id: d.id, editedAt: d.edited_at }));
+    const body = feedback?.trim();
+    if (body) {
+      const existing = await comments.listVersion(versionId, actorEmail);
+      const author = actorEmail.toLowerCase();
+      // An internal note with the same words is not feedback: it never reaches the creator.
+      // Feedback over the service limit goes out as several comments, in order. A repeat adds only the missing parts.
+      for (const part of splitCommentBody(body)) {
+        const alreadyPosted = existing.some(
+          (comment) =>
+            comment.visibility !== 'internal' &&
+            comment.authorEmail === author &&
+            comment.body === part
+        );
+        if (alreadyPosted) continue;
+        const created = await comments.add(versionId, actorEmail, {
+          assetRef: assetId,
+          body: part,
+          visibility: 'draft'
+        });
+        if (
+          expected &&
+          created.visibility === 'draft' &&
+          !expected.some((d) => d.id === created.id)
+        )
+          expected.push({ id: created.id, editedAt: created.editedAt });
+        added = true;
+      }
+    }
+    const { released, notification } = expected
+      ? await comments.release(versionId, actorEmail, notice, expected)
+      : await comments.release(versionId, actorEmail, ...(notice ? [notice] : []));
+    return { ok: true, feedback_comment_added: added, released, ...emailResult(notification) };
+  } catch (error) {
+    const known =
+      error instanceof ReviewCommentsClientError || error instanceof AirtableClientError;
+    return {
+      ok: false,
+      error: {
+        code: known ? error.code : 'UNEXPECTED_ERROR',
+        message: error instanceof Error ? error.message : String(error),
+        status: known ? (error.status ?? 500) : 500
+      },
+      next_step:
+        'The review status is saved. Do not repeat the decision. Inspect app_review_list_comments, add any missing feedback as a draft, then explicitly confirm app_review_release_feedback with the exact current expected_drafts.',
+      decision_tool: decisionTool
+    };
+  }
+}
+
+/**
+ * The developer address is the one review tickets go to today: the override on
+ * the asset when set, else the creator's. No usable address means no email.
+ */
+function appReleaseNotice(
+  asset: { appName?: string; creatorEmail?: string; creatorName?: string },
+  version: AppReviewVersion,
+  outcome?: ReviewOutcome,
+): ReleaseNotice | undefined {
+  return buildReleaseNotice({
+    email: asset.creatorEmail,
+    name: asset.creatorName,
+    assetName: asset.appName,
+    assetType: 'App',
+    versionNumber: version.versionNumber,
+    outcome,
+  });
+}
+
+/** How the "feedback is ready" email went, in the shape every release result carries. */
+function emailResult(notification: ReleaseNotification | undefined): Record<string, unknown> {
+  return {
+    developer_email_sent: notification?.status === 'sent',
+    ...(notification ? { notification } : {}),
+    ...(notification?.status === 'none' && notification.reason === 'no_recipient'
+      ? { email_note: 'No email was sent: the asset record has no usable creator email address.' }
+      : {}),
+    ...(notification?.status === 'failed'
+      ? { email_next_step: 'The feedback is released, but the email did not send. To retry the email, run app_review_release_feedback for this version with expected_drafts set to [].' }
+      : {}),
+  };
+}
+
+/** A "(No Notification)" status is deliberately silent: nothing may reach the developer. */
+const SILENT_DECISION_RESULT = {
+  ok: true,
+  skipped: 'no_notification_status',
+  feedback_comment_added: false,
+  released: 0,
+  developer_email_sent: false,
+} as const;
 
 function cleanObject<T extends Record<string, unknown>>(value: T): T {
   const entries = Object.entries(value).filter(([, v]) => v !== undefined);
@@ -299,12 +478,105 @@ function requireZendesk(getZendesk: ZendeskFactory, verb: 'reads' | 'writes'): Z
   return zendesk;
 }
 
+const APP_LISTING_RESOURCE_TYPE = 'INTEGRATION';
+
+type ListingAsset = { assetId?: string; listingProfileIds?: string[] };
+
+/**
+ * The Airtable `App ID` values of the asset. Checked against Snowflake 2026-11-17: the value is the listing
+ * profile (MRP) ID when the app has a listing, and the Webflow app ID when it has none yet.
+ */
+function assetListingIds(asset: ListingAsset): string[] {
+  return (asset.listingProfileIds ?? []).map((id) => id.trim().toLowerCase()).filter(Boolean);
+}
+
+/**
+ * Picks the listing profile ID to call the route with. Without mrp_id, the asset must hold exactly one ID.
+ * With mrp_id, a read may target any listing; a write needs the asset to hold at least one ID, because
+ * ownership is proved against those IDs after the read.
+ */
+function resolveListingId(asset: ListingAsset, requested: string | undefined, isWrite: boolean): { mrpId: string; fromAsset: boolean } {
+  const linked = assetListingIds(asset);
+  const wanted = requested?.trim().toLowerCase();
+  if (wanted) {
+    if (isWrite && linked.length === 0) {
+      throw new AirtableClientError(
+        'LIVE_LISTING_ASSET_MISMATCH',
+        'The asset has no App ID in Airtable, so this listing cannot be matched to it. A write needs that match.',
+        409,
+        { assetId: asset.assetId ?? null, mrpId: wanted },
+      );
+    }
+    return { mrpId: wanted, fromAsset: linked.includes(wanted) };
+  }
+  if (linked.length === 1) return { mrpId: linked[0]!, fromAsset: true };
+  throw new AirtableClientError(
+    linked.length === 0 ? 'LIVE_LISTING_ID_UNAVAILABLE' : 'LIVE_LISTING_ID_AMBIGUOUS',
+    linked.length === 0
+      ? 'The asset has no App ID in Airtable, so no listing is linked. Supply mrp_id to read a listing.'
+      : 'The asset holds more than one App ID. Supply mrp_id to pick one.',
+    409,
+    { assetId: asset.assetId ?? null, assetAppIds: linked },
+  );
+}
+
+/** Reads the listing. A 404 on an ID taken from the asset means that ID is the Webflow app ID, not a listing. */
+async function readListingForAsset(config: LiveListingConfig, target: { mrpId: string; fromAsset: boolean }, asset: ListingAsset): Promise<LiveListing> {
+  try {
+    return await readLiveListing(config, target.mrpId);
+  } catch (error) {
+    if (target.fromAsset && error instanceof AirtableClientError && error.code === 'LIVE_LISTING_NOT_FOUND') {
+      throw new AirtableClientError(
+        'LIVE_LISTING_NOT_FOUND',
+        'No listing profile has the App ID on this asset. Airtable holds the Webflow app ID until the listing sync links the listing, so the app has no listing yet or the sync has not run. Supply mrp_id if the listing exists.',
+        404,
+        { assetId: asset.assetId ?? null, assetAppId: target.mrpId },
+      );
+    }
+    throw error;
+  }
+}
+
+/**
+ * An app listing belongs to the asset when the asset's App ID is the listing profile ID, or is the Webflow
+ * app ID that the listing is for (a listing the daily sync has not linked yet).
+ */
+function listingMatchesAsset(listing: LiveListing, asset: ListingAsset): boolean {
+  const ids = assetListingIds(asset);
+  if (listing.resourceType !== APP_LISTING_RESOURCE_TYPE) return false;
+  const resourceId = listing.resourceId?.toLowerCase();
+  return ids.includes(listing.mrpId.toLowerCase()) || (resourceId !== undefined && ids.includes(resourceId));
+}
+
+/** A listing write must target the app listing of the asset under review, not a template, library, or other app. */
+function assertListingBelongsToAsset(listing: LiveListing, asset: ListingAsset): void {
+  if (!listingMatchesAsset(listing, asset)) {
+    throw new AirtableClientError(
+      'LIVE_LISTING_ASSET_MISMATCH',
+      'This listing does not belong to the asset. It must be an app listing (INTEGRATION) whose profile ID or app ID is the App ID on the Airtable asset.',
+      409,
+      {
+        assetId: asset.assetId ?? null,
+        assetAppIds: assetListingIds(asset),
+        listingMrpId: listing.mrpId,
+        listingResourceType: listing.resourceType,
+        listingResourceId: listing.resourceId,
+      },
+    );
+  }
+}
+
 export function registerTools(
   server: McpServer,
   getClient: ClientFactory,
-  _getReviewer: ReviewerFactory = () => null,
+  getReviewer: ReviewerFactory = () => null,
   getZendesk: ZendeskFactory = () => null,
+  getReviewComments: ReviewCommentsFactory = () => null,
+  getLiveListing: LiveListingFactory = () => ({}),
 ): void {
+  // Null until the comments Worker URL and key are set; every comment behaviour below is then off.
+  const reviewComments = getReviewComments();
+
   server.tool(
     'app_review_health',
     'Runtime health check for Webflow App Review MCP and Airtable connectivity.',
@@ -633,7 +905,7 @@ export function registerTools(
 
   server.tool(
     'app_review_get_review_context',
-    'Read-only starting point to prepare, start, or kick off a new MCP review cycle, including asset updates. Reads the existing reviewer and status without changing either. Wait for the bundle if it has not been uploaded. Never assign a reviewer or set In Review merely to prepare a review. Returns separate reviewFeedback and rejectionFeedback at both context and context.version. Check both fields for findings; reviewFeedback may be absent or empty even when rejectionFeedback contains rejection findings.',
+    'Read-only starting point to prepare, start, or kick off a new MCP review cycle, including asset updates. Reads the existing reviewer and status without changing either. Wait for the bundle if it has not been uploaded. Never assign a reviewer or set In Review merely to prepare a review. Returns separate reviewFeedback and rejectionFeedback at both context and context.version. Check both fields for findings; reviewFeedback may be absent or empty even when rejectionFeedback contains rejection findings. context.assetExceptions lists the app\'s ⚖️Exceptions rows from every version with their decision notes. Read them before the review: a ✅Approved row can set conditions that apply to every later version, so check this version against each one and report any condition it does not meet. When context.assetExceptionNotesOmitted is true, the notes were too long to include: call app_review_list_asset_exceptions with the same version_id for them before the review.',
     {
       version_id: z.string().min(1),
     },
@@ -695,29 +967,213 @@ export function registerTools(
     'Set an app version to changes-requested and attach feedback without reviewer-session scoping.',
     {
       version_id: z.string().min(1),
+      expected_drafts: expectedDecisionDraftsSchema.optional(),
       review_feedback: z.string().min(1),
       rejection_reason: z.enum(REJECTION_REASON_OPTIONS).optional(),
       review_status: z.enum(REQUEST_CHANGES_STATUS_OPTIONS).optional(),
     },
-    async ({ version_id, review_feedback, rejection_reason, review_status }) => {
+    async ({ expected_drafts, version_id, review_feedback, rejection_reason, review_status }) => {
       try {
         ensureRequestChangesStatus(review_status);
-        await requireAppVersion(getClient(), version_id);
+        const status = review_status ?? '📤Changes Requested';
+        const silent = status.endsWith('(No Notification)');
+        // Checked before the write: a status change must not land without its feedback.
+        const actorEmail = reviewComments && !silent ? requireReviewerEmail(getReviewer) : null;
+        const { version, asset } = await requireAppVersionWithAsset(getClient(), version_id);
+        const assetId = requireVersionAssetId(version);
+        await checkDecisionDrafts(reviewComments, version_id, actorEmail, expected_drafts);
         const updated = await getClient().updateVersionReview(version_id, {
-          review_status: review_status ?? '📤Changes Requested',
+          review_status: status,
           rejection_reason,
           review_feedback,
         });
-        return asSuccess({ updated_version: updated });
+        return asSuccess({
+          updated_version: updated,
+          ...(reviewComments
+            ? {
+                review_comments: actorEmail
+                  ? await releaseFeedbackAfterDecision('app_review_request_changes', reviewComments, version_id, assetId, actorEmail, review_feedback, appReleaseNotice(asset, version, 'changes_requested'), expected_drafts)
+                  : SILENT_DECISION_RESULT,
+              }
+            : {}),
+        });
       } catch (error) {
         return asError(error);
       }
     },
   );
 
+  /** Zendesk thread (when the version has one) plus the version's review comments. */
+  async function readThreadWithComments(
+    comments: ReviewCommentsClient,
+    versionId: string,
+    includeInternal: boolean,
+    limit: number,
+  ): Promise<Record<string, unknown>> {
+    const version = await requireAppVersion(getClient(), versionId);
+    const zendesk = getZendesk();
+    const ticketId = version.zendeskTicketId;
+    const thread = zendesk && ticketId ? await zendesk.getTicketThread(ticketId, { includeInternalNotes: includeInternal, limit }) : null;
+
+    const reviewerEmail = getReviewer()?.email?.trim();
+    let reviewComments: ReviewComment[] | null = null;
+    let reviewCommentsError: Record<string, unknown> | null = null;
+    if (reviewerEmail) {
+      try {
+        const all = await comments.listVersion(versionId, reviewerEmail);
+        reviewComments = includeInternal ? all : all.filter((comment) => comment.visibility === 'released');
+      } catch (error) {
+        // Keep the Zendesk thread already read; report the comments failure beside it.
+        if (!(error instanceof ReviewCommentsClientError)) throw error;
+        reviewCommentsError = { code: error.code, message: error.message, status: error.status ?? 500 };
+      }
+    }
+
+    return {
+      version_id: versionId,
+      asset_id: version.assetId,
+      version_number: version.versionNumber,
+      ticket_url: zendesk && ticketId ? `https://webflow2579.zendesk.com/agent/tickets/${ticketId}` : null,
+      thread,
+      ...(thread === null
+        ? { thread_note: ticketId ? 'Zendesk reads are not configured on this deployment.' : 'This version has no linked Zendesk ticket.' }
+        : {}),
+      review_comments: reviewComments,
+      ...(reviewCommentsError ? { review_comments_error: reviewCommentsError } : {}),
+      ...(reviewComments === null && !reviewCommentsError
+        ? { review_comments_note: 'Review comments need a signed-in reviewer (Cloudflare Access endpoint).' }
+        : {}),
+    };
+  }
+
+  if (reviewComments) {
+    const commentIdSchema = z.string().min(1).max(64);
+
+    server.tool(
+      'app_review_list_comments',
+      'Read-only: every review comment on an app version (drafts, internal notes, released feedback, and developer replies), oldest first. Needs a signed-in reviewer.',
+      { version_id: z.string().min(1) },
+      async ({ version_id }) => {
+        try {
+          const actorEmail = requireReviewerEmail(getReviewer);
+          const version = await requireAppVersion(getClient(), version_id);
+          return asSuccess({
+            version_id,
+            asset_id: version.assetId,
+            comments: await reviewComments.listVersion(version_id, actorEmail),
+          });
+        } catch (error) {
+          return asError(error);
+        }
+      },
+    );
+
+    server.tool(
+      'app_review_add_comment',
+      'Reviewer write: add a review comment to an app version. "draft" (default) is feedback for the developer; it stays hidden until app_review_release_feedback, request_changes, approve, or reject releases it. "internal" is a reviewer-only note; it is never shown to the developer. The asset comes from the version record, not from input.',
+      {
+        version_id: z.string().min(1),
+        body: z.string().min(1).max(20_000),
+        visibility: z.enum(['draft', 'internal']).default('draft'),
+        parent_id: commentIdSchema.optional().describe('Reply to this comment on the same version.'),
+        rubric_ref: commentIdSchema.optional().describe('Guideline or checklist item this comment is about.'),
+        request_key: z.string().regex(/^[A-Za-z0-9_-]{8,64}$/).optional().describe('One key for one save (8 to 64 letters, digits, hyphens or underscores). Send the same key when you repeat a save whose answer was lost: the first comment comes back and nothing is written twice.'),
+      },
+      async ({ version_id, body, visibility, parent_id, rubric_ref, request_key }) => {
+        try {
+          const actorEmail = requireReviewerEmail(getReviewer);
+          const version = await requireAppVersion(getClient(), version_id);
+          const comment = await reviewComments.add(version_id, actorEmail, {
+            assetRef: requireVersionAssetId(version),
+            body: body.trim(),
+            visibility,
+            ...(parent_id ? { parentId: parent_id } : {}),
+            ...(rubric_ref ? { rubricRef: rubric_ref } : {}),
+            ...(request_key ? { requestKey: request_key } : {}),
+          });
+          return asSuccess({ comment });
+        } catch (error) {
+          return asError(error);
+        }
+      },
+    );
+
+    server.tool(
+      'app_review_edit_comment',
+      'Reviewer write: replace the text of your own draft or internal comment. Released comments cannot be edited.',
+      { comment_id: commentIdSchema, body: z.string().min(1).max(20_000) },
+      async ({ comment_id, body }) => {
+        try {
+          return asSuccess({ comment: await reviewComments.edit(comment_id, requireReviewerEmail(getReviewer), body.trim()) });
+        } catch (error) {
+          return asError(error);
+        }
+      },
+    );
+
+    server.tool(
+      'app_review_delete_comment',
+      'Reviewer write: delete your own draft or internal comment. Released comments and comments with replies cannot be deleted.',
+      { comment_id: commentIdSchema },
+      async ({ comment_id }) => {
+        try {
+          return asSuccess(await reviewComments.remove(comment_id, requireReviewerEmail(getReviewer)));
+        } catch (error) {
+          return asError(error);
+        }
+      },
+    );
+
+    server.tool(
+      'app_review_release_feedback',
+      'Reviewer write (developer-facing): release every draft comment on an app version to the developer, and email the developer when the release makes new feedback visible and the email is configured. request_changes, approve, and reject already do this, except with a "(No Notification)" status, which stays silent. Use this tool only when the operator explicitly asks to send feedback without a status change, or to retry a failed release or a failed email. Does not change the review status. An agent calls this only when the reviewer asked for this exact send in this conversation, after it showed the reviewer the text of every draft that app_review_list_comments returned. A save of a draft or of an internal note is not an approval to send.',
+      {
+        version_id: z.string().min(1),
+        expected_drafts: z
+          .array(z.object({ id: commentIdSchema, edited_at: z.string().max(40).nullable() }))
+          .max(200)
+          .describe('Every draft on the version, as app_review_list_comments returned it just now: id and editedAt (null when never edited). Nothing is released when the drafts on the version are not exactly these. Send [] only to retry a failed email after a release.'),
+      },
+      async ({ version_id, expected_drafts }) => {
+        try {
+          const actorEmail = requireReviewerEmail(getReviewer);
+          const { version, asset } = await requireAppVersionWithAsset(getClient(), version_id);
+          // The dashboard hides a round in a "(No Notification)" status, so a release would email a link to feedback the developer cannot read.
+          if ((version.reviewStatus ?? '').endsWith('(No Notification)')) {
+            throw new AirtableClientError(
+              'NO_NOTIFICATION_STATUS',
+              'This version is in a "(No Notification)" status, so the developer cannot read feedback on it. Change the review status first, then release.',
+              409,
+              { version_id },
+            );
+          }
+          const notice = appReleaseNotice(asset, version);
+          const expected = expected_drafts.map((draft) => ({ id: draft.id, editedAt: draft.edited_at }));
+          const { released, notification } = await reviewComments.release(version_id, actorEmail, notice, expected);
+          return asSuccess({ version_id, released, ...emailResult(notification) });
+        } catch (error) {
+          return asError(error);
+        }
+      },
+    );
+
+    server.tool(
+      'app_review_resolve_comment',
+      'Reviewer write: mark a review comment open, resolved, or carried_forward (still open on the next version).',
+      { comment_id: commentIdSchema, resolution: z.enum(['open', 'resolved', 'carried_forward']) },
+      async ({ comment_id, resolution }) => {
+        try {
+          return asSuccess({ comment: await reviewComments.resolve(comment_id, requireReviewerEmail(getReviewer), resolution) });
+        } catch (error) {
+          return asError(error);
+        }
+      },
+    );
+  }
+
   server.tool(
     'app_review_get_ticket_thread',
-    'Read the Zendesk ticket linked to an app version: subject, status, requester, and the conversation (developer replies and review-team messages), oldest to newest. Read-only; resolves the ticket from the version record, never from an arbitrary ticket ID. Public comments only by default — set include_internal_notes=true to also return private agent notes. Use this to answer "what did the developer say / were they notified / what did we send" before drafting any follow-up.',
+    'Read the conversation on an app version: the linked Zendesk ticket (subject, status, requester, developer replies and review-team messages, oldest to newest) and, when review comments are enabled on this deployment, the version\'s review comments in review_comments. Read-only; resolves the ticket from the version record, never from an arbitrary ticket ID. Public and released comments only by default — set include_internal_notes=true to also return private agent notes, drafts and internal review comments. Use this to answer "what did the developer say / were they notified / what did we send" before drafting any follow-up.',
     {
       version_id: z.string().min(1),
       include_internal_notes: z.boolean().default(false),
@@ -725,6 +1181,9 @@ export function registerTools(
     },
     async ({ version_id, include_internal_notes, limit }) => {
       try {
+        if (reviewComments) {
+          return asSuccess(await readThreadWithComments(reviewComments, version_id, include_internal_notes, limit));
+        }
         const zendesk = getZendesk();
         if (!zendesk) {
           throw new ZendeskClientError(
@@ -1011,18 +1470,27 @@ export function registerTools(
     'Approve an app version without reviewer-session scoping. Undecided ⚖️exceptions no longer block approval (gate retired 11/4/2026); the Airtable automation posts a soft warning in #app-review-exceptions instead.',
     {
       version_id: z.string().min(1),
+      expected_drafts: expectedDecisionDraftsSchema.optional(),
       review_feedback: z.string().optional(),
       review_type: z.enum(REVIEW_TYPE_OPTIONS).optional(),
     },
-    async ({ version_id, review_feedback, review_type }) => {
+    async ({ expected_drafts, version_id, review_feedback, review_type }) => {
       try {
-        await requireAppVersion(getClient(), version_id);
+        const actorEmail = reviewComments ? requireReviewerEmail(getReviewer) : null;
+        const { version, asset } = await requireAppVersionWithAsset(getClient(), version_id);
+        const assetId = requireVersionAssetId(version);
+        await checkDecisionDrafts(reviewComments, version_id, actorEmail, expected_drafts);
         const updated = await getClient().updateVersionReview(version_id, {
           review_status: '✅Approved',
           review_type,
           review_feedback,
         });
-        return asSuccess({ updated_version: updated });
+        return asSuccess({
+          updated_version: updated,
+          ...(reviewComments && actorEmail
+            ? { review_comments: await releaseFeedbackAfterDecision('app_review_approve_version', reviewComments, version_id, assetId, actorEmail, review_feedback, appReleaseNotice(asset, version, 'approved'), expected_drafts) }
+            : {}),
+        });
       } catch (error) {
         return asError(error);
       }
@@ -1031,23 +1499,32 @@ export function registerTools(
 
   server.tool(
     'app_review_reject_version',
-    'Reject an app version with reason and feedback without reviewer-session scoping.',
+    'Reject an app version with reason and feedback without reviewer-session scoping. The feedback is written to 🚩Rejection Feedback, the field the developer-facing rejection email reads; 📝Review Feedback is left unchanged.',
     {
       version_id: z.string().min(1),
+      expected_drafts: expectedDecisionDraftsSchema.optional(),
       rejection_reason: z.enum(REJECTION_REASON_OPTIONS),
-      review_feedback: z.string().min(1),
+      review_feedback: z.string().min(1).describe('Developer-facing rejection findings. Stored in 🚩Rejection Feedback and sent in the rejection email.'),
       review_type: z.enum(REVIEW_TYPE_OPTIONS).optional(),
     },
-    async ({ version_id, rejection_reason, review_feedback, review_type }) => {
+    async ({ expected_drafts, version_id, rejection_reason, review_feedback, review_type }) => {
       try {
-        await requireAppVersion(getClient(), version_id);
+        const actorEmail = reviewComments ? requireReviewerEmail(getReviewer) : null;
+        const { version, asset } = await requireAppVersionWithAsset(getClient(), version_id);
+        const assetId = requireVersionAssetId(version);
+        await checkDecisionDrafts(reviewComments, version_id, actorEmail, expected_drafts);
         const updated = await getClient().updateVersionReview(version_id, {
           review_status: '❌Rejected',
           review_type,
           rejection_reason,
-          review_feedback,
+          rejection_feedback: review_feedback,
         });
-        return asSuccess({ updated_version: updated });
+        return asSuccess({
+          updated_version: updated,
+          ...(reviewComments && actorEmail
+            ? { review_comments: await releaseFeedbackAfterDecision('app_review_reject_version', reviewComments, version_id, assetId, actorEmail, review_feedback, appReleaseNotice(asset, version, 'rejected'), expected_drafts) }
+            : {}),
+        });
       } catch (error) {
         return asError(error);
       }
@@ -1056,7 +1533,7 @@ export function registerTools(
 
   server.tool(
     'app_review_update_version_review',
-    'Update review fields on an Asset Version record, including exception and hold fields. Reviewer assignment is read-only; never send reviewer, even null. review_status requires explicit operator status_change confirmation and a fresh expected status. Preparing a review cycle is read-only via app_review_get_review_context. Exception sequencing rule: fill exception_type + exception_rationale first, then flip exception_status to 🆕Requested in a separate call — the status flip triggers the #app-review-exceptions Slack post. Refuses an approved review_status while any ⚖️exception on the app is undecided, and refuses exception_status ❌Denied while ⚖️Exceptions items are undecided.',
+    'Update review fields on an Asset Version record, including exception and hold fields, and backend_observed_in_review (what the reviewer saw of a backend during bundle, injected-script, or install checks that the developer declaration does not cover; it never substitutes for the declaration, which the developer completes on the next Update). Reviewer assignment is read-only; never send reviewer, even null. review_status requires explicit operator status_change confirmation and a fresh expected status. Preparing a review cycle is read-only via app_review_get_review_context. Exception sequencing rule: fill exception_type + exception_rationale first, then flip exception_status to 🆕Requested in a separate call — the status flip triggers the #app-review-exceptions Slack post. Refuses an approved review_status while any ⚖️exception on the app is undecided, and refuses exception_status ❌Denied while ⚖️Exceptions items are undecided.',
     {
       version_id: z.string().min(1),
       review_status: z.enum(REVIEW_STATUS_OPTIONS).optional(),
@@ -1072,6 +1549,7 @@ export function registerTools(
       exception_decision_notes: z.string().optional(),
       hold_reason: z.union([z.enum(HOLD_REASON_OPTIONS), z.null()]).optional(),
       hold_notes: z.string().optional(),
+      backend_observed_in_review: z.string().optional().describe('Reviewer-observed backend the declaration does not cover, e.g. .php endpoints, API calls to a developer domain, a chatbot backend. Never a substitute for the declaration.'),
     },
     async (params) => {
       try {
@@ -1096,6 +1574,7 @@ export function registerTools(
           exception_decision_notes: params.exception_decision_notes,
           hold_reason: params.hold_reason,
           hold_notes: params.hold_notes,
+          backend_observed_in_review: params.backend_observed_in_review,
         });
 
         if (Object.keys(mutation).length === 0) {
@@ -1295,17 +1774,7 @@ export function registerTools(
           ? allItems.filter((item) => item.exceptionStatus === params.status)
           : allItems;
 
-        const statusOrder = new Map<string, number>(
-          (EXCEPTION_STATUS_OPTIONS as readonly string[]).map((s, i) => [s, i]),
-        );
-        const sortKey = (item: (typeof items)[number]) =>
-          item.decisionDatetime ?? item.requestedDatetime ?? item.createdTime ?? '';
-        items.sort((a, b) => {
-          const orderA = statusOrder.get(a.exceptionStatus ?? '') ?? 99;
-          const orderB = statusOrder.get(b.exceptionStatus ?? '') ?? 99;
-          if (orderA !== orderB) return orderA - orderB;
-          return sortKey(a).localeCompare(sortKey(b));
-        });
+        items.sort(compareExceptionItems);
 
         const counts: Record<string, number> = {};
         for (const item of allItems) {
@@ -1390,14 +1859,16 @@ export function registerTools(
 
   server.tool(
     'app_review_update_exception_item',
-    'Update a per-item exception row (⚖️Exceptions table). Setting exception_status triggers the #app-review-exceptions automation and auto-stamps the request/decision datetime — fill text fields before or together with the status flip. Decisions (✅Approved / ❌Denied) belong to the decision-maker; include decision_notes with any decision.',
+    'Update a per-item exception row (⚖️Exceptions table). Setting exception_status triggers the #app-review-exceptions automation and auto-stamps the request/decision datetime — fill text fields before or together with the status flip. The app review team decides exceptions (✅Approved / ❌Denied); include notes with any decision. decision_notes REPLACES the whole field, so new text alone deletes the earlier decision and its conditions. To add to a row (a check against a condition, a build hash, a follow-up), use append_decision_note: it adds a dated line and keeps the earlier notes.',
     {
       exception_item_id: z.string().min(1),
       item: z.string().optional(),
       exception_status: z.enum(EXCEPTION_STATUS_OPTIONS).optional(),
       exception_type: z.enum(EXCEPTION_TYPE_OPTIONS).optional(),
       rationale: z.string().optional(),
-      decision_notes: z.string().optional(),
+      decision_notes: z.string().optional().describe('REPLACES the whole decision-notes field. Do not send it with append_decision_note.'),
+      append_decision_note: z.string().min(1).optional().describe('Adds a line with the UTC date after the existing decision notes. The earlier notes stay.'),
+      noted_by: z.string().optional().describe('Your display name for the appended line (e.g. "Shea Sisco")'),
     },
     async (params) => {
       try {
@@ -1408,6 +1879,8 @@ export function registerTools(
           exception_type: params.exception_type,
           rationale: params.rationale,
           decision_notes: params.decision_notes,
+          append_decision_note: params.append_decision_note,
+          noted_by: params.noted_by,
         }));
         return asSuccess({ exception_item: updated });
       } catch (error) {
@@ -1442,7 +1915,7 @@ export function registerTools(
 
   server.tool(
     'app_review_update_asset_metadata',
-    'Update writable app metadata fields on Assets. Read-only/computed fields are rejected or routed. latest_review_status requires explicit status_change confirmation and a fresh expected status; never change status merely to prepare a review cycle.',
+    'Update writable app metadata fields on Assets, including the self-attested backend declaration (backend_hosting_model, backend_runtime, backend_runtime_version, backend_hosting_provider, backend_frameworks, backend_web_servers, backend_declared_at) when a reviewer corrects a plausibility error. Read-only/computed fields are rejected or routed. latest_review_status requires explicit status_change confirmation and a fresh expected status; never change status merely to prepare a review cycle.',
     {
       asset_id: z.string().min(1),
       app_name: z.string().optional(),
@@ -1469,6 +1942,13 @@ export function registerTools(
       support_email_or_url: z.string().optional(),
       preview_site_url: z.string().url().optional(),
       promo_video_url: z.string().url().optional(),
+      backend_hosting_model: z.enum(BACKEND_HOSTING_MODEL_OPTIONS).optional(),
+      backend_runtime: z.enum(BACKEND_RUNTIME_OPTIONS).optional(),
+      backend_runtime_version: z.string().optional(),
+      backend_hosting_provider: z.string().optional(),
+      backend_frameworks: z.string().optional().describe('Comma-separated framework labels, e.g. "Express, Next.js".'),
+      backend_web_servers: z.string().optional().describe('Comma-separated web server, proxy, or gateway labels, e.g. "nginx, Cloudflare".'),
+      backend_declared_at: z.string().datetime({ offset: true }).optional(),
       marketplace_status: z.enum(MARKETPLACE_STATUS_OPTIONS).optional(),
       latest_review_status: z.enum(REVIEW_STATUS_OPTIONS).optional(),
       status_change: statusChangeSchema.optional(),
@@ -1531,6 +2011,13 @@ export function registerTools(
           support_email_or_url: params.support_email_or_url,
           preview_site_url: params.preview_site_url,
           promo_video_url: params.promo_video_url,
+          backend_hosting_model: params.backend_hosting_model,
+          backend_runtime: params.backend_runtime,
+          backend_runtime_version: params.backend_runtime_version,
+          backend_hosting_provider: params.backend_hosting_provider,
+          backend_frameworks: params.backend_frameworks,
+          backend_web_servers: params.backend_web_servers,
+          backend_declared_at: params.backend_declared_at,
           marketplace_status: params.marketplace_status,
         });
 
@@ -1603,7 +2090,7 @@ export function registerTools(
 
   server.tool(
     'app_review_set_marketplace_status',
-    'Set the Marketplace Status on an app asset.',
+    'Set the Marketplace Status on an app asset. This updates the Airtable record only. 6️⃣Suspended⏸️ records a suspension that was set in Webflow Admin; it does not suspend the app.',
     {
       asset_id: z.string().min(1),
       marketplace_status: z.enum(MARKETPLACE_STATUS_OPTIONS),
@@ -1614,6 +2101,80 @@ export function registerTools(
         await requireAppAsset(client, params.asset_id);
         const updated = await client.setMarketplaceStatus(params.asset_id, params.marketplace_status);
         return asSuccess({ updated_asset: updated });
+      } catch (error) {
+        return asError(error);
+      }
+    },
+  );
+
+  server.tool(
+    'app_review_get_live_listing',
+    'Read-only: return the live Webflow Marketplace listing profile (MRP) for an app asset: status, visibility, and whether it shows in the Marketplace (APPROVED and PUBLIC). This is the Webflow record, not the Airtable Marketplace Status. The listing profile ID comes from the asset (the Airtable App ID field, filled by the daily listing sync). Pass mrp_id only when that fails: the asset has no ID, more than one, or a listing the sync has not linked yet. The result says whether the listing belongs to the asset.',
+    {
+      asset_id: z.string().min(1),
+      mrp_id: z.string().min(1).optional(),
+    },
+    async (params) => {
+      try {
+        const asset = await requireAppAsset(getClient(), params.asset_id);
+        const listing = await readListingForAsset(getLiveListing(), resolveListingId(asset, params.mrp_id, false), asset);
+        return asSuccess({
+          listing,
+          belongs_to_asset: listingMatchesAsset(listing, asset),
+          asset: { assetId: asset.assetId, appIds: assetListingIds(asset), marketplaceStatus: asset.marketplaceStatus ?? null },
+        });
+      } catch (error) {
+        return asError(error);
+      }
+    },
+  );
+
+  server.tool(
+    'app_review_set_live_listing',
+    'PRODUCTION WRITE to Webflow: set the status, visibility, or both on the live Marketplace listing profile (MRP) of an app. APPROVED + PUBLIC makes the app show in the Marketplace; any other pair removes it. Use only when the reviewer explicitly asks for this exact change. Read first with app_review_get_live_listing and pass the values you read as expected. Does not change Airtable: update Marketplace Status there separately. Needs a signed-in reviewer.',
+    {
+      asset_id: z.string().min(1),
+      mrp_id: z.string().min(1).optional(),
+      status: z.enum(LIVE_LISTING_STATUSES).optional(),
+      visibility: z.enum(LIVE_LISTING_VISIBILITIES).optional(),
+      expected: z.object({
+        status: z.string().nullable(),
+        visibility: z.string().nullable(),
+      }),
+      confirm_live_listing_write: z.literal(true),
+    },
+    async (params) => {
+      try {
+        const actor = requireReviewerEmail(getReviewer);
+        if (params.confirm_live_listing_write !== true) {
+          throw new AirtableClientError(
+            'LIVE_LISTING_CONFIRMATION_REQUIRED',
+            'Set confirm_live_listing_write to true only after the reviewer approves this exact change.',
+            400,
+          );
+        }
+        if (params.status === undefined && params.visibility === undefined) {
+          throw new AirtableClientError('NO_MUTATION_FIELDS', 'Supply status, visibility, or both.', 400);
+        }
+        const asset = await requireAppAsset(getClient(), params.asset_id);
+        const config = getLiveListing();
+        const target = resolveListingId(asset, params.mrp_id, true);
+        const before = await readListingForAsset(config, target, asset);
+        const mrpId = before.mrpId;
+        assertListingBelongsToAsset(before, asset);
+        if (before.status !== params.expected.status || before.visibility !== params.expected.visibility) {
+          throw new AirtableClientError(
+            'LIVE_LISTING_CONFLICT',
+            'The live listing differs from the expected starting state. Read it again and reconfirm before you write.',
+            409,
+            { expected: params.expected, current: { status: before.status, visibility: before.visibility } },
+          );
+        }
+        const after = await writeLiveListing(config, mrpId, {
+          status: params.status,
+          visibility: params.visibility,
+        });
+        return asSuccess({ before, after, changed_by: actor, airtable_updated: false });
       } catch (error) {
         return asError(error);
       }

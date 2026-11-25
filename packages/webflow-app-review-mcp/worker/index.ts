@@ -30,6 +30,8 @@ import { registerPrompts } from '../src/prompts.js';
 import { attachRequestProps } from '../src/request-context.js';
 import { registerResources } from '../src/resources.js';
 import { registerTools } from '../src/tools.js';
+import { reviewerSession } from '../src/session-identity.js';
+import { buildReviewCommentsClient } from '../src/review-comments.js';
 import { parseZendeskGroupId, ZendeskClient } from '../src/zendesk.js';
 
 interface Env {
@@ -65,6 +67,14 @@ interface Env {
   MARKETPLACE_ZENDESK_GROUP_ID?: string;
   /** Kill switch for developer-facing hold notices + 7-day reminders ("1" disables). */
   HOLD_NOTICES_DISABLED?: string;
+  /** Kill switch for the Webflow account email CC on review tickets, CRE-2567 ("1" disables). */
+  TICKET_ACCOUNT_CC_DISABLED?: string;
+  /** Review comments service (repo webflow/marketplace-review-comments). Both unset = the comment tools are not registered. */
+  REVIEW_COMMENTS_URL?: string;
+  /** This MCP's reviewer key for that Worker, scope "app" (secret via `wrangler secret put`). */
+  REVIEW_COMMENTS_API_KEY?: string;
+  /** Marketplace admin key for the live listing route (secret via `wrangler secret put`). Unset = the live listing tools are off. */
+  MARKETPLACE_ADMIN_API_KEY?: string;
 }
 
 type RequestProps = {
@@ -88,6 +98,9 @@ export class WebflowAppReviewMCP extends McpAgent<Env, unknown, RequestProps> {
   });
 
   async init() {
+    this.server.tool('app_review_session', 'Return the current reviewer identity verified by Cloudflare Access. Legacy shared-token sessions cannot identify a user.', {}, async () => ({
+      content: [{ type: 'text' as const, text: JSON.stringify(reviewerSession(this.props)) }],
+    }));
     if (this.env.TELEMETRY_DB) {
       enableTelemetry(
         this.server,
@@ -113,7 +126,13 @@ export class WebflowAppReviewMCP extends McpAgent<Env, unknown, RequestProps> {
     const getZendesk = () => buildZendesk(this.env);
 
     registerResources(this.server, getClient);
-    registerTools(this.server, getClient, () => null, getZendesk);
+    const reviewComments = buildReviewCommentsClient(this.env.REVIEW_COMMENTS_URL, this.env.REVIEW_COMMENTS_API_KEY);
+    // Read per call: props belong to the session, and only Cloudflare Access sets an email.
+    const getReviewer = () => (this.props?.email ? { email: this.props.email } : null);
+
+    registerTools(this.server, getClient, getReviewer, getZendesk, () => reviewComments, () => ({
+      apiKey: this.env.MARKETPLACE_ADMIN_API_KEY,
+    }));
     registerPrompts(this.server);
   }
 }
@@ -130,6 +149,10 @@ function buildZendesk(env: Env): ZendeskClient | null {
 
 function holdNoticesEnabled(env: Env): boolean {
   return env.HOLD_NOTICES_DISABLED?.trim() !== '1';
+}
+
+function ticketAccountCcEnabled(env: Env): boolean {
+  return env.TICKET_ACCOUNT_CC_DISABLED?.trim() !== '1';
 }
 
 const CORS_HEADERS: Record<string, string> = {
@@ -236,6 +259,7 @@ function buildWebhookLeg(env: Env): WebhookLeg | { missing: string[] } {
 
   const zendesk = holdNoticesEnabled(env) ? buildZendesk(env) : null;
   const holdNotices = holdNoticesEnabled(env) ? createD1HoldNoticeStore(env.TELEMETRY_DB!) : null;
+  const ticketCcZendesk = ticketAccountCcEnabled(env) ? buildZendesk(env) : null;
 
   return {
     webhookApi,
@@ -250,6 +274,7 @@ function buildWebhookLeg(env: Env): WebhookLeg | { missing: string[] } {
       kb,
       zendesk,
       holdNotices,
+      ticketAccountCc: ticketCcZendesk ? { zendesk: ticketCcZendesk } : null,
       logger: (message) => console.log(message),
     },
   };
@@ -449,6 +474,10 @@ export default {
               enabled: holdNoticesEnabled(env),
               zendeskConfigured: buildZendesk(env) !== null,
               reminderIntervalDays: 7,
+            },
+            ticketAccountCc: {
+              enabled: ticketAccountCcEnabled(env),
+              zendeskConfigured: buildZendesk(env) !== null,
             },
             tables: {
               assets: 'tblRwzpWoLgE9MrUm',

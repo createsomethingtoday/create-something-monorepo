@@ -1,0 +1,12 @@
+[
+  {
+    "command": "check",
+    "exit": 0,
+    "seconds": 74.47
+  },
+  {
+    "command": "build",
+    "exit": 0,
+    "seconds": 56.56
+  }
+]

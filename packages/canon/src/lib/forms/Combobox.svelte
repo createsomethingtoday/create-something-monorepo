@@ -14,6 +14,7 @@
 	 *     { value: 'uk', label: 'United Kingdom' },
 	 *   ]}
 	 *   bind:value={country}
+	 *   ariaLabel="Country"
 	 *   placeholder="Select a country"
 	 * />
 	 */
@@ -33,6 +34,8 @@
 		value?: string;
 		/** Placeholder text */
 		placeholder?: string;
+		/** Accessible field name; defaults to placeholder for existing consumers. */
+		ariaLabel?: string;
 		/** Disabled state */
 		disabled?: boolean;
 		/** Allow clearing selection */
@@ -47,6 +50,7 @@
 		options,
 		value = $bindable(),
 		placeholder = 'Select...',
+		ariaLabel,
 		disabled = false,
 		clearable = true,
 		noResultsMessage = 'No results found',
@@ -67,6 +71,11 @@
 					opt.label.toLowerCase().includes(query.toLowerCase())
 			  )
 			: options
+	);
+	const activeOptionId = $derived(
+		open && filteredOptions[highlightedIndex]
+			? `${listboxId}-option-${highlightedIndex}`
+			: undefined
 	);
 
 	// Get selected option
@@ -198,8 +207,10 @@
 			{placeholder}
 			{disabled}
 			role="combobox"
+			aria-label={ariaLabel ?? placeholder}
 			aria-expanded={open}
 			aria-controls={listboxId}
+			aria-activedescendant={activeOptionId}
 			aria-haspopup="listbox"
 			aria-autocomplete="list"
 			autocomplete="off"
@@ -240,6 +251,7 @@
 			{:else}
 				{#each filteredOptions as option, index}
 					<li
+						id={`${listboxId}-option-${index}`}
 						class="combobox-option"
 						class:highlighted={index === highlightedIndex}
 						class:selected={option.value === value}
@@ -292,6 +304,8 @@
 	}
 
 	.combobox-input {
+		min-width: 0;
+		min-height: 44px;
 		flex: 1;
 		background: transparent;
 		border: none;
@@ -321,8 +335,9 @@
 		display: flex;
 		align-items: center;
 		justify-content: center;
-		width: 20px;
-		height: 20px;
+		width: 44px;
+		flex-shrink: 0;
+		height: 44px;
 		background: transparent;
 		border: none;
 		color: var(--color-performance-fg-muted, rgba(255, 255, 255, 0.46));
@@ -330,6 +345,9 @@
 		border-radius: var(--radius-performance-scale-sm, 6px);
 		transition: color var(--duration-performance-micro, 200ms) var(--ease-performance-standard, cubic-bezier(0.4, 0, 0.2, 1));
 	}
+
+	.combobox-clear:focus-visible {outline: 2px solid var(--color-performance-focus); outline-offset: 2px;}
+	.combobox-trigger:focus-within {border-color: var(--color-performance-focus);}
 
 	.combobox-clear:hover {
 		color: var(--color-performance-fg-primary, #fff);
@@ -381,6 +399,7 @@
 	}
 
 	.combobox-option {
+		min-height: 44px;
 		display: flex;
 		align-items: center;
 		justify-content: space-between;
@@ -392,6 +411,8 @@
 
 	.combobox-option.highlighted {
 		background: var(--color-performance-bg-surface, #111);
+		outline: 2px solid var(--color-performance-focus);
+		outline-offset: -2px;
 	}
 
 	.combobox-option.selected {
@@ -425,6 +446,14 @@
 		}
 	}
 
+	@media (forced-colors: active) {
+		/* The keyboard target remains visible independently of the selected check. */
+		.combobox-option.highlighted {
+			outline: 2px solid Highlight;
+			outline-offset: -2px;
+		}
+	}
+
 	/* Reduced motion */
 	@media (prefers-reduced-motion: reduce) {
 		.combobox-trigger,
@@ -432,6 +461,7 @@
 		.combobox-chevron,
 		.combobox-dropdown,
 		.combobox-option {
+		min-height: 44px;
 			transition: none;
 			animation: none;
 		}

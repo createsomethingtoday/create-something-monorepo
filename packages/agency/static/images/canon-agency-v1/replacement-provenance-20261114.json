@@ -1,0 +1,29 @@
+{
+  "issue": "CRE-2455",
+  "assets": [
+    {
+      "asset": "body-transparent-r15.webp",
+      "source": "output/canon-replacement-art/body/canon-body-transparent-r15.webp",
+      "sha256": "5991de6999931b004cbac6c55d177156099914da6ab24f38bd90c332ac6ff78d",
+      "status": "approved_for_production",
+      "note": "Exact PNG source approved by user; delivered WebP is a format-only derivative.",
+      "approvedPNG": "ccd55117e8512a5e45d703e2b29adda0a1f14d0e59378eec32f2c1ed3b956dc1",
+      "prompt": "Use case: background-extraction. Asset type: original Canon full-body cutout for website onboarding and learning workshop. Edit target image1 is the approved character. Remove only its black background and floor, producing genuine transparent alpha. Preserve EXACT same squat charcoal wool felt body, proportions, softly cuboid head, oval cream woven eyes and contained dark pupils, digitized stitched smile, cream-tip antenna, two gentle hands, five soft fingers each as shown, one open welcoming palm, other hand holding cream cube-mark notebook in pocket. Preserve exact pose, framing, camera, stitching, lighting and material. Do not redesign any face/body or add objects. Clean natural felt alpha boundary without black halo or checkerboard; full body and antenna entirely contained with modest transparent margin. No cast black floor/shadow plate. Output one single isolated full body, not a sheet."
+    },
+    {
+      "asset": "evidence-comparison-r19.webp",
+      "source": "output/canon-replacement-art/property/evidence-comparison-r19.png",
+      "sha256": "3ef88304f510b3e9a84eefaebc06a8ced0306db171917018ee14abdd4204e5b9",
+      "status": "approved_for_production",
+      "note": "Exact PNG source approved by user; delivered WebP is a format-only derivative.",
+      "approvedPNG": "499ae17f7c63797d61bab2ea5626f2223a3dd5201b4bb9b93f97c216d9e5c904",
+      "prompt": "Use case: precise-object-edit, identity preservation.\nInput image 1 is the EDIT TARGET. Input image 2 is an IDENTITY REFERENCE ONLY for Canon's approved r41 HEAD SHAPE; do not copy its black background, body pose, hand, notebook position, lighting or studio setting into the target.\nMake one local change ONLY to Canon's outer felt head silhouette in image 1: make it visibly SQUATTIER, LOWER and BROADER, a broad soft RECTANGULAR CUBOID like r41. Target the outer head excluding antenna at approximately 1.4 units wide to 1 unit high. Flatten the roof into a shallow crown with softly rounded corners and a visible side plane; remove the excess tall felt cap above the face. It must not read as a sphere, round dome, tall cube, or bulbous cap. Achieve the lower broader silhouette by reducing excess felt above the face and modestly broadening the outer shell, not by stretching or squashing the eyes or the whole picture.\nKeep the exact oval woven digital eyes, their tall vertical oval shape and normal proportions, dark pupils contained and centered within each ivory eye, pixel smile, woven face texture and expression. Keep the antenna and cream antenna tip, correctly attached to the lowered roof.\nLock every other part of image 1: exact body, limbs, hands, posture, task, task geometry, props and their occlusions, composition, camera, perspective, warm workshop, light, shadows, materials, color and frame edges. Do not move, resize or warp the body or objects. Identity-reference guidance applies ONLY to the head silhouette. No new objects, text, logos, lights, glass or metal. Preserve the same landscape framing and exact 1536 by 1024 dimensions.\nTask-specific invariants: Canon holds one cream puzzle-profile piece above its corresponding paper outline for evidence comparison. Preserve the piece, both hands, the paper outline, loose piece, pencil, trays and exact comparison arrangement.\n"
+    }
+  ],
+  "approval": {
+    "state": "approved_for_production",
+    "userWords": "Approve the artwork for production",
+    "observedAt": "2026-11-14T05:43:58.353590+00:00",
+    "scope": "The 12 selected Canon scenes and transparent body in the 2026-11-14 complete-replacement review set; selected PNG hashes define the approval scope."
+  }
+}

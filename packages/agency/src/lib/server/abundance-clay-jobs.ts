@@ -1,5 +1,7 @@
-import { clayRequestSchema, clayResultSchema } from './abundance-clay-contract';
-import { latestSuccessfulNationwideRun } from './abundance-healthcare-nationwide';
+import {
+  recordClayCompletion
+} from './enrichment-budget';
+import { clayResultSchema } from './abundance-clay-contract';
 export class ClayQuotaError extends Error {}
 export class ClayCallbackError extends Error {}
 interface Job {
@@ -41,105 +43,6 @@ export async function readClayJob(db: D1Database, id: string) {
   if (!job) throw new TypeError('Unknown job');
   return publicJob(job);
 }
-export async function requestClayJob(
-  db: D1Database,
-  input: unknown,
-  config: { webhookUrl: string; webhookToken: string },
-  fetchFn: typeof fetch = fetch
-) {
-  const parsed = clayRequestSchema.parse(input);
-  const run = await latestSuccessfulNationwideRun(db, 'all_np_taxonomies');
-  if (!run) throw new TypeError('Broad registry snapshot required');
-  const row = await db
-    .prepare(
-      'SELECT provider_snapshot_json FROM abundance_healthcare_nationwide_memberships WHERE run_id=? AND provider_npi=?'
-    )
-    .bind(run.id, parsed.npi)
-    .first<{ provider_snapshot_json: string }>();
-  if (!row) throw new TypeError('NPI not in snapshot');
-  const provider = JSON.parse(row.provider_snapshot_json);
-  if (typeof provider.name !== 'string' || typeof provider.source_payload_hash !== 'string')
-    throw new TypeError('Invalid registry record');
-  const now = new Date().toISOString();
-  // Cache by immutable provider version and calendar week. Unknown delivery is
-  // retained: retries return the original job and cannot duplicate a paid run.
-  const week = Math.floor(Date.now() / (7 * 86400000));
-  const cacheKey = await digest(`${parsed.npi}:${provider.source_payload_hash}:${week}`);
-  const existing = await db
-    .prepare('SELECT * FROM abundance_clay_jobs WHERE cache_key=?')
-    .bind(cacheKey)
-    .first<Job>();
-  if (existing) return { ...publicJob(existing), cache_hit: true };
-  const url = new URL(config.webhookUrl);
-  if (
-    url.protocol !== 'https:' ||
-    url.hostname !== 'api.clay.com' ||
-    url.username ||
-    url.password ||
-    url.port ||
-    !url.pathname.startsWith('/v3/sources/webhook/')
-  )
-    throw new TypeError('Invalid Clay endpoint');
-  const id = `npgclay_${crypto.randomUUID()}`;
-  const token = crypto.randomUUID() + crypto.randomUUID();
-  const tokenHash = await digest(token);
-  // Single write statement serializes concurrent reservations, including quota.
-  const inserted = await db
-    .prepare(
-      `INSERT OR IGNORE INTO abundance_clay_jobs
- (id,cache_key,npi,status,callback_hash,source_run_id,source_payload_hash,created_at)
- SELECT ?,?,?,'pending',?,?,?,? WHERE
- (SELECT count(*) FROM abundance_clay_jobs WHERE created_at>=?)<5`
-    )
-    .bind(
-      id,
-      cacheKey,
-      parsed.npi,
-      tokenHash,
-      run.id,
-      provider.source_payload_hash,
-      now,
-      new Date(Date.now() - 86400000).toISOString()
-    )
-    .run();
-  if (!inserted.meta.changes) {
-    const concurrent = await db
-      .prepare('SELECT * FROM abundance_clay_jobs WHERE cache_key=?')
-      .bind(cacheKey)
-      .first<Job>();
-    if (concurrent) return { ...publicJob(concurrent), cache_hit: true };
-    throw new ClayQuotaError('Daily request allowance exhausted');
-  }
-  const payload = {
-    request_id: id,
-    npi: parsed.npi,
-    name: provider.name,
-    city: provider.practice_city ?? null,
-    state: provider.practice_state ?? null,
-    source_payload_hash: provider.source_payload_hash,
-    enrichment_requested: true,
-    scope: 'public_professional_only',
-    callback_url: 'https://createsomething.agency/api/webhooks/npg-clay',
-    callback_token: token
-  };
-  try {
-    const response = await fetchFn(url, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'x-clay-webhook-auth': config.webhookToken },
-      body: JSON.stringify(payload),
-      signal: AbortSignal.timeout(15000)
-    });
-    if (!response.ok) throw Error('Clay did not acknowledge');
-  } catch {
-    await db
-      .prepare(
-        "UPDATE abundance_clay_jobs SET status='delivery_unknown' WHERE id=? AND status='pending'"
-      )
-      .bind(id)
-      .run();
-  }
-  return { ...(await readClayJob(db, id)), cache_hit: false };
-}
 export async function completeClayJob(db: D1Database, input: unknown) {
   if (!input || typeof input !== 'object') throw new ClayCallbackError();
   const raw = input as Record<string, unknown>;
@@ -162,6 +65,7 @@ export async function completeClayJob(db: D1Database, input: unknown) {
   const serialized = JSON.stringify(result);
   if (job.result_json) {
     if (job.result_json !== serialized) throw new ClayCallbackError();
+    await recordClayCompletion(db, job.id);
     return { accepted: true, repeated: true };
   }
   if (Date.now() - Date.parse(job.created_at) > 86400000) throw new ClayCallbackError();
@@ -179,5 +83,6 @@ export async function completeClayJob(db: D1Database, input: unknown) {
       .first<{ result_json: string }>();
     if (current?.result_json !== serialized) throw new ClayCallbackError();
   }
+  await recordClayCompletion(db, job.id);
   return { accepted: true };
 }

@@ -8,6 +8,8 @@ import { isAgencyWebflowPortfolioPath } from '../atlas/surface-policy';
 const privateOrUtilityRoute = /^\/(account|admin|dashboard|login|logout|auth|mcp-access|delivery|api|dify|prospects)(?:\/|$)/;
 const publicSupportingRoutes = new Set([
   '/privacy', '/terms', '/support-brief',
+  // Development-only consumer fixture; its server loader returns 404 in production.
+  '/canon-preview',
   // Current public search landing pages outside the editorial portfolio.
   '/ai-workflow-control', '/ai-workflow-recovery', '/marketplace-review-automation'
 ]);
@@ -18,10 +20,16 @@ const portfolioRoutes = new Set(
 // Their loaders still decide whether a requested slug exists and is published.
 const publicPreviewRoute = /^\/(?:arc|experiments)\/[^/]+$/;
 
+/** Approved identity entry points share Agency's visual identity. This grants
+ * presentation only; authentication and the public-page inventory stay separate. */
+export function usesAgencyMeasuredAccountSurface(pathname: string): boolean {
+  const path = pathname.split(/[?#]/)[0].replace(/\/+$/, '') || '/';
+  return path === '/account' || path === '/login';
+}
+
 export function usesAgencyOperatorPalette(pathname: string): boolean {
   const path = pathname.split(/[?#]/)[0].replace(/\/+$/, '') || '/';
-  // Customer entry adopts Agency styling; private workspace policy stays separate.
-  if (path === '/login') return true;
+  if (usesAgencyMeasuredAccountSurface(path)) return true;
   if (privateOrUtilityRoute.test(path)) return false;
   // Preserve the already approved opt-in for the Map entry only. Nested maps,
   // handoffs, subscriptions and shared maps retain their own utility policy.

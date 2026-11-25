@@ -5,24 +5,25 @@
 // Endpoints:
 //   GET  /                   status page
 //   GET  /health             smoke check
-//   POST /webhook            Bettermode events (TEST + post/reply lifecycle)
+//   POST /webhook            Bettermode events (TEST + SUBSCRIPTION content events)
 //   POST /webhook/interaction  dynamic block render + button callbacks
+//
+// Post and reply events go to a Cloudflare Queue. The consumer and the
+// scheduled sweep live in ./queue.
 
+import { WorkerEntrypoint } from 'cloudflare:workers';
+
+import { BettermodeError } from './bettermode';
+import { isThreadEvent, webhookEventName, webhookPostId } from './events';
 import {
-  airtableConfig,
-  fetchCreatorContext,
-  type CreatorContext,
-} from './airtable';
-import {
-  appAccessToken,
-  bettermodeAuth,
-  BettermodeError,
-  createReply,
-  fetchPostThread,
-  memberAccessToken,
-  type BettermodePost,
-} from './bettermode';
-import { generateDraft, openaiConfig } from './openai';
+  adminUserIds,
+  enqueue,
+  handleQueueBatch,
+  reconcile,
+  shouldHandleSpace,
+  type QueueMessage,
+} from './queue';
+import { sendApprovedDraft } from './send';
 import { verifySignature } from './signature';
 import {
   adminDraftSlate,
@@ -31,12 +32,11 @@ import {
   type DraftBlockState,
 } from './slate';
 import {
+  expireOpenDrafts,
   getLatestDraftByPostId,
-  listRecentApprovedDrafts,
   markRejected,
-  markSent,
-  upsertPendingDraft,
-  upsertSignal,
+  patchSignal,
+  recordWebhookEvent,
 } from './store';
 
 type WebhookPayload = {
@@ -54,19 +54,40 @@ type WebhookPayload = {
     preview?: boolean;
     inputs?: Record<string, unknown> | null;
     challenge?: string;
+    // Content events (type SUBSCRIPTION) name the event here.
+    name?: string | null;
+    noun?: string | null;
+    verb?: string | null;
     object?: { id?: string; type?: string; spaceId?: string } | null;
-    target?: { id?: string; type?: string; spaceId?: string } | null;
+    target?: { id?: string; type?: string; spaceId?: string; postId?: string } | null;
   };
 };
 
-const POST_EVENT_TYPES = new Set([
-  'post.published',
-  'post.created',
-  'post.updated',
-  'reply.published',
-  'reply.created',
-  'reply.updated',
-]);
+// Private API for the dashboard. A named entrypoint has no public URL: only
+// a Worker in this account with a service binding to it can call it. The
+// caller (the creator MCP, behind the Template Review connector) checks who
+// the person is before it calls.
+export class QueueAdmin extends WorkerEntrypoint<Env> {
+  async sendDraft(input: {
+    postId: string;
+    draftText: string;
+    requestedBy?: string | null;
+  }): Promise<{ ok: true; reply_id: string | null } | { ok: false; error: string }> {
+    try {
+      const actorId = adminUserIds(this.env)[0];
+      if (!actorId) throw new Error('No Bettermode admin is configured on the Worker.');
+      const { replyId } = await sendApprovedDraft(this.env, {
+        postId: String(input?.postId || ''),
+        draftText: String(input?.draftText || ''),
+        actorId,
+        requestedBy: input?.requestedBy ?? null,
+      });
+      return { ok: true, reply_id: replyId };
+    } catch (error) {
+      return { ok: false, error: errorMessage(error) };
+    }
+  }
+}
 
 export default {
   async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
@@ -111,7 +132,15 @@ export default {
       );
     }
   },
-} satisfies ExportedHandler<Env>;
+
+  async queue(batch: MessageBatch<QueueMessage>, env: Env): Promise<void> {
+    await handleQueueBatch(batch, env);
+  },
+
+  async scheduled(_controller: ScheduledController, env: Env): Promise<void> {
+    await reconcile(env);
+  },
+} satisfies ExportedHandler<Env, QueueMessage>;
 
 async function handleWebhook(
   request: Request,
@@ -130,12 +159,15 @@ async function handleWebhook(
 
   const webhook = parseJson<WebhookPayload>(rawBody);
 
-  // Diagnostic logging — surfaces the exact event type Bettermode sends so we
-  // can verify our POST_EVENT_TYPES filter matches reality. Cheap and safe:
-  // single structured line per inbound webhook, no payload contents.
+  // One structured line per webhook, with the event but no payload contents.
+  // `name` is what the thread filter reads.
+  const eventName = webhookEventName(webhook);
   console.log('webhook received', {
     pathname,
     type: webhook.type,
+    name: eventName,
+    noun: webhook.data?.noun,
+    verb: webhook.data?.verb,
     entityId: webhook.entityId,
     context: webhook.context,
     objectId: webhook.data?.object?.id,
@@ -159,24 +191,32 @@ async function handleWebhook(
     return jsonResponse(await handleInteraction(webhook, env, ctx), request, env);
   }
 
-  if (pathname === '/webhook' && webhook.type && POST_EVENT_TYPES.has(webhook.type)) {
-    const postId = webhook.data?.object?.id || webhook.entityId;
-    const spaceId = webhook.data?.object?.spaceId;
-    console.log('matched post event', { type: webhook.type, postId, spaceId });
-    if (postId && shouldHandleSpace(spaceId, env)) {
-      ctx.waitUntil(generateDraftForPost(postId, env).catch((err) => {
-        console.error('draft generation failed', { postId, error: errorMessage(err) });
-      }));
+  if (pathname === '/webhook' && isThreadEvent(webhook, env.BETTERMODE_MARKETPLACE_SPACE_ID)) {
+    const postId = webhookPostId(webhook);
+    const spaceId = webhook.data?.object?.spaceId || webhook.data?.target?.spaceId;
+    console.log('matched post event', { type: webhook.type, name: eventName, postId, spaceId });
+    // The consumer checks the space against the live thread, so an event
+    // without a spaceId passes. Only a known foreign space is dropped here.
+    if (postId && (!spaceId || shouldHandleSpace(spaceId, env))) {
+      // Awaited so a failed enqueue returns a non-2xx, not a false success.
+      await enqueue(env, { kind: 'thread.sync', postId, reason: eventName || 'webhook' });
+      // Heartbeat for the dashboard. It must not fail or slow the webhook.
+      ctx.waitUntil(
+        recordWebhookEvent(env.DB, eventName || 'unnamed').catch((error) => {
+          console.error('could not record webhook event', { error: errorMessage(error) });
+        }),
+      );
     } else {
       console.warn('event matched type but filtered out', {
         type: webhook.type,
+        name: eventName,
         postId,
         spaceId,
         marketplace_space: env.BETTERMODE_MARKETPLACE_SPACE_ID,
       });
     }
   } else if (pathname === '/webhook' && webhook.type) {
-    console.warn('unhandled webhook type', { type: webhook.type });
+    console.warn('unhandled webhook event', { type: webhook.type, name: eventName });
   }
 
   // Federated search and unknown types: ack with success.
@@ -250,31 +290,12 @@ async function handleSend(
   env: Env,
 ): Promise<Record<string, unknown>> {
   try {
-    const postId = stringInput(webhook, 'postId') || resolvePostId(webhook);
-    const draftText = stringInput(webhook, 'draft');
-    if (!postId) throw new Error('Missing post ID.');
-    if (!draftText) throw new Error('Drafted reply is empty.');
-
-    const state = await loadDraftState(postId, env);
-    if (!state.draft) {
-      throw new Error('No drafted reply found for this post.');
-    }
-
-    const auth = bettermodeAuth(env);
-    const networkId = state.signal.metadata?.network_id || env.BETTERMODE_DEFAULT_NETWORK_ID;
-    if (!networkId) throw new Error('Missing Bettermode network ID.');
-    if (!webhook.data?.actorId) throw new Error('Missing admin actor ID.');
-
-    const memberToken = await memberAccessToken(networkId, webhook.data.actorId, auth);
-    const reply = await createReply(
+    const postId = stringInput(webhook, 'postId') || resolvePostId(webhook) || '';
+    await sendApprovedDraft(env, {
       postId,
-      state.signal.metadata?.space_id ?? null,
-      draftToHtml(draftText),
-      memberToken,
-      auth,
-    );
-
-    await markSent(env.DB, state.draft.id, draftText, reply.id ?? null);
+      draftText: stringInput(webhook, 'draft'),
+      actorId: webhook.data?.actorId || '',
+    });
 
     const refreshed = await loadDraftState(postId, env);
     refreshed.notice = { kind: 'success', title: 'Reply sent.' };
@@ -320,11 +341,7 @@ async function handleRegenerate(
       },
     ]);
   }
-  ctx.waitUntil(
-    generateDraftForPost(postId, env, { regenerate: true }).catch((err) => {
-      console.error('regenerate failed', { postId, error: errorMessage(err) });
-    }),
-  );
+  await enqueue(env, { kind: 'thread.sync', postId, reason: 'regenerate', regenerate: true });
   const state = await loadDraftState(postId, env);
   state.notice = { kind: 'info', title: 'Regenerating draft...' };
   return interactionResponse(webhook, [
@@ -345,8 +362,13 @@ async function handleDismiss(
     return interactionResponse(webhook, []);
   }
   const state = await loadDraftState(postId, env);
-  if (state.draft) {
-    await markRejected(env.DB, state.draft.id);
+  // Close the queue item only when an open draft was rejected. A creator
+  // message after this time reopens it.
+  if (state.draft && (await markRejected(env.DB, state.draft.id))) {
+    await patchSignal(env.DB, state.signal.id, 'dismissed', {
+      dismissed_at: new Date().toISOString(),
+      closed_reason: null,
+    });
   }
   const refreshed = await loadDraftState(postId, env);
   refreshed.notice = { kind: 'info', title: 'Draft dismissed.' };
@@ -401,130 +423,9 @@ async function loadDraftState(postId: string | undefined, env: Env): Promise<Loa
   };
 }
 
-async function generateDraftForPost(
-  postId: string,
-  env: Env,
-  opts: { regenerate?: boolean } = {},
-): Promise<void> {
-  const auth = bettermodeAuth(env);
-  const networkId = env.BETTERMODE_DEFAULT_NETWORK_ID;
-  if (!networkId) throw new Error('Missing BETTERMODE_DEFAULT_NETWORK_ID.');
-
-  const token = await appAccessToken(networkId, auth);
-  const post = await fetchPostThread(postId, token, auth);
-  if (!post) {
-    console.warn('post not found for draft', { postId });
-    return;
-  }
-
-  if (!shouldHandleSpace(post.spaceId || post.space?.id, env)) {
-    return;
-  }
-
-  const author = post.owner || post.createdBy;
-  const email = author?.email || '';
-  const isTopLevel = !post.parentId;
-
-  // Skip drafting when the author is internal Webflow staff (e.g. team
-  // announcements like "Interactions with GSAP training"). The agent's
-  // job is to draft admin replies to creator questions, not to reply
-  // to its own team's announcements.
-  if (isStaffAuthorEmail(email, env)) {
-    console.log('skipping draft for staff author', {
-      postId,
-      authorEmail: email,
-      reason: 'matches staff domain allowlist',
-    });
-    return;
-  }
-
-  let creator: CreatorContext | null = null;
-  const aConfig = airtableConfig(env);
-  if (aConfig && email) {
-    try {
-      creator = await fetchCreatorContext(email, aConfig);
-    } catch (err) {
-      console.error('airtable lookup failed', { email, error: errorMessage(err) });
-    }
-  }
-
-  const oConfig = openaiConfig(env);
-  if (!oConfig) {
-    console.warn('OpenAI is not configured; skipping draft', { postId });
-    return;
-  }
-
-  const fewShot = await listRecentApprovedDrafts(env.DB, 5);
-  const draft = await generateDraft(
-    {
-      post,
-      isTopLevel,
-      creator,
-      fewShotApprovedDrafts: fewShot,
-      regenerate: opts.regenerate === true,
-    },
-    oConfig,
-  );
-
-  const signalId = await upsertSignal(env.DB, {
-    postId: post.id,
-    postUrl: post.url,
-    postContent: stripBettermodeContent(post),
-    metadata: {
-      network_id: networkId,
-      space_id: post.spaceId || post.space?.id || null,
-      parent_post_id: post.parentId || null,
-      is_top_level: isTopLevel,
-      author_member_id: author?.id || null,
-      author_email: email || null,
-      author_name: author?.name || null,
-    },
-  });
-
-  await upsertPendingDraft(env.DB, { signalId, draftContent: draft });
-}
-
 function isAdminUser(actorId: string | undefined, env: Env): boolean {
-  if (!actorId) return false;
-  const allow = (env.BETTERMODE_ADMIN_USER_IDS || '')
-    .split(',')
-    .map((id) => id.trim())
-    .filter(Boolean);
-  if (allow.length === 0) {
-    // No allowlist configured → fail closed.
-    return false;
-  }
-  return allow.includes(actorId);
-}
-
-function shouldHandleSpace(spaceId: string | null | undefined, env: Env): boolean {
-  const required = env.BETTERMODE_MARKETPLACE_SPACE_ID?.trim();
-  if (!required) {
-    // Not yet configured: handle everything so the operator can capture a
-    // real space ID from the first webhook payload via logs.
-    return true;
-  }
-  return !!spaceId && spaceId === required;
-}
-
-// Returns true when the post author's email matches a configured staff
-// domain (comma-separated in BETTERMODE_STAFF_AUTHOR_DOMAINS, defaulting
-// to `webflow.com`). Staff-authored posts are typically announcements
-// from the Marketplace team itself, not creator questions the agent
-// should draft replies to.
-function isStaffAuthorEmail(
-  email: string | undefined | null,
-  env: Env,
-): boolean {
-  if (!email) return false;
-  const lower = email.trim().toLowerCase();
-  if (!lower.includes('@')) return false;
-  const configured = env.BETTERMODE_STAFF_AUTHOR_DOMAINS;
-  const domains = (configured && configured.trim() ? configured : 'webflow.com')
-    .split(',')
-    .map((d) => d.trim().toLowerCase())
-    .filter(Boolean);
-  return domains.some((d) => lower.endsWith(`@${d}`));
+  // An empty allowlist fails closed.
+  return !!actorId && adminUserIds(env).includes(actorId);
 }
 
 function resolvePostId(webhook: WebhookPayload): string | undefined {
@@ -539,22 +440,6 @@ function resolvePostId(webhook: WebhookPayload): string | undefined {
 function stringInput(webhook: WebhookPayload, key: string): string {
   const value = webhook.data?.inputs?.[key];
   return typeof value === 'string' ? value : '';
-}
-
-function stripBettermodeContent(post: BettermodePost): string {
-  const raw = post.shortContent || post.description || post.title || '';
-  return raw.replace(/<[^>]+>/g, '').replace(/\s+/g, ' ').trim();
-}
-
-function draftToHtml(text: string): string {
-  const escaped = text
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;');
-  return escaped
-    .split(/\n{2,}/)
-    .map((para) => `<p>${para.replace(/\n/g, '<br>')}</p>`)
-    .join('');
 }
 
 function clip(value: string, max: number): string {

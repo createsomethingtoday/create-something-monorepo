@@ -984,3 +984,6 @@
   margin-top: 12px;
   font-size: 13px;
 }
+
+/* Small guide artwork is legible at the shared 96px size on every viewport. */
+.dental-agents .dental-canon { width:96px; height:96px; filter:none; }

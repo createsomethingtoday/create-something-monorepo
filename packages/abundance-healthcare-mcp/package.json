@@ -8,7 +8,8 @@
   "scripts": {
     "build": "pnpm --filter @create-something/mcp-core build && tsc",
     "test": "pnpm --filter @create-something/mcp-core build && node --import tsx --test test/*.test.ts",
-    "typecheck": "pnpm --filter @create-something/mcp-core build && tsc --noEmit"
+    "typecheck": "pnpm --filter @create-something/mcp-core build && tsc --noEmit",
+    "test:worker": "node --test test/skip-trace-runtime.test.mjs"
   },
   "dependencies": {
     "@create-something/mcp-core": "workspace:*",

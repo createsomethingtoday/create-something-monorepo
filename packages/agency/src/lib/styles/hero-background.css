@@ -1,0 +1,47 @@
+/* Coverage-owned public intros use the same editorial split as current Agency.
+   __HERO__ is a repository-owned selector, never visitor input. */
+__HERO__ {
+  box-sizing: border-box !important;
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) !important;
+  gap: 1rem 3rem !important;
+  align-items: center;
+  position: relative;
+  width: 100% !important;
+  max-width: 1152px !important;
+  min-height: 0 !important;
+  height: auto !important;
+  margin-inline: auto !important;
+  padding: 6rem 1rem !important;
+  background: var(--color-performance-paper) !important;
+  color: var(--color-performance-ink) !important;
+}
+__HERO__ > * { grid-column: 1; min-width: 0; order: 1; }
+__HERO__::before {
+  content: '' !important;
+  display: block !important;
+  position: relative !important;
+  inset: auto !important;
+  grid-column: 2;
+  grid-row: 1 / span 12;
+  align-self: center;
+  width: 100% !important;
+  height: auto !important;
+  aspect-ratio: 1280 / 721;
+  background: var(--agency-hero-image) center / cover no-repeat !important;
+  border-radius: 1rem;
+  opacity: 1 !important;
+  transform: none !important;
+  mask: none !important;
+  pointer-events: none;
+  z-index: 0 !important;
+  order: 2;
+}
+__HERO__::after { display: none !important; }
+__HERO__ :is(h1,h2) { max-width: 19ch; font-family: var(--font-performance-display) !important; color: var(--color-performance-ink) !important; }
+__HERO__ p { color: var(--color-performance-muted) !important; }
+@media(max-width:767px) {
+  __HERO__ { grid-template-columns: minmax(0,1fr) !important; padding-block: 4rem !important; }
+  __HERO__::before { grid-column:1; grid-row:auto; margin-top:2rem; background-image:var(--agency-hero-mobile-image) !important; }
+}
+@media(forced-colors: active) { __HERO__::before { display:none !important; } }

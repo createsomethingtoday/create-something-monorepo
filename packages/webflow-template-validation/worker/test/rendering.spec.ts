@@ -131,6 +131,13 @@ describe('page error helpers', () => {
 		expect(isIgnoredPageError('gsap is not defined')).toBe(false);
 	});
 
+	it('ignores the Webflow PayPal checkout error for a page opened without an order', () => {
+		expect(
+			isIgnoredPageError('CombinedGraphQLErrors: Our servers encountered an unexpected error: no paypal order ID')
+		).toBe(true);
+		expect(isIgnoredPageError('paypal is not defined')).toBe(false);
+	});
+
 	it('reads the throwing script from a V8 stack', () => {
 		const stack = `TypeError: Cannot read properties of null (reading 'style')\n    at HTMLDocument.<anonymous> (${SITE}/js/custom.js:12:9)\n    at https://cdn.prod.website-files.com/js/webflow.js:1:200`;
 		expect(scriptSourceFromStack(stack)).toBe(`${SITE}/js/custom.js`);
@@ -159,5 +166,30 @@ describe('renderTargets', () => {
 			`${SITE}/about`,
 			`${SITE}/contact`
 		]);
+	});
+});
+
+describe('duplicate navbar links', () => {
+	function withDuplicates(path: string, links: Array<{ text: string; href: string; count: number }>): PageRenderObservation {
+		return page(path, {
+			viewports: viewports().map((viewport) => (viewport.viewport === 'desktop' ? { ...viewport, duplicateNavLinks: links } : viewport))
+		});
+	}
+
+	it('warns once for a link that repeats on every page, and names the first page', () => {
+		const contact = { text: 'Contact', href: `${SITE}/contact`, count: 2 };
+		const issues = generateRenderingIssues([withDuplicates('/', [contact]), withDuplicates('/about', [contact])], { pagesRequested: 2 });
+		expect(issues).toHaveLength(1);
+		expect(issues[0]).toMatchObject({ id: 'nav-duplicate-links', category: RENDERING_CATEGORY, severity: 'warning' });
+		expect(issues[0].details?.locations).toEqual(['/ — "Contact" shows 2 times in the navbar, each to /contact']);
+	});
+
+	it('does not fail the category', () => {
+		const result = summarizeRendering([withDuplicates('/', [{ text: 'Contact', href: `${SITE}/contact`, count: 2 }])], { pagesRequested: 1 });
+		expect(result.issues.every((issue) => issue.severity !== 'error')).toBe(true);
+	});
+
+	it('reports nothing when no page has a duplicate', () => {
+		expect(generateRenderingIssues([withDuplicates('/', [])], { pagesRequested: 1 })).toEqual([]);
 	});
 });

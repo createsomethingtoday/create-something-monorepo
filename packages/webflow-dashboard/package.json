@@ -11,6 +11,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "fixture:storefront": "vite --config fixtures/storefront-editor/vite.config.ts",
+    "fixture:dashboard": "vite dev --config fixtures/dashboard/vite.config.ts",
     "deploy": "pnpm build && node ../../scripts/run-wrangler.mjs pages deploy .svelte-kit/cloudflare --project-name=webflow-dashboard --commit-dirty=true",
     "deploy:preview": "pnpm build && node ../../scripts/run-wrangler.mjs pages deploy .svelte-kit/cloudflare --project-name=webflow-dashboard --branch=preview --commit-dirty=true"
   },
@@ -31,6 +32,7 @@
     "@create-something/canon": "workspace:^",
     "@create-something/webflow-dashboard-core": "workspace:*",
     "airtable": "^0.12.2",
+    "gsap": "3.15.0",
     "isomorphic-dompurify": "^2.35.0",
     "lucide-svelte": "^0.454.0",
     "uuid": "^11.0.3"

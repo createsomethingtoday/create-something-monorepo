@@ -15,9 +15,7 @@ REVIEWER="${REVIEWER:-all}"
 INCLUDE_CENTRAL="${INCLUDE_CENTRAL:-0}"
 
 REVIEWERS=(
-  "WF_TEMPLATE_REVIEW_NATALIA|cs-hub-wf-template-review-natalia"
   "WF_TEMPLATE_REVIEW_ERIC|cs-hub-wf-template-review-eric"
-  "WF_TEMPLATE_REVIEW_VICKI|cs-hub-wf-template-review-vicki"
   "WF_TEMPLATE_REVIEW_MARIANA|cs-hub-wf-template-review-mariana"
   "WF_TEMPLATE_REVIEW_MICAH|cs-hub-wf-template-review-micah"
 )

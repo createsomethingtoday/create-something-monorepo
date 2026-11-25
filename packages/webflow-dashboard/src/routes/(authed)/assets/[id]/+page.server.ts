@@ -2,9 +2,13 @@ import type { PageServerLoad } from './$types';
 import { error } from '@sveltejs/kit';
 import { getAirtableClient, type RequiredFixExceptionItem } from '$lib/server/airtable';
 import { isReviewFeedbackReleased } from '$lib/utils/review-status';
+import { isReviewCommentsEnabled } from '$lib/server/review-comments';
 import { applyTemplateViews } from '$lib/server/template-views';
 
-export const load: PageServerLoad = async ({ params, locals, platform }) => {
+// Tabs a link may open directly. The review feedback email links to "timeline".
+const LINKABLE_TABS = ['overview', 'timeline', 'analytics'] as const;
+
+export const load: PageServerLoad = async ({ params, locals, platform, url }) => {
 	// Check authentication
 	if (!locals.user?.email) {
 		throw error(401, 'Unauthorized');
@@ -57,6 +61,8 @@ export const load: PageServerLoad = async ({ params, locals, platform }) => {
 		asset,
 		requiredFixes,
 		releasedFeedbackSnapshot,
+		reviewCommentsEnabled: isReviewCommentsEnabled(platform.env, asset.type),
+		initialTab: LINKABLE_TABS.find((tab) => tab === url.searchParams.get('tab')) ?? null,
 		user: locals.user
 	};
 };

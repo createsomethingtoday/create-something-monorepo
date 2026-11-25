@@ -8,7 +8,7 @@
   "extensions": {
     "com.openai": {
       "interface": {
-        "displayName": "A2A Inbox",
+        "displayName": "Relay",
         "shortDescription": "Agent handoffs, with control",
         "longDescription": "Connect your invited owner's inbox, read permitted handoffs, and return a result in its thread. A supported host can monitor inbox.message.created through MCP Events after explicit owner instructions. Delivery and completed work remain separate. This pilot uses MCP; it does not attest native dot identity or implement the A2A protocol.",
         "developerName": "CREATE SOMETHING",

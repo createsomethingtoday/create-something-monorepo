@@ -82,6 +82,20 @@ describe('evaluateAlerts', () => {
     expect(rules).toContain('A4 spend'); // 33 > 0.8 * 40
   });
 
+  it('fires A7 when turns are attempted for 24h and none completes', () => {
+    // Shape of the 2026-10-30 outage after the daily budget ran out.
+    const down24 = { counts: { turn_failed: 24, session_minted: 12 }, settledUsd: 0, denialReasons: { daily_budget: 28 } };
+    const finding = evaluateAlerts(down24, emptyStats, emptyStats, makeEnv()).find((f) => f.rule === 'A7 no-completed-turns');
+    expect(finding).toMatchObject({ severity: 'outage' });
+    expect(finding?.message).toContain('24 failed and 28 were denied');
+
+    const oneCompleted = { ...down24, counts: { ...down24.counts, turn_settled: 1 } };
+    const twoAttempts = { counts: { turn_failed: 2 }, settledUsd: 0, denialReasons: {} };
+    for (const quiet of [oneCompleted, twoAttempts]) {
+      expect(evaluateAlerts(quiet, emptyStats, emptyStats, makeEnv()).map((f) => f.rule)).not.toContain('A7 no-completed-turns');
+    }
+  });
+
   it('stays quiet on a healthy window', () => {
     const healthy24 = { counts: { turn_settled: 90, session_minted: 60 }, settledUsd: 22, denialReasons: {} };
     const healthy6 = { counts: { turn_settled: 20 }, settledUsd: 5, denialReasons: {} };
@@ -134,13 +148,14 @@ describe('runScheduled', () => {
 
     await runScheduled({ cron: ALERT_SCAN_CRON } as ScheduledController, env, fetcher as unknown as typeof fetch);
     const slackCalls = () => fetcher.mock.calls.filter(([url]) => String(url).includes('hooks.slack.test'));
-    // A1 (no settled turns) + A3 (daily_budget denial) both fire on this dataset.
-    expect(slackCalls().length).toBe(2);
+    // A1 (no settled turns), A3 (daily_budget denial) and A7 (denied, none
+    // completed) fire on this dataset.
+    expect(slackCalls().length).toBe(3);
     expect(String(slackCalls()[1][1]?.body)).toContain('daily_budget');
     expect(JSON.stringify(slackCalls().map((c) => c[1]?.body))).not.toContain('token-must-not-appear');
 
     await runScheduled({ cron: ALERT_SCAN_CRON } as ScheduledController, env, fetcher as unknown as typeof fetch);
-    expect(slackCalls().length).toBe(2); // cooldown suppressed the repeats
+    expect(slackCalls().length).toBe(3); // cooldown suppressed the repeats
   });
 
   it('shadow-logs instead of posting when SLACK_WEBHOOK_URL is unset', async () => {
@@ -159,6 +174,56 @@ describe('runScheduled', () => {
     expect(slackCalls).toEqual([]);
     expect(log.mock.calls.some(([line]) => String(line).includes('[telemetry shadow]'))).toBe(true);
     log.mockRestore();
+  });
+});
+
+describe('request preflight', () => {
+  const rejection = () =>
+    new Response(
+      JSON.stringify({
+        type: 'error',
+        error: { type: 'invalid_request_error', message: "tools.0.custom: For 'number' type, properties maximum, minimum are not supported" },
+      }),
+      { status: 400, headers: { 'content-type': 'application/json' } },
+    );
+  const healthyRows = [{ type: 'turn_settled', reason: '', n: '50', micro_usd: '12216628' }];
+
+  it('reports A8 to Slack and in the summary when the model API rejects the request', async () => {
+    const log = vi.spyOn(console, 'log').mockImplementation(() => {});
+    const fetcher = vi.fn(async (url: string | URL | Request) => {
+      if (String(url).includes('count_tokens')) return rejection();
+      if (String(url).includes('analytics_engine')) return aeResponse(healthyRows);
+      return new Response('ok', { status: 200 });
+    });
+    const env = makeEnv({ SLACK_WEBHOOK_URL: 'https://hooks.slack.test/T/B/x' });
+
+    await runScheduled({ cron: ALERT_SCAN_CRON } as ScheduledController, env, fetcher as unknown as typeof fetch);
+    const slackBodies = fetcher.mock.calls
+      .filter(([url]) => String(url).includes('hooks.slack.test'))
+      .map((call) => String((call as unknown as [string, RequestInit])[1]?.body));
+    expect(slackBodies).toHaveLength(1);
+    expect(slackBodies[0]).toContain('A8 request-preflight');
+    expect(slackBodies[0]).toContain('HTTP 400');
+
+    const { buildSummary } = await import('../src/digest.js');
+    const summary = await buildSummary(env, new Date('2026-11-14T16:00:00Z'), fetcher as unknown as typeof fetch);
+    expect(summary.alerts).toEqual([
+      { rule: 'A8 request-preflight', severity: 'outage', message: expect.stringContaining('HTTP 400') },
+    ]);
+    // The API's reason stays in the log: the summary is published.
+    expect(JSON.stringify(summary)).not.toContain('maximum');
+    expect(log.mock.calls.some(([line]) => String(line).includes('maximum, minimum are not supported'))).toBe(true);
+    log.mockRestore();
+  });
+
+  it.each([429, 500, 529])('reports nothing when the check itself cannot run (HTTP %s)', async (status) => {
+    const fetcher = vi.fn(async (url: string | URL | Request) => {
+      if (String(url).includes('count_tokens')) return new Response('{}', { status, headers: { 'content-type': 'application/json' } });
+      return aeResponse(healthyRows);
+    });
+    const { buildSummary } = await import('../src/digest.js');
+    const summary = await buildSummary(makeEnv(), new Date('2026-11-14T16:00:00Z'), fetcher as unknown as typeof fetch);
+    expect(summary.alerts).toEqual([]);
   });
 });
 
@@ -346,9 +411,12 @@ describe('snapshot recovery safety', () => {
     expect(calls.some((url) => url.includes('api.github.com'))).toBe(false);
   });
 
-  it('a disabled publisher performs only the original three hourly queries', async () => {
+  it('a disabled publisher performs only three dataset queries and one request preflight', async () => {
     const fetcher = vi.fn().mockImplementation(async () => aeResponse([]));
     await runScheduled({ cron: ALERT_SCAN_CRON } as ScheduledController, makeEnv(), fetcher);
-    expect(fetcher).toHaveBeenCalledTimes(3);
+    const urls = fetcher.mock.calls.map(([url]) => String(url));
+    expect(urls.filter((url) => url.includes('analytics_engine'))).toHaveLength(3);
+    expect(urls.filter((url) => url.includes('count_tokens'))).toHaveLength(1);
+    expect(urls).toHaveLength(4);
   });
 });

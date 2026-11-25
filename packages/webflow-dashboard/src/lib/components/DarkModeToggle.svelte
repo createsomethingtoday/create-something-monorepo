@@ -8,7 +8,11 @@
 		resolveTheme
 	} from '$lib/utils/theme';
 
+	import { gsap, motionOK } from '$lib/motion/core';
+	import { press } from '$lib/motion/actions';
+
 	let isDark = $state(false);
+	let iconEl = $state<HTMLElement | null>(null);
 
 	$effect(() => {
 		// The app.html bootstrap script has already applied the theme to <html>;
@@ -31,20 +35,32 @@
 		const theme = isDark ? 'dark' : 'light';
 		applyTheme(theme);
 		persistTheme(theme);
+
+		// The new icon turns into place, like a dial clicking over.
+		if (iconEl && motionOK()) {
+			gsap.fromTo(
+				iconEl,
+				{ rotation: isDark ? -90 : 90, scale: 0.5, opacity: 0 },
+				{ rotation: 0, scale: 1, opacity: 1, duration: 0.5, ease: 'back.out(1.8)', clearProps: 'all' }
+			);
+		}
 	}
 </script>
 
 <button
 	type="button"
 	class="toggle-btn"
+	use:press
 	onclick={toggle}
 	aria-label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
 >
-	{#if isDark}
-		<Sun size={20} />
-	{:else}
-		<Moon size={20} />
-	{/if}
+	<span class="toggle-icon" bind:this={iconEl}>
+		{#if isDark}
+			<Sun size={20} />
+		{:else}
+			<Moon size={20} />
+		{/if}
+	</span>
 </button>
 
 <style>
@@ -64,10 +80,13 @@
 		transition: all var(--duration-micro) var(--ease-standard);
 	}
 
+	.toggle-icon {
+		display: inline-flex;
+	}
+
 	.toggle-btn:hover {
 		color: var(--color-fg-primary);
 		border-color: var(--color-info-border);
-		transform: translateY(-1px);
 	}
 
 	.toggle-btn:focus-visible {

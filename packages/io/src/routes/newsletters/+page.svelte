@@ -1,6 +1,7 @@
 <script lang="ts">
-  import ResearchScene from '$lib/components/ResearchScene.svelte';
-  import { NewsletterSignup, SEO } from '@create-something/canon';
+  import TaskOpening from '$lib/components/TaskOpening.svelte';
+  import ArchiveNewsletterSignup from '$lib/components/ArchiveNewsletterSignup.svelte';
+  import { SEO } from '@create-something/canon';
 
   let { data } = $props();
 
@@ -11,6 +12,8 @@
     timeZone: 'America/Chicago'
   });
 </script>
+
+<svelte:head><link rel="stylesheet" href="/styles/newsletters-v1.css" /></svelte:head>
 
 <SEO
   title="Newsletter Archive"
@@ -23,7 +26,9 @@
   ]}
 />
 
-<header class="archive-hero">
+<div class="newsletter-editorial">
+<TaskOpening illustration="field-note" scene="review-nook" caption="Canon keeps the working sheet ready for the next review.">
+<div class="archive-hero">
   <div class="archive-shell">
     <p class="eyebrow">Newsletter archive / Field notes</p>
     <div class="hero-grid">
@@ -36,14 +41,15 @@
         <a href="#subscribe">Get the operator edition <span aria-hidden="true">→</span></a>
       </div>
     </div>
-    <ResearchScene sizes="(min-width: 960px) 720px, 94vw" scene="about-careful-working-notes" caption="An agent opens the notebook so the next attempt can build on the record." />
+
     <div class="signal-rail" aria-label="Publication contract">
       <span><strong>Signal</strong> field evidence</span>
       <span><strong>Decision</strong> operator judgment</span>
       <span><strong>Proof</strong> public archive</span>
     </div>
   </div>
-</header>
+</div>
+</TaskOpening>
 
 <div class="archive-main">
   <section class="archive-shell" aria-labelledby="archive-heading">
@@ -82,16 +88,10 @@
   </section>
 
   <div id="subscribe" class="signup-anchor">
-    <NewsletterSignup
-      eyebrow="Operator edition"
-      headline="Get the next field note first."
-      description="The concise edition, practical links, and one clear next move—sent when the work is ready. The full argument remains available in the public archive."
-      actionLabel="Request the next edition"
-      submitLabel="Subscribe"
-      note="Double opt-in. Occasional field notes. Unsubscribe whenever it stops being useful."
-      source="io-newsletter-archive"
-    />
+    <ArchiveNewsletterSignup turnstileSiteKey={data.turnstileSiteKey} />
   </div>
+</div>
+
 </div>
 
 <style>

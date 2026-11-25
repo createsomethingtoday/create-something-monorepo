@@ -10,7 +10,7 @@ published: true
 
 ## Motion Philosophy
 
-Every animation must answer: what does this communicate that stillness cannot? Motion exists to reduce cognitive load, not increase visual complexity.
+Every animation must answer: what does this communicate that stillness cannot? Motion exists to reduce cognitive load, not increase visual complexity. Keep server-rendered content readable before hydration and when JavaScript fails. Reduced motion, focus and hash navigation must retain meaning and available actions. Static character studies do not animate to suggest work is running.
 
 <div class="principles-grid">
 <div class="principle-card">
@@ -50,11 +50,11 @@ Five duration levels from instant feedback to deliberate reveals.
 
 | Token | Value | Use Case |
 |-------|-------|----------|
-| `--duration-performance-instant` | 0ms | Immediate state changes |
-| `--duration-performance-micro` | 100ms | Hover states, button feedback |
+| `--duration-performance-instant` | 100ms | Immediate state changes |
+| `--duration-performance-micro` | 150ms | Hover states, button feedback |
 | `--duration-performance-fast` | 200ms | Tooltips, dropdowns |
-| `--duration-normal` | 300ms | Modal transitions, page elements |
-| `--duration-performance-slow` | 500ms | Complex reveals, hero animations |
+| `--duration-performance-standard` | 220ms | Modal transitions, page elements |
+| `--duration-performance-slow` | 700ms | Complex reveals, hero animations |
 
 ## Easing
 
@@ -88,11 +88,11 @@ Always respect user preferences:
 
 ```css
 .button {
-  transition: all var(--duration-performance-micro) var(--ease-performance-standard);
+  transition: background-color var(--duration-performance-micro) var(--ease-performance-standard);
 }
 
 .button:hover {
-  transform: translateY(-1px);
+  background-color: var(--color-performance-hover);
 }
 ```
 
@@ -100,7 +100,7 @@ Always respect user preferences:
 
 ```css
 .modal {
-  animation: fadeIn var(--duration-normal) var(--ease-performance-standard);
+  animation: fadeIn var(--duration-performance-standard) var(--ease-performance-standard);
 }
 
 @keyframes fadeIn {

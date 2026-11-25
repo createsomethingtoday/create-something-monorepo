@@ -12,7 +12,11 @@ const HOW_TO_FIX: Record<MarketplaceCustomCodeFinding['policy'], string> = {
 		'Remove the custom font code, add the eligible Google or OFL font through Site settings > Fonts, publish again, and rerun validation.',
 	'custom-code-schema-markup-not-allowed': 'Remove the schema markup, publish again, and rerun validation.',
 	'custom-code-html-embed-not-allowed':
-		'Rebuild the embed with native Webflow elements (for video, the Video element or a YouTube/Vimeo iframe), keep only inline SVG, CSS, or approved scripts in HTML Embeds, publish again, and rerun validation.'
+		'Rebuild the embed with native Webflow elements (for video, the Video element or a YouTube/Vimeo iframe), keep only inline SVG, CSS, or approved scripts in HTML Embeds, publish again, and rerun validation.',
+	'custom-code-external-script-not-allowed':
+		'Remove the script from Site settings or Page settings > Custom code. Only GSAP and Lenis from an approved CDN are allowed. Publish again, and rerun validation.',
+	'custom-code-external-stylesheet-not-allowed':
+		'Remove the stylesheet from Site settings or Page settings > Custom code, build the styles with classes in the Designer, publish again, and rerun validation.'
 };
 
 // This validator does not run the GSAP worker's script checks, so embed scripts are surfaced

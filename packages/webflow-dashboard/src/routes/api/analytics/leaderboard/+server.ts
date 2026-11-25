@@ -13,8 +13,13 @@ import { getSyncMetadata } from '$lib/utils/sync-schedule';
  * - Window: the 30 days ending Monday 16:00 UTC
  * - Published: Tuesday, after the daily warehouse load covers the whole window
  * - The numbers stay fixed between weekly snapshots; they are not real-time.
- * - Sales include orders through creator fulfillment links (paid off-platform),
- *   valued at list price; fulfillmentSales30d / totalFulfillmentSales split them out.
+ * - Sales include orders through creator fulfillment links (paid off-platform);
+ *   fulfillmentSales30d / totalFulfillmentSales split them out.
+ * - Revenue: Webflow does not see the price a fulfillment-link buyer paid, and
+ *   list price is an upper limit. When the snapshot has the split
+ *   (summary.revenueBasis = 'marketplace-checkout'), a creator's own revenue is
+ *   checkoutRevenue30d and revenueRank ranks revenue from Marketplace checkout only.
+ *   Older snapshots count link sales at list price (revenueBasis = 'list-price').
  */
 export const GET: RequestHandler = async ({ locals, platform }) => {
 	if (!locals.user?.email) {
@@ -68,6 +73,7 @@ export const GET: RequestHandler = async ({ locals, platform }) => {
 				// Redact competitor revenue data and sales-channel split
 				totalRevenue30d: isUserTemplate ? record.totalRevenue30d || 0 : undefined,
 				fulfillmentSales30d: isUserTemplate ? record.fulfillmentSales30d : undefined,
+				checkoutRevenue30d: isUserTemplate ? record.checkoutRevenue30d : undefined,
 				avgRevenuePerSale: isUserTemplate ? record.avgRevenuePerSale || 0 : undefined,
 				salesRank: record.salesRank || 0,
 				revenueRank: record.revenueRank || 0,
@@ -89,7 +95,13 @@ export const GET: RequestHandler = async ({ locals, platform }) => {
 		// Calculate summary stats
 		const topTemplate = leaderboard[0] || null;
 		const totalMarketplaceSales = leaderboardResult.marketplaceSummary?.totalSales ?? leaderboard.reduce((sum, t) => sum + t.totalSales30d, 0);
-		const userTotalRevenue = userTemplates.reduce((sum, t) => sum + (t.totalRevenue30d || 0), 0);
+		// The split is all or nothing in a snapshot, so one row tells the basis.
+		const revenueBasis = records.some((record) => record.checkoutRevenue30d !== undefined)
+			? 'marketplace-checkout'
+			: 'list-price';
+		const shownRevenue = (t: { checkoutRevenue30d?: number; totalRevenue30d?: number }) =>
+			t.checkoutRevenue30d ?? t.totalRevenue30d ?? 0;
+		const userTotalRevenue = userTemplates.reduce((sum, t) => sum + shownRevenue(t), 0);
 
 		// Get actual sync schedule metadata (not current time)
 		const syncMetadata = getSyncMetadata({
@@ -106,12 +118,13 @@ export const GET: RequestHandler = async ({ locals, platform }) => {
 						topTemplate: topTemplate
 							? {
 									name: topTemplate.templateName,
-									revenue: topTemplate.isUserTemplate ? topTemplate.totalRevenue30d : undefined,
+									revenue: topTemplate.isUserTemplate ? shownRevenue(topTemplate) : undefined,
 									sales: topTemplate.totalSales30d
 								}
 							: null,
 						totalMarketplaceSales,
 						totalFulfillmentSales: leaderboardResult.marketplaceSummary?.fulfillmentSales ?? null,
+						revenueBasis,
             snapshotVersion: leaderboardResult.snapshotVersion,
         salesSource: leaderboardResult.marketplaceSummary ? 'marketplace-snapshot' : 'leaderboard-top-50',
 						userTotalRevenue,

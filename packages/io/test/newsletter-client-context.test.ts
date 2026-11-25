@@ -55,3 +55,13 @@ describe('consent-aware context shared by every newsletter signup client', () =>
       expect(newsletterSignupContext()).toEqual({ analyticsEnabled: false });
     });
 });
+
+it('uses the original same-origin enclosing document for the isolated archive form', () => {
+  vi.stubGlobal('window', {
+    location: { href: 'https://createsomething.io/newsletters/signup-form', pathname: '/newsletters/signup-form', origin: 'https://createsomething.io' },
+    parent: { location: { href: 'https://createsomething.io/newsletters?utm_source=original', origin: 'https://createsomething.io' }, document: { referrer: 'https://external.example/article' } }
+  });
+  vi.stubGlobal('navigator', { globalPrivacyControl: false });
+  analytics.current = { isTrackingDisabled: () => false, getSessionId: () => 'existing-session', getSourceProperty: () => 'io' };
+  expect(newsletterSignupContext()).toMatchObject({ analyticsEnabled: true, landingUrl: 'https://createsomething.io/newsletters?utm_source=original', referrer: 'https://external.example/article' });
+});

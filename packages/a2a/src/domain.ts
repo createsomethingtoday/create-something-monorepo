@@ -166,8 +166,15 @@ export class InboxService {
 			throw new DomainError('send_not_allowed',403,'Send unavailable: check counterpart approval, active inboxes, work budget, expiry, and pilot limits');
 		}
 		if(row.body_hash!==bodyHash&&!(row.author_kind==='legacy'&&authorKind==='agent'&&kind==='request'&&row.body_hash===await digest(payload)))throw new DomainError('idempotency_conflict',409,'Idempotency key already used for a different request');
-		const visible=await this.readMessage(p,row.id);
-		return {message:visible,duplicate:row.id!==messageId,...(row.event_id?{eventId:row.event_id}:{})};
+		try {
+			const visible=await this.readMessage(p,row.id);
+			return {message:visible,duplicate:row.id!==messageId,...(row.event_id?{eventId:row.event_id}:{})};
+		} catch (cause) {
+			// This exact request is already persisted, even if current access now
+			// hides its content. Preserve the read boundary without reporting a
+			// no-effect denial or inviting a second message under a new key.
+			throw new DomainError('write_outcome_unknown',503,'The write result could not be confirmed; reconcile the same idempotency key without bypassing current access.',{cause});
+		}
 	}
 	async listMessages(p: Principal, agentId: string, after = 0, includeSent = false): Promise<Message[]> {
 		if (!Number.isSafeInteger(after) || after < 0) throw invalid('Cursor must be a nonnegative integer');

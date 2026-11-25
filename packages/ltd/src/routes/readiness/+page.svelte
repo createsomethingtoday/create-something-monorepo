@@ -1,5 +1,5 @@
 <script lang="ts">
-	import LibraryScene from '$lib/components/LibraryScene.svelte';
+  import TaskOpening from '$lib/components/TaskOpening.svelte';
 	import { Button, SEO } from '@create-something/canon';
 	import {
 		assessWorkflowReadiness,
@@ -38,7 +38,8 @@
 />
 
 <div class="readiness-page">
-	<header class="readiness-page__hero">
+	<TaskOpening scene="separate-gates" caption="Access and authority are separate checks before work continues.">
+<div class="readiness-page__hero">
 		<div class="readiness-page__intro">
 		<p>CREATE SOMETHING .ltd · Workflow readiness</p>
 		<h1>Find the boundary before work crosses it.</h1>
@@ -47,8 +48,9 @@
 			quick way to see what must be clear before a team or agent can run the work with trust.
 		</p>
 		</div>
-		<LibraryScene paired scene="permission-two-separate-gates" caption="Access and authority are separate checks before work continues." />
-	</header>
+
+	</div>
+</TaskOpening>
 
 	<section class="readiness-page__assessment" aria-labelledby="assessment-title">
 		<div class="readiness-page__progress" aria-live="polite">
@@ -243,18 +245,18 @@
 
 	.readiness-page__result {
 		border-top: 1px solid var(--color-performance-line, #d7d7d2);
-		border-left: 4px solid var(--color-operator-status-review-text);
-		background: var(--color-operator-secondary);
+		border-left: 4px solid var(--color-performance-review);
+		background: var(--color-performance-bg-elevated);
 	}
 
 	.readiness-page__result[data-state='ready'] {
-		border-left-color: var(--color-operator-status-done-text);
-		background: var(--color-operator-secondary);
+		border-left-color: var(--color-performance-success);
+		background: var(--color-performance-bg-elevated);
 	}
 
 	.readiness-page__result[data-state='blocked'] {
-		border-left-color: var(--color-operator-status-blocked-text);
-		background: var(--color-operator-secondary);
+		border-left-color: var(--color-performance-error);
+		background: var(--color-performance-bg-elevated);
 	}
 
 	.readiness-page__result > p:first-child {

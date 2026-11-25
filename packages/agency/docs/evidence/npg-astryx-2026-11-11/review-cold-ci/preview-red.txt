@@ -1,0 +1,41 @@
+Job 130784353278; https://github.com/createsomethingtoday/create-something-monorepo/actions/runs/43098998958/job/130784353278
+Historical c3fb751 CI failure excerpt; routine output omitted.
+2026-11-11T20:59:24.3657640Z packages/io prepare$ svelte-kit sync || echo ''
+2026-11-11T20:59:24.3661717Z packages/agency prepare$ pnpm npg:build && pnpm prepare:build-dir && pnpm prepare:local-deps && node ./scripts/run-pinned-bin.mjs @sveltejs/kit svelte-kit sync || echo ''
+2026-11-11T20:59:24.9059027Z packages/agency prepare: > @create-something/agency@1.0.0 npg:build /home/runner/work/create-something-monorepo/create-something-monorepo/packages/agency
+2026-11-11T20:59:24.9065250Z packages/agency prepare: > node scripts/build-npg-chat.mjs
+2026-11-11T20:59:25.0969410Z packages/agency prepare: ▲ [WARNING] Cannot find base config file "./.svelte-kit/tsconfig.json" [tsconfig.json]
+2026-11-11T20:59:25.0971977Z packages/agency prepare:     tsconfig.json:2:12:
+2026-11-11T20:59:25.0976749Z packages/agency prepare:       2 │   "extends": "./.svelte-kit/tsconfig.json",
+2026-11-11T20:59:25.0978443Z packages/agency prepare:         ╵              ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+2026-11-11T20:59:25.1458011Z packages/agency prepare: vite v7.3.6 building client environment for production...
+2026-11-11T20:59:25.1973410Z packages/agency prepare: ✓ 0 modules transformed.
+2026-11-11T20:59:25.2022603Z packages/agency prepare: ✗ Build failed in 24ms
+2026-11-11T20:59:25.2057077Z packages/agency prepare: node:internal/modules/run_main:123
+2026-11-11T20:59:25.2059172Z packages/agency prepare:     triggerUncaughtException(
+2026-11-11T20:59:25.2060068Z packages/agency prepare:     ^
+2026-11-11T20:59:25.2062435Z packages/agency prepare: [vite:esbuild] failed to resolve "extends":"./.svelte-kit/tsconfig.json" in /home/runner/work/create-something-monorepo/create-something-monorepo/packages/agency/tsconfig.json
+2026-11-11T20:59:25.2065307Z packages/agency prepare: file: /home/runner/work/create-something-monorepo/create-something-monorepo/packages/agency/src/lib/npg/astryx/main.tsx
+2026-11-11T20:59:25.2069473Z packages/agency prepare:     at resolveExtends (file:///home/runner/work/create-something-monorepo/create-something-monorepo/node_modules/.pnpm/vite@7.3.6_@types+node@24.10.9_jiti@2.7.0_terser@5.46.0_tsx@4.21.0_yaml@2.9.0/node_modules/vite/dist/node/chunks/config.js:5809:8)
+2026-11-11T20:59:25.2080297Z packages/agency prepare:   code: 'PLUGIN_ERROR',
+2026-11-11T20:59:25.2081476Z packages/agency prepare:   cause: Error: Cannot find module './.svelte-kit/tsconfig.json'
+2026-11-11T20:59:25.2082512Z packages/agency prepare:   Require stack:
+2026-11-11T20:59:25.2083972Z packages/agency prepare:   - /home/runner/work/create-something-monorepo/create-something-monorepo/packages/agency/tsconfig.json
+2026-11-11T20:59:25.2085718Z packages/agency prepare:       at Function._resolveFilename (node:internal/modules/cjs/loader:1430:15)
+2026-11-11T20:59:25.2087301Z packages/agency prepare:       at Function.resolve (node:internal/modules/helpers:157:19)
+2026-11-11T20:59:25.2120882Z packages/agency prepare:     requireStack: [
+2026-11-11T20:59:25.2122408Z packages/agency prepare:       '/home/runner/work/create-something-monorepo/create-something-monorepo/packages/agency/tsconfig.json'
+2026-11-11T20:59:25.2123712Z packages/agency prepare:     ]
+2026-11-11T20:59:25.2124348Z packages/agency prepare:   },
+2026-11-11T20:59:25.2125847Z packages/agency prepare:   tsconfigFile: '/home/runner/work/create-something-monorepo/create-something-monorepo/packages/agency/tsconfig.json',
+2026-11-11T20:59:25.2146536Z packages/agency prepare:   name: 'TSConfckParseError',
+2026-11-11T20:59:25.2147534Z packages/agency prepare:   pluginCode: 'EXTENDS_RESOLVE',
+2026-11-11T20:59:25.2156548Z packages/agency prepare: Node.js v22.23.4
+2026-11-11T20:59:25.2225901Z packages/agency prepare:  ELIFECYCLE  Command failed with exit code 1.
+2026-11-11T20:59:25.2643424Z packages/agency prepare: Done
+2026-11-11T20:59:26.8697613Z packages/io prepare: Done
+2026-11-11T20:59:26.8762142Z Done in 57.9s
+2026-11-11T21:00:03.3605290Z  FAIL  test/selective-context-visual.test.ts [ test/selective-context-visual.test.ts ]
+2026-11-11T21:00:03.3618057Z Error: Failed to resolve entry for package "@create-something/auth-platform". The package may have incorrect main/module/exports specified in its package.json.
+2026-11-11T21:00:03.3626369Z
+2026-11-11T21:00:03.3627757Z  Test Files  2 failed (2)

@@ -1,0 +1,66 @@
+:root {
+  font-family: Arial, Helvetica, sans-serif;
+  color: #f2ecde;
+  background: #090909;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+html, body, main { margin: 0; width: 100%; height: 100%; overflow: hidden; }
+
+/* All essential content remains inside a centered 4:3 crop of a 16:9 camera. */
+main {
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) auto;
+  padding: 6vh 14vw 17vh;
+}
+
+.stage {
+  min-height: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+svg {
+  display: block;
+  height: 100%;
+  max-width: 100%;
+  width: auto;
+  aspect-ratio: 1;
+}
+
+footer { text-align: center; }
+.status-line { display: flex; align-items: center; justify-content: center; gap: 1.1vw; }
+h1 {
+  margin: 0;
+  font-size: 6.5vw;
+  font-weight: 500;
+  letter-spacing: -.04em;
+  line-height: 1.1;
+  white-space: nowrap;
+}
+
+#indicator {
+  width: 1.15vw;
+  height: 1.15vw;
+  min-width: 2px;
+  min-height: 2px;
+  border-radius: 50%;
+  background: #777;
+  flex: none;
+}
+
+body[data-state=taking] #indicator { background: #cf3e32; }
+
+/* Context is available to assistive technology; the camera carries one status. */
+#detail {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}

@@ -8,7 +8,8 @@ const config = {
     adapter: adapter({
       routes: {
         include: ['/*'],
-        exclude: ['<all>']
+        // Legacy image aliases must reach Pages static redirects before the app worker.
+        exclude: ['/workshop/canon.png', '<all>']
       }
     }),
     alias: {

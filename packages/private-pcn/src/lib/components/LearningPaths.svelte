@@ -51,7 +51,7 @@
     </section>
   {:else if data.path}
     <header>
-      <p class="eyebrow">{data.network?.name || 'CREATE SOMETHING'} / LEARNING PATH</p>
+      <p class="eyebrow">{data.network?.name || 'CREATE SOMETHING'} / Learning path</p>
       <h1>{data.path.title}</h1>
       <p class="outcome">{data.path.outcome}</p>
       <div class="meta">
@@ -125,7 +125,7 @@
     </div>
   {:else}
     <header>
-      <p class="eyebrow">PRIVATE / LEARN BY BUILDING</p>
+      <p class="eyebrow">Private / Learn by building</p>
       <h1 class="paths-list-heading">Learning paths.</h1>
       <p class="outcome">
         A deliberate sequence from a technique to something you can put into practice.
@@ -159,7 +159,7 @@
       </section>{:else}<div class="path-cards">
         {#each data.paths as path}<a class="path-card" href={`${base}/${path.id}`}
             ><span class="eyebrow"
-              >{path.lessons.length} LESSONS / ABOUT {path.estimated_minutes} MIN</span
+              >{path.lessons.length} lessons / About {path.estimated_minutes} MIN</span
             >
             <h2>{path.title}</h2>
             <p>{path.outcome}</p>
@@ -314,5 +314,73 @@
     .sequence a {
       gap: 12px;
     }
+  }
+
+  header {
+    --muted: var(--enlightr-ink);
+    background: var(--enlightr-data);
+    max-width: none;
+    padding: clamp(24px, 4vw, 56px);
+  }
+  h1 {
+    font-family: var(--font-serif);
+    font-size: clamp(48px, 7vw, 88px);
+    font-weight: 400;
+  }
+  .outcome,
+  header .meta {
+    color: #111;
+  }
+  .path-cards {
+    gap: 0;
+  }
+  .path-card {
+    background: var(--enlightr-code);
+    border: 0;
+    padding: 32px;
+    min-height: 340px;
+    color: #111;
+  }
+  .path-card:nth-child(3n + 2) {
+    background: var(--enlightr-data);
+  }
+  .path-card:nth-child(3n + 3) {
+    background: var(--enlightr-ai);
+  }
+  .path-card h2 {
+    font-family: var(--font-serif);
+    font-size: 38px;
+    font-weight: 400;
+  }
+  .path-card p,
+  .path-card .eyebrow {
+    color: #111;
+  }
+  .path-card .open {
+    padding-top: 24px;
+    border-top: 1px solid #111;
+  }
+  .sequence {
+    border-bottom: 1px solid var(--line);
+  }
+  .sequence a {
+    padding-inline: 16px;
+  }
+  .sequence a:hover,
+  .sequence a:focus-visible {
+    background: var(--enlightr-data);
+  }
+  .sequence a:hover h3 {
+    color: #111;
+  }
+  .number {
+    font: 14px var(--font-performance-sans, sans-serif);
+    font-variant-numeric: tabular-nums;
+    color: #111;
+  }
+  .path-grid aside {
+    border: 0;
+    background: var(--enlightr-muted);
+    padding: 24px;
   }
 </style>

@@ -1,4 +1,6 @@
 <script lang="ts">
+  import '$lib/styles/newsletter-editorial.css';
+  import '$lib/styles/newsletter-readers.css';
   import { SEO } from '@create-something/canon';
   import type { ActionData, PageData } from './$types';
 
@@ -13,7 +15,7 @@
   noindex={true}
 />
 
-<main class="check-in" data-performance-mode="operator">
+<main class="check-in newsletter-editorial newsletter-check-in" data-performance-mode="operator">
   <section class="check-in__opening" aria-labelledby="check-in-title">
     <div class="check-in__copy">
       <p class="eyebrow">CREATE SOMETHING / SUBSCRIBER CHECK-IN</p>
@@ -40,12 +42,14 @@
 
     <figure class="check-in__media">
       <img
-        src="https://createsomething.agency/images/performance-lab/playbook-home-agent-macro.webp"
-        alt="Macro-real Playbook court with an ivory AI-agent marker inside a control ring and an amber workflow route."
-        width="1536"
-        height="1024"
+        src="/images/field-note-1280.webp"
+        srcset="/images/field-note-640.webp 640w, /images/field-note-1280.webp 1280w"
+        sizes="(max-width: 768px) calc(100vw - 40px), 40vw"
+        alt="Canon places a folded paper note into an envelope."
+        width="1280"
+        height="721"
       />
-      <figcaption>One shared Playbook: the route, the decision gate, and the proof.</figcaption>
+      <figcaption>A note worth sending. / Conceptual illustration</figcaption>
     </figure>
   </section>
 
@@ -175,250 +179,3 @@
     <a href="/privacy">Read the privacy policy</a>
   </section>
 </main>
-
-<style>
-  .check-in {
-    min-height: 100vh;
-    padding: clamp(6.5rem, 11vw, 9rem) clamp(1rem, 4vw, 4rem) 4rem;
-    background: var(--color-performance-paper, #f3f3f0);
-    color: var(--color-performance-ink, #090909);
-  }
-
-  .check-in__opening,
-  .check-in__workspace,
-  .check-in__handoff {
-    width: min(76rem, 100%);
-    margin-inline: auto;
-  }
-
-  .check-in__opening {
-    display: grid;
-    grid-template-columns: minmax(0, 0.9fr) minmax(20rem, 1.1fr);
-    border: 1px solid var(--color-performance-line, #d7d7d2);
-    background: #fff;
-  }
-
-  .check-in__copy {
-    display: grid;
-    align-content: center;
-    gap: 1.25rem;
-    padding: clamp(2rem, 5vw, 4.5rem);
-  }
-
-  .eyebrow,
-  dt {
-    margin: 0;
-    font-family: var(--font-performance-mono);
-    font-size: 0.72rem;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-  }
-
-  h1,
-  h2,
-  p {
-    margin: 0;
-  }
-  h1 {
-    max-width: 10ch;
-    font-size: clamp(2.8rem, 6vw, 5.8rem);
-    line-height: 0.96;
-    letter-spacing: -0.04em;
-  }
-  h2 {
-    font-size: clamp(2rem, 4vw, 3.5rem);
-    line-height: 1;
-  }
-  .lede {
-    max-width: 42rem;
-    color: #45484d;
-    font-size: 1.1rem;
-    line-height: 1.6;
-  }
-
-  .receipt-strip {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    margin: 1rem 0 0;
-    border-block: 1px solid #d7d7d2;
-  }
-  .receipt-strip div {
-    padding: 0.9rem 0.5rem 0.9rem 0;
-  }
-  .receipt-strip dd {
-    margin: 0.35rem 0 0;
-    font-size: 0.9rem;
-  }
-
-  .check-in__media {
-    margin: 0;
-    background: #090909;
-    color: #fff;
-  }
-  .check-in__media img {
-    display: block;
-    width: 100%;
-    height: 100%;
-    min-height: 30rem;
-    object-fit: cover;
-  }
-  .check-in__media figcaption {
-    padding: 0.8rem 1rem;
-    font-family: var(--font-performance-mono);
-    font-size: 0.72rem;
-  }
-
-  .check-in__workspace {
-    margin-top: 1.5rem;
-    padding: clamp(1.25rem, 4vw, 3rem);
-    border: 1px solid #d7d7d2;
-    background: #fff;
-  }
-  form {
-    display: grid;
-    gap: 2rem;
-  }
-  fieldset {
-    display: grid;
-    gap: 0.75rem;
-    margin: 0;
-    padding: 0 0 2rem;
-    border: 0;
-    border-bottom: 1px solid #d7d7d2;
-  }
-  legend {
-    padding: 0;
-    font-size: 1.35rem;
-    font-weight: 600;
-  }
-  .field-note {
-    color: #5e6268;
-    font-size: 0.92rem;
-  }
-  textarea {
-    width: 100%;
-    box-sizing: border-box;
-    padding: 1rem;
-    border: 1px solid #9c9c96;
-    border-radius: 0;
-    background: #fff;
-    color: #090909;
-    font: inherit;
-    line-height: 1.5;
-    resize: vertical;
-  }
-  textarea:focus,
-  input:focus-visible,
-  button:focus-visible,
-  a:focus-visible {
-    outline: 3px solid #0057b8;
-    outline-offset: 3px;
-  }
-
-  .choice-grid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 0.65rem;
-  }
-  .choice-grid label {
-    display: flex;
-    min-height: 3.5rem;
-    align-items: center;
-    gap: 0.65rem;
-    padding: 0.75rem;
-    border: 1px solid #9c9c96;
-    cursor: pointer;
-  }
-  .choice-grid label:has(input:checked) {
-    border-color: #0057b8;
-    background: #dce8f5;
-  }
-  .choice-grid input {
-    width: 1rem;
-    height: 1rem;
-    accent-color: #0057b8;
-  }
-
-  .form-actions {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 1rem 1.5rem;
-  }
-  button {
-    min-height: 3rem;
-    padding: 0.8rem 1.1rem;
-    border: 1px solid #090909;
-    border-radius: 0;
-    background: #090909;
-    color: #fff;
-    font: 600 0.86rem var(--font-performance-mono);
-    cursor: pointer;
-  }
-  a {
-    color: inherit;
-    text-underline-offset: 0.22em;
-  }
-  .form-status {
-    margin: 0 0 1.5rem;
-    padding: 0.9rem 1rem;
-    border-left: 4px solid;
-  }
-  .form-status.success {
-    border-color: #168447;
-    background: #e3f4e9;
-  }
-  .form-status.error {
-    border-color: #b42318;
-    background: #fde8e7;
-  }
-  .state-panel {
-    display: grid;
-    gap: 1rem;
-    max-width: 44rem;
-  }
-
-  .check-in__handoff {
-    display: flex;
-    justify-content: space-between;
-    gap: 2rem;
-    padding: 1.5rem 0;
-    color: #5e6268;
-    font-size: 0.9rem;
-    line-height: 1.5;
-  }
-  .check-in__handoff p {
-    max-width: 48rem;
-  }
-
-  @media (max-width: 48rem) {
-    .check-in {
-      padding-inline: 0.75rem;
-    }
-    .check-in__opening {
-      grid-template-columns: 1fr;
-    }
-    .check-in__copy {
-      padding: 1.5rem;
-    }
-    .check-in__media img {
-      min-height: 18rem;
-    }
-    .receipt-strip,
-    .choice-grid {
-      grid-template-columns: 1fr;
-    }
-    .check-in__handoff {
-      flex-direction: column;
-    }
-  }
-
-  @media (prefers-reduced-motion: reduce) {
-    *,
-    *::before,
-    *::after {
-      scroll-behavior: auto !important;
-      transition: none !important;
-    }
-  }
-</style>

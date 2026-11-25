@@ -62,6 +62,8 @@
     "client-overlays:generate": "node scripts/generate-client-overlay-coverage.mjs",
     "management-surface:generate": "node scripts/generate-management-surface.mjs",
     "operating-slice-readiness:generate": "node scripts/generate-operating-slice-readiness.mjs",
+    "operating-slices:review-evidence": "node scripts/review-slice-evidence.mjs",
+    "operating-slices:evaluate-evidence": "node scripts/evaluate-slice-evidence.mjs",
     "operating-slices:generate": "node scripts/generate-operating-slice-review.mjs",
     "organization-review:generate": "node scripts/generate-organization-review.mjs",
     "performance:generate": "node scripts/generate-performance-contract.mjs",
@@ -93,6 +95,7 @@
   "devDependencies": {
     "@x402/core": "2.22.0",
     "@x402/evm": "2.22.0",
+    "tsx": "^4.21.0",
     "typescript": "^5.7.0",
     "viem": "2.55.13"
   },

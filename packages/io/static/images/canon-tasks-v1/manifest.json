@@ -1,0 +1,172 @@
+{
+  "issue": "CRE-2455",
+  "tool": "built-in imagegen; format-only cwebp q88 m6, no compositional edits",
+  "artAcceptance": "User approved the 12 selected task scenes and transparent cutout for production on 2026-11-14; exact PNG approval hashes are recorded below. Existing welcome/review masters were previously approved.",
+  "scenes": {
+    "evidence-comparison": {
+      "src": "/images/canon-tasks-v1/evidence-comparison-r19.webp",
+      "mobileSrc": "/images/canon-tasks-v1/evidence-comparison-r19-640.webp",
+      "mediumSrc": "/images/canon-tasks-v1/evidence-comparison-r19-960.webp",
+      "width": 1536,
+      "height": 1024,
+      "srcset": "/images/canon-tasks-v1/evidence-comparison-r19-640.webp 640w, /images/canon-tasks-v1/evidence-comparison-r19-960.webp 960w, /images/canon-tasks-v1/evidence-comparison-r19.webp 1536w"
+    },
+    "review-nook": {
+      "src": "/images/canon-tasks-v1/review-nook.webp",
+      "mobileSrc": "/images/canon-tasks-v1/review-nook-640.webp",
+      "mediumSrc": "/images/canon-tasks-v1/review-nook-960.webp",
+      "width": 1122,
+      "height": 1402,
+      "srcset": "/images/canon-tasks-v1/review-nook-640.webp 640w, /images/canon-tasks-v1/review-nook-960.webp 960w, /images/canon-tasks-v1/review-nook.webp 1122w"
+    },
+    "modular-port": {
+      "src": "/images/canon-tasks-v1/modular-port-r19.webp",
+      "mobileSrc": "/images/canon-tasks-v1/modular-port-r19-640.webp",
+      "mediumSrc": "/images/canon-tasks-v1/modular-port-r19-960.webp",
+      "width": 1254,
+      "height": 1254,
+      "srcset": "/images/canon-tasks-v1/modular-port-r19-640.webp 640w, /images/canon-tasks-v1/modular-port-r19-960.webp 960w, /images/canon-tasks-v1/modular-port-r19.webp 1254w"
+    },
+    "bounded-sandbox": {
+      "src": "/images/canon-tasks-v1/bounded-sandbox-r19.webp",
+      "mobileSrc": "/images/canon-tasks-v1/bounded-sandbox-r19-640.webp",
+      "mediumSrc": "/images/canon-tasks-v1/bounded-sandbox-r19-960.webp",
+      "width": 1536,
+      "height": 1024,
+      "srcset": "/images/canon-tasks-v1/bounded-sandbox-r19-640.webp 640w, /images/canon-tasks-v1/bounded-sandbox-r19-960.webp 960w, /images/canon-tasks-v1/bounded-sandbox-r19.webp 1536w"
+    },
+    "controlled-load": {
+      "src": "/images/canon-tasks-v1/controlled-load-r20.webp",
+      "mobileSrc": "/images/canon-tasks-v1/controlled-load-r20-640.webp",
+      "mediumSrc": "/images/canon-tasks-v1/controlled-load-r20-960.webp",
+      "width": 1536,
+      "height": 1024,
+      "srcset": "/images/canon-tasks-v1/controlled-load-r20-640.webp 640w, /images/canon-tasks-v1/controlled-load-r20-960.webp 960w, /images/canon-tasks-v1/controlled-load-r20.webp 1536w"
+    },
+    "evidence-unknowns": {
+      "src": "/images/canon-tasks-v1/evidence-unknowns-r19.webp",
+      "mobileSrc": "/images/canon-tasks-v1/evidence-unknowns-r19-640.webp",
+      "mediumSrc": "/images/canon-tasks-v1/evidence-unknowns-r19-960.webp",
+      "width": 1254,
+      "height": 1254,
+      "srcset": "/images/canon-tasks-v1/evidence-unknowns-r19-640.webp 640w, /images/canon-tasks-v1/evidence-unknowns-r19-960.webp 960w, /images/canon-tasks-v1/evidence-unknowns-r19.webp 1254w"
+    }
+  },
+  "masters": {
+    "evidence-comparison": {
+      "source": "output/canon-replacement-art/property/evidence-comparison-r19.png",
+      "sha256": "499ae17f7c63797d61bab2ea5626f2223a3dd5201b4bb9b93f97c216d9e5c904",
+      "prompt": "Use case: precise-object-edit, identity preservation.\nInput image 1 is the EDIT TARGET. Input image 2 is an IDENTITY REFERENCE ONLY for Canon's approved r41 HEAD SHAPE; do not copy its black background, body pose, hand, notebook position, lighting or studio setting into the target.\nMake one local change ONLY to Canon's outer felt head silhouette in image 1: make it visibly SQUATTIER, LOWER and BROADER, a broad soft RECTANGULAR CUBOID like r41. Target the outer head excluding antenna at approximately 1.4 units wide to 1 unit high. Flatten the roof into a shallow crown with softly rounded corners and a visible side plane; remove the excess tall felt cap above the face. It must not read as a sphere, round dome, tall cube, or bulbous cap. Achieve the lower broader silhouette by reducing excess felt above the face and modestly broadening the outer shell, not by stretching or squashing the eyes or the whole picture.\nKeep the exact oval woven digital eyes, their tall vertical oval shape and normal proportions, dark pupils contained and centered within each ivory eye, pixel smile, woven face texture and expression. Keep the antenna and cream antenna tip, correctly attached to the lowered roof.\nLock every other part of image 1: exact body, limbs, hands, posture, task, task geometry, props and their occlusions, composition, camera, perspective, warm workshop, light, shadows, materials, color and frame edges. Do not move, resize or warp the body or objects. Identity-reference guidance applies ONLY to the head silhouette. No new objects, text, logos, lights, glass or metal. Preserve the same landscape framing and exact 1536 by 1024 dimensions.\nTask-specific invariants: Canon holds one cream puzzle-profile piece above its corresponding paper outline for evidence comparison. Preserve the piece, both hands, the paper outline, loose piece, pencil, trays and exact comparison arrangement.\n",
+      "approvedPNG": "499ae17f7c63797d61bab2ea5626f2223a3dd5201b4bb9b93f97c216d9e5c904"
+    },
+    "review-nook": {
+      "source": "packages/agency/static/images/canon-agency-v1/review-nook.webp",
+      "sha256": "4aa27175fa7e834d4f3805bd898902a79a2a560f1c568b6b94310a887b49d974",
+      "prompt": "Existing owned approved master; original prompt in canon-agency-v1/ARTWORK.md."
+    },
+    "modular-port": {
+      "source": "output/canon-replacement-art/property/modular-port-r19.png",
+      "sha256": "3d429b8b28a33f60d1fcf5cddeeffd47ecec6e439e7a605d5f89ab17247819dc",
+      "prompt": "Use case: precise-object-edit. INPUT ROLES: Image 1 is the ONLY edit target, an existing Canon workshop task scene. Image 2 is the authoritative approved r41 Canon identity reference ONLY for head proportions/material/face, NOT for background, camera or pose. Make one localized HEAD-ONLY refinement in Image 1. The head must become lower and broader like Image 2: a squat wide soft cuboid with approximately 1.4:1 visible width-to-height excluding the antenna, a flatter roof, shallow crown, softly squared corners and a clear dimensional side plane. Reduce excess felt mass above the face and remove the tall/domed cranium impression. It should be whimsical and squat, not a near-square head, rounded dome or tall block. Rebuild the head volume naturally in the existing perspective; NEVER vertically squash the whole face, rescale the body, or warp the image. Preserve tall cream VERTICAL OVAL woven pixel eyes, contained centered dark oval pupils, gentle small pixel-stitch smile, dimensional felt fiber texture, and the single short felt antenna with cream wool ball. Keep eyes upright and tall with no squashing, no circular eyes, no screen glass or glow. Maintain the current character's head orientation/gaze and facial expression, with the neck/head attachment natural and body/coat/limbs/hands/feet/pocket/notebook exactly as Image 1. Preserve every other pixel intent: exact task objects and their marks, pose, camera angle and distance, composition, native square aspect ratio, full framing, workshop background, tabletop, wood/paper/ceramic materials, warm lighting, shadows and existing task-connected whimsy. Do NOT import Image 2's black background or standing pose. Do NOT add any character/body, stone, metal, shiny plastic, text, logo or watermark. TASK LOCK: Keep the exact single keyed wooden plug aligned beside the existing right-side three-port apparatus, plug shape and pegs, hands, braided cord path and loop, left toolbox and every tool, port openings and panel unchanged. Do not connect or disconnect the plug, alter port geometry or add a cable.\n",
+      "approvedPNG": "3d429b8b28a33f60d1fcf5cddeeffd47ecec6e439e7a605d5f89ab17247819dc"
+    },
+    "bounded-sandbox": {
+      "source": "output/canon-replacement-art/property/bounded-sandbox-r19.png",
+      "sha256": "07fb1d5fdb82ee3da4f4d2a16050bfcc046a4720468c4f3a7779c147da588921",
+      "prompt": "Use case: precise-object-edit. Image1 is edit target; image2 is approved Canon identity ONLY. Keep the warm workshop, full containment tray, two parallel rails, chunky end stops, moving carriage, compact body, hands and camera. Make the task visibly a bounded test: add a clearly visible small wooden tracing stylus under the moving carriage, its tip contacting the sand, leaving ONE strong clean straight groove from the near end stop up to the carriage. The groove is an observable trace of the guided travel, not decorative sand art. Preserve clear rail/stop geometry and natural hand contact. Also correct only Canon's head silhouette toward image2: lower/broader soft cuboid about1.4width:height excludingantenna, flatterroof and shallowcrown, reduceexcess feltaboveface. Keep tall continuous oval woven eyes and centered contained pupils, smile, antenna. Do not horizontally stretch or round eyes. Keep original body/limbs proportions, full scene framing/material/light. No extra machine, letters, readings, checkmarks or fake pass. Tiny curled paper edge remains.\n",
+      "approvedPNG": "07fb1d5fdb82ee3da4f4d2a16050bfcc046a4720468c4f3a7779c147da588921"
+    },
+    "controlled-load": {
+      "source": "output/canon-replacement-art/property/controlled-load-r20.png",
+      "sha256": "0f8f16f991a964180bfa1399dc61b3d54afecf68c2f451dc195646db77a4cfa0",
+      "prompt": "Use case: precise-object-edit. Edit image1. Fix ONLY Canon's unnaturally extended left arm. Remove the long straight arm reaching to the test weight. Replace it with a short natural relaxed bent arm close beside Canon's own torso, holding the SMALL spare cream testweight at waist level. Canon is observing the actual test and may add that spare weight next; he does NOT touch the large weight on the bridge. Keep exact same head, oval woven eyes, smile, body proportions, notebook/other mitt, stance, workshop, camera and lighting. The LARGE cream cylindrical weight remains resting directly on the sagging paper bridge at its center with clear physical contact. No supporting overhead cord; keep empty frame, two supports, paper curvature and all other main apparatus unchanged. Remove the spare weight formerly sitting on the far-right bench because it is now in Canon's nearby mitt. No extra limbs, long arms, words or approval marks. Same composition and dimensions.\n",
+      "approvedPNG": "0f8f16f991a964180bfa1399dc61b3d54afecf68c2f451dc195646db77a4cfa0"
+    },
+    "evidence-unknowns": {
+      "source": "output/canon-replacement-art/property/evidence-unknowns-r19.png",
+      "sha256": "a9d668d82a302ca451057d6390c7288a12447c00ec70b8f6584425b8f207a7e0",
+      "prompt": "Use case: precise-object-edit. INPUT ROLES: Image 1 is the ONLY edit target, an existing Canon workshop task scene. Image 2 is the authoritative approved r41 Canon identity reference ONLY for head proportions/material/face, NOT for background, camera or pose. Make one localized HEAD-ONLY refinement in Image 1. The head must become lower and broader like Image 2: a squat wide soft cuboid with approximately 1.4:1 visible width-to-height excluding the antenna, a flatter roof, shallow crown, softly squared corners and a clear dimensional side plane. Reduce excess felt mass above the face and remove the tall/domed cranium impression. It should be whimsical and squat, not a near-square head, rounded dome or tall block. Rebuild the head volume naturally in the existing perspective; NEVER vertically squash the whole face, rescale the body, or warp the image. Preserve tall cream VERTICAL OVAL woven pixel eyes, contained centered dark oval pupils, gentle small pixel-stitch smile, dimensional felt fiber texture, and the single short felt antenna with cream wool ball. Keep eyes upright and tall with no squashing, no circular eyes, no screen glass or glow. Maintain the current character's head orientation/gaze and facial expression, with the neck/head attachment natural and body/coat/limbs/hands/feet/pocket/notebook exactly as Image 1. Preserve every other pixel intent: exact task objects and their marks, pose, camera angle and distance, composition, native square aspect ratio, full framing, workshop background, tabletop, wood/paper/ceramic materials, warm lighting, shadows and existing task-connected whimsy. Do NOT import Image 2's black background or standing pose. Do NOT add any character/body, stone, metal, shiny plastic, text, logo or watermark. TASK LOCK: Keep the exact three-panel evidence folio unchanged: bordered pencil stair-fold reference on the left, matching physical folded-paper stair form in the center, empty dashed unresolved placeholder on the right, and its lifted paper corner. Keep the pointing hand and all corner holders unchanged.\n",
+      "approvedPNG": "a9d668d82a302ca451057d6390c7288a12447c00ec70b8f6584425b8f207a7e0"
+    }
+  },
+  "files": {
+    "bounded-sandbox-r19-640.webp": {
+      "bytes": 35250,
+      "sha256": "d2c5154884d32161e346e17ba3dc0e00d27bdbcb838ccc4601f4ddf935e6b5e9"
+    },
+    "bounded-sandbox-r19-960.webp": {
+      "bytes": 68154,
+      "sha256": "7af305942690cbd1ea6e4dcdf8ba79b751a5ed9477773f8f44a6f9663d0fc52c"
+    },
+    "bounded-sandbox-r19.webp": {
+      "bytes": 163960,
+      "sha256": "4ba20a141a0e8b81f3a4d5303e514e6d32e3c205aad53370a6344f5c87fab914"
+    },
+    "controlled-load-r20-640.webp": {
+      "bytes": 35176,
+      "sha256": "22363a734359a353814555cbced393f724a42d0980008bd5e9f0ef209b914e83"
+    },
+    "controlled-load-r20-960.webp": {
+      "bytes": 69596,
+      "sha256": "d548f4b4c47c171fd228dac4d99dd31e816c01c02362f3628ee1f1c432466e98"
+    },
+    "controlled-load-r20.webp": {
+      "bytes": 158922,
+      "sha256": "3a3e7dce9d1ced31cf6343bcf84353a4601d0537632b63dd910339603d03c212"
+    },
+    "evidence-comparison-r19-640.webp": {
+      "bytes": 27830,
+      "sha256": "ed1f4c36d4a4453f6036d3020eb845d208321a9684a824ba52684248e8daa6cc"
+    },
+    "evidence-comparison-r19-960.webp": {
+      "bytes": 53716,
+      "sha256": "c0adbd723d669e2e741ad73430196f1f780f0f183b39792475991462ef696617"
+    },
+    "evidence-comparison-r19.webp": {
+      "bytes": 125962,
+      "sha256": "3ef88304f510b3e9a84eefaebc06a8ced0306db171917018ee14abdd4204e5b9"
+    },
+    "evidence-unknowns-r19-640.webp": {
+      "bytes": 54484,
+      "sha256": "fb2f537b5d237f890e2903bdebc25b8f387afee0b2293671170d1c6767be7625"
+    },
+    "evidence-unknowns-r19-960.webp": {
+      "bytes": 101012,
+      "sha256": "103b2f390efdaeb0ba101cb9a512495af1f8509e823a9b3b51bb7d8993d31442"
+    },
+    "evidence-unknowns-r19.webp": {
+      "bytes": 172404,
+      "sha256": "98292abb4468b8a321c58dabf0f8999f16b3ec2eca4db5a89f4f3c3eaceb5b88"
+    },
+    "modular-port-r19-640.webp": {
+      "bytes": 42420,
+      "sha256": "ea0f1855f830e65f42136fd23e833d314a47acefdb7400cda834cc8c6f84df16"
+    },
+    "modular-port-r19-960.webp": {
+      "bytes": 79522,
+      "sha256": "4cbba43dbbb7dee8259952409d4f8eec24ea1422a1f9810af726274b8960da87"
+    },
+    "modular-port-r19.webp": {
+      "bytes": 134558,
+      "sha256": "8a2f6dce8f0f89c8f026049fd24c23391cb9200ee6744f2cb81def4af7d707fc"
+    },
+    "review-nook-640.webp": {
+      "bytes": 55288,
+      "sha256": "04cee08aba135f58905a2cf21a87f9559b85b688dfd7846c1a8804eb4e4e4504"
+    },
+    "review-nook-960.webp": {
+      "bytes": 113698,
+      "sha256": "f21df08d0d8b06d381749e9cac6026c30344d675143da185ed6c4d126f60933a"
+    },
+    "review-nook.webp": {
+      "bytes": 186690,
+      "sha256": "5f7fbb8390f2291bdd36c7ba210614c1e955ede7cfa99649075d9f100d4597c8"
+    }
+  },
+  "approval": {
+    "state": "approved_for_production",
+    "userWords": "Approve the artwork for production",
+    "observedAt": "2026-11-14T05:43:58.353590+00:00",
+    "scope": "The 12 selected Canon scenes and transparent body in the 2026-11-14 complete-replacement review set; selected PNG hashes define the approval scope."
+  }
+}

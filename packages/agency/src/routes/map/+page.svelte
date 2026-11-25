@@ -102,7 +102,7 @@
     padding: var(--space-performance-md);
     gap: 0;
     border: 1px solid var(--color-performance-shell-border-strong);
-    border-radius: var(--radius-operator-panel);
+    border-radius: var(--radius-performance-scale-lg);
     background: var(--color-performance-shell-surface);
     color: var(--color-performance-fg-primary);
   }

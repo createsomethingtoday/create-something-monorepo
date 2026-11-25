@@ -1,3 +1,4 @@
+import { withBudgetFixture } from './fixtures/budget.js';
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
@@ -213,7 +214,7 @@ test('confirmed Exa enrichment is bounded to one exact provider and preserves un
       npi: '1265049910', purpose: 'recruiting_outreach',
       confirm_paid_enrichment: true, contact_types: ['email', 'phone'],
     },
-    { agencyApiKey: 'test-key', exaApiKey: 'exa-test-key', fetchFn },
+    { agencyApiKey: 'test-key', exaApiKey: 'exa-test-key', fetchFn: withBudgetFixture(fetchFn) },
   );
 
   const exaRequest = requests.find((request) => request.url === 'https://api.exa.ai/agent/runs');
@@ -229,7 +230,7 @@ test('confirmed Exa enrichment is bounded to one exact provider and preserves un
   assert.equal(result.contact_route_status, 'unverified_enrichment_candidate');
   assert.equal(result.outreach_authority_status, 'not_established');
   assert.equal(result.advertising_eligibility_status, 'not_established');
-  assert.equal(result.estimated_max_cost_usd, 0.102);
+  assert.equal(result.estimated_cost_usd, null);
 });
 
 test('Exa enrichment fails before any lookup when its server-side key is unavailable', async () => {
@@ -260,7 +261,7 @@ test('Exa enrichment requires explicit paid-call confirmation before any lookup'
     enrichProviderProfessionalContact(
       // @ts-expect-error Exercise runtime validation for an MCP client that omits confirmation.
       { npi: '1265049910', purpose: 'recruiting_outreach', confirm_paid_enrichment: false },
-      { agencyApiKey: 'test-key', exaApiKey: 'exa-test-key', fetchFn },
+      { agencyApiKey: 'test-key', exaApiKey: 'exa-test-key', fetchFn: withBudgetFixture(fetchFn) },
     ),
     /confirm_paid_enrichment/i,
   );
@@ -289,7 +290,7 @@ test('Exa enrichment cancels an unfinished run at the bounded timeout', async ()
     enrichProviderProfessionalContact(
       { npi: '1265049910', purpose: 'recruiting_outreach', confirm_paid_enrichment: true },
       {
-        agencyApiKey: 'test-key', exaApiKey: 'exa-test-key', fetchFn,
+        agencyApiKey: 'test-key', exaApiKey: 'exa-test-key', fetchFn: withBudgetFixture(fetchFn),
         exaTimeoutMs: 1_000, exaPollIntervalMs: 100,
       },
     ),
@@ -317,7 +318,7 @@ test('Exa timeout does not claim cancellation when cleanup fails', async () => {
     enrichProviderProfessionalContact(
       { npi: '1265049910', purpose: 'recruiting_outreach', confirm_paid_enrichment: true },
       {
-        agencyApiKey: 'test-key', exaApiKey: 'exa-test-key', fetchFn,
+        agencyApiKey: 'test-key', exaApiKey: 'exa-test-key', fetchFn: withBudgetFixture(fetchFn),
         exaTimeoutMs: 1_000, exaPollIntervalMs: 100,
       },
     ),
@@ -352,7 +353,7 @@ test('Exa polling failures cancel the paid run before returning an error', async
   await assert.rejects(
     enrichProviderProfessionalContact(
       { npi: '1265049910', purpose: 'recruiting_outreach', confirm_paid_enrichment: true },
-      { agencyApiKey: 'test-key', exaApiKey: 'exa-test-key', fetchFn, exaPollIntervalMs: 100 },
+      { agencyApiKey: 'test-key', exaApiKey: 'exa-test-key', fetchFn: withBudgetFixture(fetchFn), exaPollIntervalMs: 100 },
     ),
     (error: unknown) => {
       assert.match(String(error), /polling failed.*was cancelled/i);
@@ -391,7 +392,7 @@ test('a stalled Exa poll response body is bounded by the overall deadline and ca
     enrichProviderProfessionalContact(
       { npi: '1265049910', purpose: 'recruiting_outreach', confirm_paid_enrichment: true },
       {
-        agencyApiKey: 'test-key', exaApiKey: 'exa-test-key', fetchFn,
+        agencyApiKey: 'test-key', exaApiKey: 'exa-test-key', fetchFn: withBudgetFixture(fetchFn),
         exaTimeoutMs: 1_000, exaPollIntervalMs: 100,
       },
     ),
@@ -418,7 +419,7 @@ test('an indeterminate Exa create response warns that a paid run may be active a
   await assert.rejects(
     enrichProviderProfessionalContact(
       { npi: '1265049910', purpose: 'recruiting_outreach', confirm_paid_enrichment: true },
-      { agencyApiKey: 'test-key', exaApiKey: 'exa-test-key', fetchFn, exaTimeoutMs: 1_000 },
+      { agencyApiKey: 'test-key', exaApiKey: 'exa-test-key', fetchFn: withBudgetFixture(fetchFn), exaTimeoutMs: 1_000 },
     ),
     /create result is indeterminate.*paid run may be active.*do not retry/i,
   );
@@ -442,7 +443,7 @@ test('Exa upstream failures do not reflect response bodies containing contact da
   await assert.rejects(
     enrichProviderProfessionalContact(
       { npi: '1265049910', purpose: 'recruiting_outreach', confirm_paid_enrichment: true },
-      { agencyApiKey: 'test-key', exaApiKey: 'exa-test-key', fetchFn },
+      { agencyApiKey: 'test-key', exaApiKey: 'exa-test-key', fetchFn: withBudgetFixture(fetchFn) },
     ),
     (error: unknown) => {
       assert.match(String(error), /create result is indeterminate.*do not retry/i);
@@ -467,7 +468,7 @@ test('Exa create connection failures are indeterminate and do not reflect transp
   await assert.rejects(
     enrichProviderProfessionalContact(
       { npi: '1265049910', purpose: 'recruiting_outreach', confirm_paid_enrichment: true },
-      { agencyApiKey: 'test-key', exaApiKey: 'exa-test-key', fetchFn },
+      { agencyApiKey: 'test-key', exaApiKey: 'exa-test-key', fetchFn: withBudgetFixture(fetchFn) },
     ),
     (error: unknown) => {
       assert.match(String(error), /create result is indeterminate.*do not retry/i);
@@ -495,7 +496,7 @@ test('terminal failed Exa runs preserve safe cost metadata and no-retry guidance
   await assert.rejects(
     enrichProviderProfessionalContact(
       { npi: '1265049910', purpose: 'recruiting_outreach', confirm_paid_enrichment: true },
-      { agencyApiKey: 'test-key', exaApiKey: 'exa-test-key', fetchFn },
+      { agencyApiKey: 'test-key', exaApiKey: 'exa-test-key', fetchFn: withBudgetFixture(fetchFn) },
     ),
     /terminal status failed.*Reported cost: \$0\.012.*do not retry/i,
   );
@@ -520,7 +521,7 @@ test('completed Exa runs with unusable output are explicitly non-retryable', asy
   await assert.rejects(
     enrichProviderProfessionalContact(
       { npi: '1265049910', purpose: 'recruiting_outreach', confirm_paid_enrichment: true },
-      { agencyApiKey: 'test-key', exaApiKey: 'exa-test-key', fetchFn },
+      { agencyApiKey: 'test-key', exaApiKey: 'exa-test-key', fetchFn: withBudgetFixture(fetchFn) },
     ),
     (error: unknown) => {
       assert.match(String(error), /completed.*Reported cost: \$0\.032.*do not retry/i);
@@ -557,7 +558,7 @@ test('Exa no-match responses suppress contradictory contact fields', async () =>
 
   const result = await enrichProviderProfessionalContact(
     { npi: '1265049910', purpose: 'recruiting_outreach', confirm_paid_enrichment: true },
-    { agencyApiKey: 'test-key', exaApiKey: 'exa-test-key', fetchFn },
+    { agencyApiKey: 'test-key', exaApiKey: 'exa-test-key', fetchFn: withBudgetFixture(fetchFn) },
   );
 
   assert.deepEqual(result.professional_contact, {});
@@ -594,7 +595,7 @@ test('Exa verified-match labels still require a usable source citation', async (
 
   const result = await enrichProviderProfessionalContact(
     { npi: '1265049910', purpose: 'recruiting_outreach', confirm_paid_enrichment: true },
-    { agencyApiKey: 'test-key', exaApiKey: 'exa-test-key', fetchFn },
+    { agencyApiKey: 'test-key', exaApiKey: 'exa-test-key', fetchFn: withBudgetFixture(fetchFn) },
   );
 
   assert.equal(result.match_status, 'verified_match');
@@ -634,7 +635,7 @@ test('Exa enrichment suppresses contact types the operator did not request', asy
       npi: '1265049910', purpose: 'recruiting_outreach', confirm_paid_enrichment: true,
       contact_types: ['email'],
     },
-    { agencyApiKey: 'test-key', exaApiKey: 'exa-test-key', fetchFn },
+    { agencyApiKey: 'test-key', exaApiKey: 'exa-test-key', fetchFn: withBudgetFixture(fetchFn) },
   );
 
   assert.equal(result.professional_contact.phone, undefined);
@@ -675,7 +676,7 @@ test('Exa enrichment rejects multi-number and NPI-as-phone values and normalizes
       npi: '4175550100', purpose: 'recruiting_outreach', confirm_paid_enrichment: true,
       contact_types: ['phone'],
     },
-    { agencyApiKey: 'test-key', exaApiKey: 'exa-test-key', fetchFn },
+    { agencyApiKey: 'test-key', exaApiKey: 'exa-test-key', fetchFn: withBudgetFixture(fetchFn) },
   );
 
   assert.equal(result.professional_contact.phone, undefined);
@@ -688,7 +689,7 @@ test('Exa enrichment rejects multi-number and NPI-as-phone values and normalizes
       npi: '4175550100', purpose: 'recruiting_outreach', confirm_paid_enrichment: true,
       contact_types: ['phone'],
     },
-    { agencyApiKey: 'test-key', exaApiKey: 'exa-test-key', fetchFn },
+    { agencyApiKey: 'test-key', exaApiKey: 'exa-test-key', fetchFn: withBudgetFixture(fetchFn) },
   );
   assert.equal(npiAsPhoneResult.professional_contact.phone, undefined);
   assert.equal(npiAsPhoneResult.contact_route_status, 'no_contact_candidate_found');
@@ -890,7 +891,7 @@ test('MCP discovery advertises the registry-first contact tools and paid fallbac
     }],
     readiness: [], total: 1, limit: 1, offset: 0,
   } } satisfies HealthcareApiResponse);
-  const server = createAbundanceHealthcareServer({ agencyApiKey: 'test-key', exaApiKey: 'exa-test-key', fetchFn });
+  const server = createAbundanceHealthcareServer({ agencyApiKey: 'test-key', exaApiKey: 'exa-test-key', fetchFn: withBudgetFixture(fetchFn) });
   const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
   await server.connect(serverTransport);
   const client = new Client({ name: 'healthcare-mcp-test', version: '1.0.0' });

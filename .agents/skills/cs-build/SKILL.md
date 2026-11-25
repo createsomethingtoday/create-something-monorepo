@@ -17,6 +17,11 @@ package, and the user's current scope govern this loop.
    in Linear. In a T3-created worktree, register that actual checkout using
    `--register-existing`; do not create a second one. Follow
    `docs/guides/T3_CODE_WORKFLOW.md` for the command and bootstrap contract.
+   When splitting work across agents or PRs, give each slice an observable
+   result, identify its actual blockers, and name the checkout or environment
+   where the combined behavior will be exercised. For migrations that need old
+   and new callers to coexist, introduce the compatible form first, migrate
+   callers in verifiable batches, then verify adoption before removing the old form.
 3. Choose only the specialist guidance needed for the change:
    - Behavior or bug: `packages/dotfiles/codex/skills/tdd-vertical-slice/SKILL.md`.
      Demonstrate a failing regression before a bug fix, then a passing check.

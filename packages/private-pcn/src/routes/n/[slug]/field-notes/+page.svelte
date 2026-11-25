@@ -84,7 +84,7 @@
     content="noindex"
   /></svelte:head
 >
-<main id="main" class="builder-workspace">
+<main id="main" class="builder-workspace operator-surface">
   <a href={`/n/${data.network?.slug}`}><Icon name="arrow-left" /> Network library</a>
   <p class="eyebrow">PRIVATE / FIELD EVIDENCE</p>
   <h1>Explain the decision.<br /><SerifPhrase text="Show the result." /></h1>

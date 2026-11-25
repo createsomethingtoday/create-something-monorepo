@@ -148,6 +148,8 @@ export interface ValidationSubmitRequest {
 			}>;
 		}>;
 		scope?: Partial<ValidationRunScope>;
+		/** Designer-side run times in milliseconds and item counts per step. Diagnostic only. */
+		timings?: unknown;
 	};
 }
 
@@ -211,6 +213,26 @@ export interface ValidationOptions {
 	 * - 'current': analyze only the current page slug (or homepage fallback)
 	 */
 	pageScope?: 'all' | 'current';
+	/**
+	 * True when `pageSlugs` is the full static page list from the Designer.
+	 * The worker sets it from the Designer data; a value from the client is
+	 * replaced. A page list from a sitemap or from links can be cut short.
+	 */
+	pageListComplete?: boolean;
+	/**
+	 * The template's Webflow preview link
+	 * (`https://preview.webflow.com/preview/<site>?preview=<token>`). With it,
+	 * the unused styles check reads the Designer's own site data and gives
+	 * the list that the Designer's Clean up panel gives. Without it, or when
+	 * the link does not load, the check compares the published pages.
+	 */
+	previewUrl?: string;
+	/**
+	 * Path of the Designer site data on the preview host. The worker sets it
+	 * from its `PREVIEW_SITE_DATA_PATH` secret; a value from the client is
+	 * replaced. Without it, `previewUrl` is not used.
+	 */
+	previewSiteDataPath?: string;
 	/**
 	 * The current page slug from the Designer (e.g., "/about").
 	 * Used when pageScope is 'current'.
@@ -373,6 +395,10 @@ export interface ContentAnalysisResult {
 		totalLinks: number;
 		totalBrokenLinks: number;
 		averageLinksPerPage: number;
+		/** CMS item pages read as a sample, in addition to the page list. Absent on a current-page run. */
+		cmsItemPagesChecked?: number;
+		/** Paths of those item pages. The sample is the same on each run while the site's links do not change. */
+		cmsItemPagePaths?: string[];
 	};
 	pages: AnalyzedPage[];
 }
@@ -477,12 +503,16 @@ export interface AnalyzedPage {
 	}>;
 	/** Images without a positive width and height attribute (layout shift; reviewers ask for both). */
 	imagesMissingDimensions?: number;
+	/** Images with no width and height attributes whose space the published CSS reserves. */
+	imagesSizedByCss?: number;
 	imagesMissingDimensionsDetails?: Array<{
 		src: string;
 		selector: string;
 	}>;
 	/** Reviewer standards found on this page (validators/reviewer-standards.ts). */
 	reviewerAudit?: ReviewerPageAudit;
+	/** A CMS item page read as a sample; it is not in the page list of the run. */
+	isCmsItemSample?: boolean;
 	seo: PageSEOData;
 	links: LinkAnalysis;
 	contentQuality: ContentQualityAnalysis;

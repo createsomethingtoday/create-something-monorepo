@@ -1,3 +1,4 @@
+import {motionEnter} from './motion';
 type ContextResource = {
   id:string; threadId:string; uri:string; title:string; summary:string;
   mimeType:string; byteLength:number; sha256:string; chunkCount:number;
@@ -34,7 +35,7 @@ function version(resource:ContextResource){return `Shared ${new Date(resource.cr
 export function createSharedContext(options:{api:Api;report:(error:unknown)=>void;draft:(text:string,peer:string,thread:string)=>void}){
   const element=node('details','shared-context');element.setAttribute('aria-label','Shared context');const disclosure=node('summary','','Shared context');
   const heading=node('div','context-heading');heading.append(node('h4','','Documents shared in this thread'));
-  const share=button('Share a document',()=>{form.hidden=false;title.focus();});
+  const share=button('Share a document',()=>{form.hidden=false;motionEnter(form);title.focus();});
   const refresh=button('Refresh documents',()=>void refreshList());heading.append(share,refresh);
   const explanation=node('p','small','Share text or Markdown with both owners and their Dots. Sharing a document does not request work.');
   const status=node('p','context-status small');status.setAttribute('role','status');status.setAttribute('aria-live','polite');
@@ -108,6 +109,7 @@ export function createSharedContext(options:{api:Api;report:(error:unknown)=>voi
       content.textContent=page.content;chunkActions.replaceChildren();
       if(page.chunkIndex>0)chunkActions.append(button('Previous part',()=>void readChunk(id,page.chunkIndex-1,true)));
       if(page.nextChunk!==null)chunkActions.append(button('Next part',()=>void readChunk(id,page.nextChunk!,true)));
+      motionEnter(preview);
       if(restoreFocus)previewTitle.focus({preventScroll:true});
     }catch(error){if(stamp!==generation||request!==reading)return;clearPreview();message('This document is unavailable. Access may have been revoked or the thread may have expired.',true);options.report(error);}finally{focusState.release();}
   }

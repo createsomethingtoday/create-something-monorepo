@@ -1,3 +1,4 @@
+import { commitRecovery, encryptRecovery, readRecovery, recoverySuccessorConsumed } from './services/oauth-refresh-recovery';
 /**
  * Identity Worker
  *
@@ -108,7 +109,7 @@ export default {
 			if (path === '/v1/auth/magic-exchange' || path === '/v1/auth/cross-domain/exchange') return response;
 			return cors(response, request, env);
 		} catch (err) {
-			console.error('Identity Worker Error:', err);
+			console.error('Identity Worker Error:', path === '/oauth/token' ? 'token_exchange_failed' : err);
 			const response = json({ error: 'internal_error', message: 'An unexpected error occurred', status: 500 }, 500);
 			return path === '/v1/auth/cross-domain/exchange' ? response : cors(response, request, env);
 		}
@@ -124,6 +125,7 @@ async function route(request: Request, env: Env, method: string, path: string): 
     const query = new URL(request.url).searchParams;
     const page = accountPage(path, {
       gigiSignupEnabled: env.GIGI_ENROLLMENT_ENABLED === 'true',
+      a2aSignupEnabled: env.A2A_ENROLLMENT_ENABLED === 'true',
       app: query.get('app') ?? undefined,
       verificationMode: query.get('mode') ?? undefined,
     });
@@ -148,6 +150,11 @@ async function route(request: Request, env: Env, method: string, path: string): 
         signup_uri: 'https://id.createsomething.space/signup?app=gigi',
         mailbox_proof_required: true,
         application_access_separate: true,
+      }, a2a: {
+        enrollment_enabled: env.A2A_ENROLLMENT_ENABLED === 'true' && !!env.RESEND_API_KEY,
+        signup_uri: 'https://id.createsomething.space/signup?app=a2a',
+        return_uri: 'https://a2a.createsomething.agency/inboxes',
+        mailbox_proof_required: true, application_access_separate: true,
       } },
       recovery: { enabled: !!env.RESEND_API_KEY && (env.VERIFIED_RECOVERY_ENABLED === 'true' || enrollmentOpen(env)), mode: env.VERIFIED_RECOVERY_ENABLED === 'true' ? 'verified-existing-accounts' : 'legacy-enrollment' } }, 200, {
 			'Cache-Control': 'public, max-age=300',
@@ -708,6 +715,7 @@ interface OAuthRefreshTokenClaims extends JWTPayload {
 }
 
 interface OAuthAccessTokenClaims extends JWTPayload {
+	connection_id?: string;
 	kind: 'oauth_access_token';
 	client_id: string;
 	scope: string;
@@ -805,6 +813,8 @@ interface AdminMcpAuditFeedBody {
 }
 
 interface OAuthTokenBody {
+	refresh_request_id?: string;
+	scope?: string;
 	grant_type?: string;
 	code?: string;
 	refresh_token?: string;
@@ -901,9 +911,7 @@ const POLICY_MCP_SESSION_SELF_SERVICE_ID = 'policy.mcp-session-self-service.v1';
 const POLICY_USER_BEARER_TOKEN_GOVERNANCE_ID = 'policy.user-bearer-token-governance.v1';
 const WEBFLOW_TEMPLATE_REVIEW_REVIEWER_ACCOUNT_IDS = new Set([
 	'acct_wf_template_review',
-	'acct_wf_natalia',
 	'acct_wf_eric',
-	'acct_wf_vicki',
 	'acct_wf_mariana',
 	'acct_wf_micah',
 ]);
@@ -982,6 +990,14 @@ const OAUTH_APPLICATION_ACCESS_POLICIES = new Map<string, {
 		{
 			applicationId: 'gigi-connector',
 			resource: 'https://gigi-connector.createsomething.workers.dev',
+			expiresIn: OAUTH_APPLICATION_ACCESS_TOKEN_EXPIRES_IN,
+		},
+	],
+	[
+		'https://gigi-connector-dev.createsomething.workers.dev',
+		{
+			applicationId: 'gigi-connector-dev',
+			resource: 'https://gigi-connector-dev.createsomething.workers.dev',
 			expiresIn: OAUTH_APPLICATION_ACCESS_TOKEN_EXPIRES_IN,
 		},
 	],
@@ -1510,13 +1526,32 @@ async function handleOAuthToken(request: Request, env: Env): Promise<Response> {
 	} else {
 		return oauthErrorResponse('unsupported_grant_type', 400, 'Supported grant_types are authorization_code and refresh_token.');
 	}
-	if (!grantKind || !(await consumeOAuthGrant(env.DB, {
+	if (resolveOAuthTokenAccessMode(claims.resource,env.MCP_HUB_URL,env.CONTROL_RUNTIME_RESOURCES).type === 'invalid') return oauthErrorResponse('invalid_target',400,'OAuth resource is not configured.');
+	if (body.resource && body.resource !== claims.resource) return oauthErrorResponse('invalid_target',400,'Resource does not match the grant.');
+	if (body.scope && body.scope !== claims.scope) return oauthErrorResponse('invalid_scope',400,'Scope must match the grant.');
+	const auditedRefresh = grantKind === 'oauth_refresh_token' && claims.resource === 'https://a2a.createsomething.agency/mcp';
+	const recoveryEnabled = auditedRefresh && body.refresh_request_id !== undefined;
+	if (recoveryEnabled && !/^[A-Za-z0-9_-]{43,128}$/.test(body.refresh_request_id!)) return oauthErrorResponse('invalid_request',400,'A high-entropy refresh_request_id is required.');
+	const recoveryBinding = JSON.stringify([claims.jti,claims.client_id,claims.sub,'family_id' in claims ? claims.family_id : null,claims.resource,claims.scope]);
+	const activeRecoveryIdentity = async () => {
+		const current = await findUserById(env.DB,claims.sub);
+		return Boolean(current && isActiveVerifiedIdentity(current) && 'family_id' in claims && typeof claims.family_id === 'string' && await isOAuthRefreshFamilyActive(env.DB,claims.family_id,claims.client_id,claims.sub));
+	};
+	if (recoveryEnabled) {
+		const previous = await readRecovery(env.DB,claims.jti,body.refresh_token!,body.refresh_request_id!,recoveryBinding);
+		if (previous) {
+			if (!(await activeRecoveryIdentity()) || await recoverySuccessorConsumed(env.DB,previous)) return oauthErrorResponse('invalid_grant',400,'Recovery is no longer active.');
+			await env.DB.prepare('UPDATE connection_renewal_audit SET replay_count=replay_count+1,last_recovered_at=? WHERE grant_id=? AND owner_subject=? AND client_id=? AND resource=?').bind(Math.floor(Date.now()/1000),claims.jti,claims.sub,claims.client_id,claims.resource).run();
+			return json(previous,200,{'Cache-Control':'no-store',Pragma:'no-cache'});
+		}
+	}
+	if (!auditedRefresh && (!grantKind || !(await consumeOAuthGrant(env.DB, {
 		grantId: claims.jti,
 		grantKind,
 		clientId: claims.client_id,
 		expiresAt: claims.exp,
 		nowSeconds: Math.floor(Date.now() / 1000),
-	}))) {
+	})))) {
 		if (grantKind === 'oauth_refresh_token' && 'family_id' in claims && typeof claims.family_id === 'string') {
 			await revokeOAuthRefreshFamily(env.DB, claims.family_id);
 		}
@@ -1541,6 +1576,10 @@ async function handleOAuthToken(request: Request, env: Env): Promise<Response> {
 				'OAuth resource is not configured for managed or application access.'
 			);
 		}
+		// A renewable A2A connection is the existing grant family, never a caller-selected ID.
+		const refreshFamilyId = scopeIncludes(claims.scope, 'offline_access')
+			? ('family_id' in claims && typeof claims.family_id === 'string' ? claims.family_id : generateUUID())
+			: undefined;
 		let accessToken: string;
 		let expiresIn: number;
 		if (accessMode.type === 'application') {
@@ -1577,6 +1616,7 @@ async function handleOAuthToken(request: Request, env: Env): Promise<Response> {
 				client_id: claims.client_id,
 				resource: applicationPolicy.resource,
 				scope: claims.scope,
+				...(applicationPolicy.resource === 'https://a2a.createsomething.agency/mcp' && refreshFamilyId ? { connection_id: refreshFamilyId } : {}),
 				...(controlClaims ?? {}),
 			} satisfies OAuthAccessTokenClaims);
 			await createMcpAuthEvent(env.DB, {
@@ -1644,12 +1684,10 @@ async function handleOAuthToken(request: Request, env: Env): Promise<Response> {
 		}
 		if (scopeIncludes(claims.scope, 'offline_access')) {
 			const now = Math.floor(Date.now() / 1000);
-			const refreshFamilyId = 'family_id' in claims && typeof claims.family_id === 'string'
-				? claims.family_id
-				: generateUUID();
+			const familyId = refreshFamilyId!;
 			if (!('family_id' in claims)) {
 				const created = await createOAuthRefreshFamily(env.DB, {
-					familyId: refreshFamilyId,
+					familyId,
 					clientId: claims.client_id,
 					userId: user.id,
 				});
@@ -1665,7 +1703,7 @@ async function handleOAuthToken(request: Request, env: Env): Promise<Response> {
 				exp: now + OAUTH_REFRESH_TOKEN_TTL_SECONDS,
 				kind: 'oauth_refresh_token',
 				jti: generateUUID(),
-				family_id: refreshFamilyId,
+				family_id: familyId,
 				email: user.email,
 				tier: user.tier,
 				source: user.source,
@@ -1682,12 +1720,41 @@ async function handleOAuthToken(request: Request, env: Env): Promise<Response> {
 			responseBody.refresh_token = refreshToken;
 		}
 
+		if (recoveryEnabled) {
+			if (!(await activeRecoveryIdentity())) return oauthErrorResponse('invalid_grant',400,'Identity is no longer active.');
+			await commitRecovery(env.DB,claims,body.refresh_request_id!,recoveryBinding,await encryptRecovery(body.refresh_token!,body.refresh_request_id!,recoveryBinding,responseBody));
+			const committed = await readRecovery(env.DB,claims.jti,body.refresh_token!,body.refresh_request_id!,recoveryBinding);
+			if (!committed) {
+				if ('family_id' in claims && typeof claims.family_id === 'string') await revokeOAuthRefreshFamily(env.DB,claims.family_id);
+				return oauthErrorResponse('invalid_grant',400,'Grant has already been used.');
+			}
+			if (!(await activeRecoveryIdentity()) || await recoverySuccessorConsumed(env.DB,committed)) return oauthErrorResponse('invalid_grant',400,'Recovery is no longer active.');
+			return json(committed,200,{'Cache-Control':'no-store',Pragma:'no-cache'});
+		}
+		if (auditedRefresh) {
+			// Prepare the standard response before atomically consuming and auditing.
+			// An audit failure must not burn a host's single-use predecessor. No
+			// encrypted response/replay is added to this non-opt-in exchange.
+			if (!(await activeRecoveryIdentity())) return oauthErrorResponse('invalid_grant',400,'Identity is no longer active.');
+			const now = Math.floor(Date.now()/1000);
+			const committed = await env.DB.batch([
+				env.DB.prepare('DELETE FROM connection_renewal_audit WHERE committed_at<?').bind(now-90*86400),
+				env.DB.prepare('DELETE FROM oauth_grant_consumptions WHERE expires_at<=?').bind(now),
+				env.DB.prepare('INSERT OR IGNORE INTO oauth_grant_consumptions(grant_id,grant_kind,client_id,expires_at) VALUES(?,?,?,?)').bind(claims.jti,'oauth_refresh_token',claims.client_id,claims.exp),
+				env.DB.prepare("INSERT INTO connection_renewal_audit(grant_id,owner_subject,client_id,resource,commit_mode,committed_at) SELECT ?,?,?,?,'response_prepared',? WHERE changes()=1").bind(claims.jti,claims.sub,claims.client_id,claims.resource,now)
+			]);
+			if (committed[2].meta.changes !== 1) {
+				if ('family_id' in claims && typeof claims.family_id === 'string') await revokeOAuthRefreshFamily(env.DB,claims.family_id);
+				return oauthErrorResponse('invalid_grant',400,'Grant has already been used.');
+			}
+			if (!(await activeRecoveryIdentity())) return oauthErrorResponse('invalid_grant',400,'Identity is no longer active.');
+		}
 		return json(responseBody, 200, {
 			'Cache-Control': 'no-store',
 			Pragma: 'no-cache',
 		});
 	} catch (error) {
-		const description = error instanceof Error ? error.message : 'token_exchange_failed';
+		const description = 'token_exchange_failed';
 		console.error('OAuth token exchange failed:', {
 			error: description,
 			user_id: user.id,
@@ -1716,7 +1783,15 @@ async function handleOAuthUserInfo(request: Request, env: Env): Promise<Response
 		if (!isOAuthUserInfoIdentityActive(user)) {
 			return oauthErrorResponse('invalid_token', 401, 'OAuth identity is no longer available.');
 		}
+		if (oauthToken.resource === 'https://a2a.createsomething.agency/mcp' && oauthToken.connection_id !== undefined &&
+			(typeof oauthToken.connection_id !== 'string' || !oauthToken.connection_id ||
+			 !(await isOAuthRefreshFamilyActive(env.DB, oauthToken.connection_id, oauthToken.client_id, oauthToken.sub)))) {
+			return oauthErrorResponse('invalid_token', 401, 'OAuth connection is no longer active.');
+		}
+		const renewal = oauthToken.resource === 'https://a2a.createsomething.agency/mcp' ? await env.DB.prepare('SELECT MAX(committed_at) AS lastCommittedAt,MAX(last_recovered_at) AS lastRecoveredAt,COALESCE(SUM(replay_count),0) AS recoveryResponsesPrepared FROM connection_renewal_audit WHERE owner_subject=? AND client_id=? AND resource=?').bind(user.id,oauthToken.client_id,oauthToken.resource).first() : null;
 		return json({
+			...(oauthToken.resource === 'https://a2a.createsomething.agency/mcp' && oauthToken.connection_id ? { connection_id: oauthToken.connection_id } : {}),
+			...(renewal ? { renewal } : {}),
 			sub: user.id,
 			email: user.email,
 			email_verified: Boolean(user.email_verified),
@@ -4648,6 +4723,8 @@ function renderOAuthAuthorizePage(params: URLSearchParams, env: Env, errorMessag
 		env.CONTROL_RUNTIME_RESOURCES
 	);
 	const gigiResource = requestedResource === 'https://gigi-connector.createsomething.workers.dev';
+	const a2aResource = requestedResource === 'https://a2a.createsomething.agency/mcp';
+	const a2aSignupEnabled = a2aResource && env.A2A_ENROLLMENT_ENABLED === 'true';
 	const gigiSignupEnabled = gigiResource && env.GIGI_ENROLLMENT_ENABLED === 'true';
 	const requestedScopes = normalizeScope(params.get('scope') ?? 'openid mcp');
 	const accessEyebrow = applicationPolicy ? 'Application MCP Access' : 'Managed MCP Access';
@@ -4745,6 +4822,7 @@ function renderOAuthAuthorizePage(params: URLSearchParams, env: Env, errorMessag
           <label>Password<input type="password" name="password" autocomplete="current-password" required /></label>
           <button type="submit">Sign in and authorize</button>
         </form>
+        ${a2aResource ? `<nav class="account-help" aria-label="Account help">${a2aSignupEnabled ? '<a href="/signup?app=a2a" target="_blank" rel="noopener noreferrer">Create account ↗</a>' : ''}<a href="/recover?app=a2a" target="_blank" rel="noopener noreferrer">Forgot your password? ↗</a></nav>${a2aSignupEnabled ? '<p class="signup-note">Verify your email and create your account in a separate tab, then return here to sign in. Open your inboxes after signing in.</p>' : ''}` : ''}
         ${gigiResource ? `<nav class="account-help" aria-label="Account help">${gigiSignupEnabled ? '<a href="/signup?app=gigi" target="_blank" rel="noopener noreferrer">Create account ↗</a>' : ''}<a href="/recover?app=gigi" target="_blank" rel="noopener noreferrer">Forgot your password? ↗</a></nav>${gigiSignupEnabled ? '<p class="signup-note">New to GiGi? Create your account in a separate tab, then return here to sign in. If this request expires, start source sign-in again in GiGi on your Mac.</p>' : ''}` : ''}
       </section>
     </main>
@@ -4771,6 +4849,8 @@ async function parseOAuthTokenBody(request: Request): Promise<OAuthTokenBody | n
 		const params = new URLSearchParams(text);
 		return {
 			grant_type: params.get('grant_type') ?? undefined,
+			refresh_request_id: params.get('refresh_request_id') ?? undefined,
+			scope: params.get('scope') ?? undefined,
 			code: params.get('code') ?? undefined,
 			refresh_token: params.get('refresh_token') ?? undefined,
 			redirect_uri: params.get('redirect_uri') ?? undefined,

@@ -14,9 +14,9 @@ const explanations = {
   provider_preflight_unavailable: 'Your provider could not start this request. No message was sent; try again when it is available.',
   provider_preflight_rejected: 'Your provider declined the request before a response started. Check its availability, then send again when ready.',
   provider_turn_rejected: 'Your provider declined this request. Check its usage or availability, then send again when ready.',
-  reconciliation_required: 'The last send may have started. Choose Check status and review the latest messages before sending again.',
+  reconciliation_required: 'The last send may have started. Choose Check status. If the outcome remains unknown, open a new chat to inspect your records without repeating this request. Empty messages do not prove that nothing changed.',
   write_outcome_unknown: unresolvedSave,
-  turn_outcome_unknown: 'The last send may have started. Choose Check status and review the latest messages before sending again.',
+  turn_outcome_unknown: 'The last send may have started. Choose Check status. If the outcome remains unknown, open a new chat to inspect your records without repeating this request. Empty messages do not prove that nothing changed.',
   usage_limit_reached: 'Your Codex usage limit is reached. Try again after it resets.',
   usage_limit: 'Your Codex usage limit is reached. Try again after it resets.',
   quota_exceeded: 'Your Codex usage limit is reached. Try again after it resets.',
@@ -44,7 +44,7 @@ export function chatState(chat) {
   if(chat.current?.state==='running')return {label:chat.current?.cancelPending?'Stopping response':'Responding',detail:'You can leave this drawer and return to your work.'};
   if(chat.current?.state==='failed' || chat.error)return {label:'Needs another look',detail:'Check status for the latest result.'};
   if(chat.current?.decisionReceipt?.outcome==='verified')return {label:'Result checked',detail:'GiGi verified the reviewed action. See its receipt below.'};
-  if(chat.current?.state==='interrupted')return {label:'Response interrupted',detail:'Review the latest messages before continuing.'};
+  if(chat.current?.state==='interrupted')return {label:'Response interrupted',detail:chat.current.messages?.length ? 'Review the latest messages before continuing.' : chat.current.sendReceipt?.accepted ? 'Your request was accepted, but its messages are unavailable. Acceptance alone does not confirm any saved changes.' : 'Saved messages are unavailable for this response. Inspect your records before repeating a request.'};
   if(chat.current?.messages?.some(message=>message.role==='assistant'))return {label:'Response ready',detail:'Review the response and its source records.'};
   return {label:'Ready to help',detail:'Ask a question or choose a starting point.'};
 }
@@ -141,7 +141,8 @@ export class ChatController {
     this.current = { ...result, messages }; this.error = result.error || null;
     const unconfirmed = this.unconfirmedSends.get(result.sessionId);
     if (unconfirmed?.sessionId === result.sessionId) {
-      const confirmed = messages.some((message) => message.role === 'user' && !unconfirmed.messageIds.has(message.id) && String(message.text).trim() === unconfirmed.text);
+      const receiptConfirmed = unconfirmed.requestId && result.sendReceipt?.requestId === unconfirmed.requestId && result.sendReceipt?.accepted === true && typeof result.sendReceipt?.turnId === 'string' && result.sendReceipt.turnId.length > 0;
+      const confirmed = receiptConfirmed || messages.some((message) => message.role === 'user' && !unconfirmed.messageIds.has(message.id) && String(message.text).trim() === unconfirmed.text);
       if (confirmed) { if (this.draft.trim() === unconfirmed.text) this.draft = ''; this.unconfirmedSends.delete(result.sessionId); }
       else this.error = result.error || 'turn_outcome_unknown';
     }
@@ -165,7 +166,7 @@ export class ChatController {
       catch (error) { if (epoch === this.epoch) { this.error = String(error?.message || error); this.emit(); } }
     }, pollInterval);
   }
-  async mutate(task, submittedText = null) {
+  async mutate(task, submittedText = null, requestId = null) {
     this.stopPolling(); this.pending = true; this.error = null; this.emit();
     const sessionId = this.current.sessionId;
     const messageIds = new Set((this.current.messages || []).map((message) => message.id));
@@ -177,7 +178,7 @@ export class ChatController {
         if (submittedText !== null && result.state === 'idle') void this.completed?.(result);
       } else {
         this.refreshRequired = true;
-        if (submittedText !== null) { this.unconfirmedSends.set(sessionId, { sessionId, text: submittedText, messageIds }); this.error = 'turn_outcome_unknown'; }
+        if (submittedText !== null) { this.unconfirmedSends.set(sessionId, { sessionId, text: submittedText, messageIds, requestId }); this.error = 'turn_outcome_unknown'; }
       }
     } catch (error) {
       this.error = String(error?.message || error);
@@ -185,7 +186,7 @@ export class ChatController {
       // Transport failures remain uncertain and must never permit automatic replay.
       const definitive = submittedText !== null && ['chatgpt_auth_required', 'codex_unavailable', 'provider_turn_rejected', 'provider_preflight_rejected', 'provider_preflight_unavailable', 'session_not_found', 'plugin_inventory_unavailable', 'gigi_tools_unavailable'].includes(this.error);
       this.refreshRequired = !definitive;
-      if (submittedText !== null && !definitive) this.unconfirmedSends.set(sessionId, { sessionId, text: submittedText, messageIds });
+      if (submittedText !== null && !definitive) this.unconfirmedSends.set(sessionId, { sessionId, text: submittedText, messageIds, requestId });
     }
     finally {
       this.pending = false; this.emit();
@@ -195,7 +196,8 @@ export class ChatController {
   async send(message) {
     const text = String(message ?? '').trim();
     if (!text || !this.visible || this.pending || this.reading || this.refreshRequired || !this.current || !this.status?.available || !this.status?.authenticated || needsReconciliation(this) || this.current.state === 'running' || this.current.state === 'approval') return;
-    await this.mutate((sessionId) => this.bridge.chatSend(this.workspaceId, sessionId, text), text);
+    const requestId = globalThis.crypto.randomUUID();
+    await this.mutate((sessionId) => this.bridge.chatSend(this.workspaceId, sessionId, text, requestId), text, requestId);
   }
   async cancel() {
     if (!this.visible || !this.current || this.pending || this.reading || this.refreshRequired || this.current.state !== 'running' || needsReconciliation(this)) return;

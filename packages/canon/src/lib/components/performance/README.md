@@ -1,5 +1,12 @@
 # Performance Lab Design And Composition System
 
+## Approachable canonical expression
+
+The current website foundation is black, with explicit light work surfaces, locally loaded Geist, readable sentence-case human labels, soft-square panels and solid materials. Owning `data-theme="light"` and `data-theme="dark"` scopes rebind semantic roles, including nested scopes. Existing Performance names and Clear compatibility exports retain evidence hierarchy, control authority, receipts and native behavior. Records, code and measured chapter labels may remain monospace; human navigation and explanations use readable interface type. Character art belongs at welcome/help boundaries and is not evidence that a workflow executed. See the [current approachable system](../../../../APPROACHABLE-SYSTEM.md).
+
+Use `/next/patterns` to inspect actual navigation, controlled records, keyboard decision states, local search and handback examples. These are fictional, local specimens. See the package migration handoffs for current source/runtime evidence and limits; no component appearance grants execution permission.
+
+
 The Performance design system is one Canon-owned namespace for presenting and operating an AI workflow system from claim through handoff. It applies to campaign, editorial, research, learning, product, evidence, and operator surfaces. It owns shared typography, spacing, contrast, responsive behavior, state, proof, motion, and composition so properties do not reconstruct those decisions route by route.
 
 ## The composition grammar
@@ -36,19 +43,32 @@ Canon owns layout, responsive behavior, contrast, accessible section semantics, 
 
 Properties own words, route data, original media, domain-specific artifacts, application forms, live canvases, analytics, and integration behavior. The `artifact`, `actions`, and `aside` snippets are the intended seams. Do not move a booking form, Atlas renderer, or client record into Canon to make a page fit this system.
 
-Campaign actions inherit a mode-aware surface from `PerformanceCampaignOpening`: ink openings provide a light primary action and a translucent, light-bordered secondary action; paper openings reverse that relationship. Properties may supply the action destination and label, but they must not reintroduce page-surface button colors over image-backed media.
+Campaign actions inherit the owning palette from `PerformanceCampaignOpening`: the primary action uses a high-contrast solid fill, and the secondary action uses a solid panel surface. Each appearance supplies contrasting text, borders and visible focus through semantic roles. Both remain legible against image-backed media. Properties supply action destinations and labels while Canon owns these surface and focus roles.
 
 Campaign headings keep sentence-ending punctuation with its preceding word at every responsive width. Canon owns that wrapping behavior so properties do not need copy-local non-breaking characters or route CSS to protect an editorial line.
 
 Campaign motion is a progressive enhancement, never the only media surface. Supply the canonical responsive `src`, `mobileSrc`, and `alt` first, then optionally add `video.mp4`, `video.webm`, and a matching `video.poster`. Canon renders the still during SSR and first paint, adds silent autoplaying loop media only after hydration when motion is allowed, and keeps the video element absent when `prefers-reduced-motion: reduce` applies. Text, actions, proof, scrims, and grid overlays remain live DOM; never bake them into video. The static image is also the rollback when video delivery or motion quality fails.
 
-The primary campaign material is Paper. Canon exports five responsive studies:
+The existing Paper media family contains five responsive studies:
 `paperCanonSheetMedia`, `paperResearchTraceMedia`,
 `paperPrototypeScoreMedia`, `paperPressureHandoffMedia`, and
 `paperLearningSequenceMedia`. Each carries an operational condition and
 property role; they are a shared vocabulary, not interchangeable decorative
-backgrounds. Legacy controlled-water media remains exported for secondary and
-historical routes.
+backgrounds. This family does not require every campaign to use Paper. Original
+felt characters and workshop environments can carry the current measured and
+whimsical direction when they suit the page's claim. See the [current system
+guide](../../../../APPROACHABLE-SYSTEM.md) and [character status](../../character/README.md)
+for adoption and approval limits; local studies are not approved production
+art. Legacy controlled-water media remains exported for secondary and historical
+routes.
+
+Heroes and CTA sections use CSS background imagery with live HTML headings,
+copy and actions. Inline images belong in subsequent editorial sections. Keep
+dense proof, outcomes and authority records in their own readable region, clear
+of the scene's face and task objects. Route-owned interactive artifacts retain
+their controls and semantics in that separate region. Select responsive framing
+that preserves the intended subject, and retain usable text and actions when
+imagery is unavailable. See the [shared background contract](../../../../BACKGROUND-COMPOSITION-MIGRATION.md).
 
 Use the optional campaign `artifact` snippet when the property owns an interactive object that must share the opening with the claim. The required static `media`, live text, actions, and proof remain authoritative. The property owns artifact semantics, controls, renderer lifecycle, fallback, and pointer behavior; Canon supplies a non-interactive placement layer and reserves enough mobile height to keep the artifact out of the claim and action path.
 
@@ -61,9 +81,9 @@ when it is the primary product or operator opening for the page.
 
 ## Typography contract
 
-Performance uses the Canon system sans stack for commands, conclusions, interface prose, and display copy. Canon sets display weight `500`, tracking `-0.03em`, line-height `0.94`, normal kerning, and standard kerning and ligature features. IBM Plex Mono owns labels, evidence, numbers, metadata, states, timestamps, identifiers, topology labels, and code in bundled applications. Tabular values should continue to use tabular numerals.
+Performance uses locally loaded Geist through the Canon sans roles for commands, conclusions, interface labels, prose and display copy. Consume `--font-performance-display-weight`, `--tracking-performance-display` and `--leading-performance-display` for display styling instead of duplicating their values. IBM Plex Mono serves actual records, code, identifiers, timestamps, topology annotations and measured chapter labels. Human-facing state explanations and navigation remain readable sentence-case interface text. Tabular values should continue to use tabular numerals.
 
-IBM Plex Mono is bundled from the official `@ibm/plex-mono` package under the SIL Open Font License. Standalone documents and email use system sans and monospace stacks, so the Performance contract does not depend on a remote font host. A property may supply original media and content, but typography remains a Canon-owned contract. `PerformanceThesisConditions` defaults to an `h2`; set `headingLevel="h1"` when it is the primary product or operator opening.
+The full `canon.css` import loads local font assets; `tokens.css` only defines roles, so token-only consumers own font loading and base resets. IBM Plex Mono is bundled from the official `@ibm/plex-mono` package under the SIL Open Font License. Standalone documents and email use system sans and monospace stacks, so the Performance contract does not depend on a remote font host. A property may supply original media and content, but typography remains a Canon-owned contract. `PerformanceThesisConditions` defaults to an `h2`; set `headingLevel="h1"` when it is the primary product or operator opening.
 
 ## Composition example
 

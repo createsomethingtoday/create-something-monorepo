@@ -88,7 +88,9 @@
 		return sortDirection === 'asc' ? '↑' : '↓';
 	}
 
+	function nestedControl(event:Event){return event.target instanceof Element && event.target!==event.currentTarget && !!event.target.closest('a,button,input,select,textarea,[role=button]');}
 	function handleRowKeydown(event: KeyboardEvent, row: T) {
+		if(nestedControl(event))return;
 		if (event.key === 'Enter' || event.key === ' ') {
 			event.preventDefault();
 			onrowclick?.(row);
@@ -139,7 +141,7 @@
 				{#each rows as row, index (rowKey ? rowKey(row) : index)}
 					<tr
 						class:clickable={Boolean(onrowclick)}
-						onclick={onrowclick ? () => onrowclick(row) : undefined}
+						onclick={onrowclick ? (event) => {if(!nestedControl(event))onrowclick(row);} : undefined}
 						onkeydown={onrowclick ? (event) => handleRowKeydown(event, row) : undefined}
 						tabindex={onrowclick ? 0 : undefined}
 					>
@@ -188,7 +190,7 @@
 		font-size: var(--text-performance-caption);
 		font-weight: var(--font-performance-medium);
 		letter-spacing: 0.04em;
-		text-transform: uppercase;
+		text-transform:none;
 		text-align: left;
 		padding: var(--space-performance-xs) var(--space-performance-sm);
 		border-bottom: 1px solid var(--color-performance-border-emphasis);
@@ -201,6 +203,7 @@
 	}
 
 	.sort-button {
+		min-height:44px;
 		display: inline-flex;
 		align-items: center;
 		gap: 0.375rem;

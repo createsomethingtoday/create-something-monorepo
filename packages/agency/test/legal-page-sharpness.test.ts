@@ -17,9 +17,14 @@ test('registers the Agency legal pair as a migrated editorial cohort', () => {
 test('keeps each legal route as one direct authoritative reading surface', () => {
   for (const route of ['privacy', 'terms']) {
     const source = readRoute(route);
-    assert.equal((source.match(/<PerformancePageSection\b/g) ?? []).length, 1);
+    if (route === 'privacy') {
+      assert.equal((source.match(/<h1>/g) ?? []).length, 1);
+      assert.match(source, /<h1>Privacy Policy<\/h1>/);
+    } else {
+      assert.equal((source.match(/<PerformancePageSection\b/g) ?? []).length, 1);
+      assert.match(source, /titleLevel="h1"/);
+    }
     assert.doesNotMatch(source, /PerformanceNarrativeStage|PerformanceConversionHandoff/);
-    assert.match(source, /titleLevel="h1"/);
     assert.match(source, /noindex={true}/);
   }
 });
@@ -29,8 +34,8 @@ test('preserves the Canon policy sources and Agency-specific legal boundary', ()
   assert.match(privacy, /PrivacyPolicyContent/);
   assert.match(privacy, /property="agency"/);
   assert.match(privacy, /domain="createsomething\.agency"/);
-  assert.match(privacy, /lastUpdated="January 29, 2026"/);
-  assert.match(privacy, /First-party analytics, no ad pixels\./);
+  assert.match(privacy, /lastUpdated="November 5, 2026"/);
+  assert.match(privacy, /First-party analytics and Meta marketing are separate choices\./);
 
   const terms = readRoute('terms');
   assert.match(terms, /TermsOfServiceContent/);
@@ -38,6 +43,18 @@ test('preserves the Canon policy sources and Agency-specific legal boundary', ()
   assert.match(terms, /domain="createsomething\.agency"/);
   assert.match(terms, /contactEmail="support@createsomething\.io"/);
   assert.match(terms, /Terms for using CREATE SOMETHING \.agency\./);
+});
+
+test('keeps privacy contents labels aligned with the canonical policy headings', () => {
+  const source = readFileSync(
+    resolve(workspaceRoot, 'packages/canon/src/lib/components/PrivacyPolicyContent.svelte'), 'utf8'
+  );
+  const headings = [...source.matchAll(/<h2[^>]*class="section-title">\d+\. ([^<]+)<\/h2>/g)]
+    .map((match) => match[1]);
+  assert.equal(headings.length, 8);
+  const route = readRoute('privacy');
+  const labels = [...route.matchAll(/^    '([^']+)'/gm)].map((match) => match[1]);
+  assert.deepEqual(labels, headings);
 });
 
 test('keeps required legal contact links available without Cloudflare JavaScript', () => {

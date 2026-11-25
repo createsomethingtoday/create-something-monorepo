@@ -1,0 +1,10 @@
+import { describe, expect, it } from 'vitest';
+import { initialState, transition, type Workflow } from './workflow';
+describe('local workflow authority',()=>{
+ it('rejects approval before review',()=>{ const s=initialState(); expect(transition(s,{type:'approve'})).toEqual(s); });
+ it('uses the selected task and clears stale work on reset',()=>{let s=initialState(); for(const e of [{type:'begin'},{type:'select',task:'handoff'},{type:'next'},{type:'scope',allowed:true},{type:'next'},{type:'start'},{type:'finish'}] as const) s=transition(s,e); expect(s.draft).toContain('Handoff'); expect(transition(s,{type:'reset'})).toEqual(initialState());});
+ it('blocks empty approval and preserves edits through retry',()=>{let s:Workflow={...initialState(),step:'review' as const,draft:'Saved work'}; s=transition(s,{type:'edit',draft:''}); expect(transition(s,{type:'approve'}).step).toBe('review'); s=transition({...s,draft:'Saved work',step:'working'},{type:'fail'}); expect(s.step).toBe('failed'); expect(transition(s,{type:'retry'}).draft).toBe('Saved work');});
+});
+it('requires scope and stops at review before issuing a receipt',()=>{let s=initialState();s=transition(s,{type:'begin'});s=transition(s,{type:'next'});expect(transition(s,{type:'next'})).toEqual(s);s=transition(s,{type:'scope',allowed:true});s=transition(s,{type:'next'});s=transition(s,{type:'start'});expect(transition(s,{type:'approve'}).step).toBe('working');s=transition(s,{type:'finish'});expect(transition(s,{type:'approve'}).step).toBe('receipt');});
+it('retains the exact prepared text during failure and retry',()=>{let s:Workflow={...initialState(),allowed:true,step:'working',draft:'A prepared handoff'};s=transition(s,{type:'fail'});s=transition(s,{type:'retry'});s=transition(s,{type:'finish'});expect(s.draft).toBe('A prepared handoff');});
+it('creates distinct useful drafts for all three task choices',()=>{const drafts=new Set<string>();for(const task of ['recap','handoff','followup'] as const){let s:Workflow={...initialState(),task,allowed:true,step:'plan'};s=transition(s,{type:'start'});drafts.add(s.draft);}expect(drafts.size).toBe(3);});

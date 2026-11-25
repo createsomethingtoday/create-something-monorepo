@@ -1,8 +1,10 @@
 <script lang="ts">
   import { page } from '$app/stores';
+  import { onMount } from 'svelte';
   import { Button } from './ui';
   import DarkModeToggle from './DarkModeToggle.svelte';
-  import { UserCircle } from 'lucide-svelte';
+  import { LogOut, UserCircle } from 'lucide-svelte';
+  import { DUR, EASE, ScrollTrigger, gsap, motionOK } from '$lib/motion/core';
 
   interface Props {
     onLogout?: () => void;
@@ -19,9 +21,145 @@
       { href: '/validation', label: 'Validation' }
     ].filter((item): item is { href: string; label: string } => item !== null)
   );
+
+  // An asset detail page belongs to the dashboard, so Dashboard stays current there.
+  function isCurrent(href: string, pathname: string): boolean {
+    if (pathname === href || pathname.startsWith(href + '/')) return true;
+    return href === '/dashboard' && pathname.startsWith('/assets/');
+  }
+
+  let headerEl = $state<HTMLElement | null>(null);
+  let navEl = $state<HTMLElement | null>(null);
+  let pillEl = $state<HTMLElement | null>(null);
+  let barEl = $state<HTMLElement | null>(null);
+  let pillVisible = false;
+
+  function measure(link: HTMLElement) {
+    return { x: link.offsetLeft, width: link.offsetWidth };
+  }
+
+  // Hover: one pill slides between links instead of each link lighting up alone.
+  function movePill(link: HTMLElement) {
+    if (!pillEl) return;
+    const target = measure(link);
+    if (!motionOK() || !pillVisible) {
+      gsap.set(pillEl, target);
+      gsap.to(pillEl, { autoAlpha: 1, duration: motionOK() ? DUR.micro : 0 });
+    } else {
+      gsap.to(pillEl, { ...target, duration: 0.32, ease: EASE.out, overwrite: 'auto' });
+      gsap.to(pillEl, { autoAlpha: 1, duration: DUR.micro });
+    }
+    pillVisible = true;
+  }
+
+  function hidePill() {
+    if (!pillEl) return;
+    pillVisible = false;
+    gsap.to(pillEl, { autoAlpha: 0, duration: motionOK() ? DUR.fast : 0, overwrite: 'auto' });
+  }
+
+  // Current page: a bar on the header edge that travels to the new link.
+  function placeBar(animate: boolean) {
+    if (!barEl || !navEl) return;
+    const current = navEl.querySelector<HTMLElement>('.nav-link.active');
+    if (!current) {
+      gsap.to(barEl, { autoAlpha: 0, duration: 0.15 });
+      return;
+    }
+    const target = { ...measure(current), autoAlpha: 1 };
+    const wasVisible = gsap.getProperty(barEl, 'opacity') !== 0;
+    if (animate && wasVisible && motionOK()) {
+      gsap.to(barEl, { ...target, duration: 0.5, ease: 'power3.inOut', overwrite: 'auto' });
+    } else {
+      gsap.set(barEl, { x: target.x, width: target.width });
+      gsap.to(barEl, { autoAlpha: 1, duration: motionOK() ? DUR.fast : 0 });
+    }
+  }
+
+  let mounted = false;
+  $effect(() => {
+    void $page.url.pathname;
+    void navItems;
+    if (!mounted) return;
+    // Wait for the `active` class to land on the new link.
+    requestAnimationFrame(() => placeBar(true));
+  });
+
+  onMount(() => {
+    mounted = true;
+    placeBar(false);
+
+    const onResize = () => placeBar(false);
+    window.addEventListener('resize', onResize);
+    void document.fonts?.ready.then(() => placeBar(false));
+
+    // `--header-offset` tells pinned content below (the asset list toolbar and
+    // column header) where the header ends, including while it is tucked away.
+    const header = headerEl;
+    const root = document.documentElement;
+    const offset = { value: header?.offsetHeight ?? 0 };
+    const applyOffset = () => root.style.setProperty('--header-offset', `${offset.value}px`);
+    applyOffset();
+
+    let hidden = false;
+    const setHidden = (next: boolean) => {
+      if (!header || next === hidden) return;
+      hidden = next;
+      const duration = motionOK() ? 0.34 : 0;
+      // A little past its own height, so the current-page bar on its edge leaves too.
+      gsap.to(header, { yPercent: next ? -108 : 0, duration, ease: EASE.inOut, overwrite: 'auto' });
+      gsap.to(offset, {
+        value: next ? 0 : header.offsetHeight,
+        duration,
+        ease: EASE.inOut,
+        overwrite: 'auto',
+        onUpdate: applyOffset
+      });
+    };
+
+    const observer = new ResizeObserver(() => {
+      if (hidden || !header) return;
+      offset.value = header.offsetHeight;
+      applyOffset();
+    });
+    if (header) observer.observe(header);
+
+    // Scroll: the header lifts off the page once content moves under it, tucks
+    // away while reading down a long page, and returns on the way back up.
+    let turnedAt = 0;
+    let direction = 1;
+    const trigger = ScrollTrigger.create({
+      start: 8,
+      end: 'max',
+      onToggle: (self) => header?.classList.toggle('is-scrolled', self.isActive),
+      onUpdate: (self) => {
+        const y = self.scroll();
+        if (self.direction !== direction) {
+          direction = self.direction;
+          turnedAt = y;
+        }
+        if (y < 320) setHidden(false);
+        else if (direction === 1 && y - turnedAt > 48) setHidden(true);
+        else if (direction === -1 && turnedAt - y > 24) setHidden(false);
+      },
+      onLeaveBack: () => setHidden(false)
+    });
+
+    // Keyboard focus moving into a tucked-away header brings it back.
+    const onFocusIn = () => setHidden(false);
+    header?.addEventListener('focusin', onFocusIn);
+
+    return () => {
+      window.removeEventListener('resize', onResize);
+      header?.removeEventListener('focusin', onFocusIn);
+      observer.disconnect();
+      trigger.kill();
+      root.style.removeProperty('--header-offset');
+    };
+  });
 </script>
 
-<header class="header">
+<header class="header" bind:this={headerEl}>
   <div class="header-content">
     <div class="header-main">
       <div class="nav-cluster">
@@ -46,34 +184,44 @@
           </a>
         </div>
 
-        <nav class="nav-links" aria-label="Primary navigation">
+        <nav
+          class="nav-links"
+          aria-label="Primary navigation"
+          bind:this={navEl}
+          onpointerleave={hidePill}
+          onfocusout={hidePill}
+        >
+          <span class="nav-pill" bind:this={pillEl} aria-hidden="true"></span>
           {#each navItems as item}
+            {@const current = isCurrent(item.href, $page.url.pathname)}
             <a
               href={item.href}
               class="nav-link"
-              class:active={$page.url.pathname === item.href ||
-                $page.url.pathname.startsWith(item.href + '/')}
-              aria-current={$page.url.pathname === item.href ||
-              $page.url.pathname.startsWith(item.href + '/')
-                ? 'page'
-                : undefined}
+              class:active={current}
+              aria-current={current ? 'page' : undefined}
+              onpointerenter={(event) => movePill(event.currentTarget)}
+              onfocus={(event) => movePill(event.currentTarget)}
             >
               {item.label}
             </a>
           {/each}
+          <span class="nav-bar" bind:this={barEl} aria-hidden="true"></span>
         </nav>
       </div>
 
       <div class="header-right">
         <DarkModeToggle />
         {#if onProfileClick}
-          <Button variant="ghost" class="header-action" onclick={onProfileClick}>
+          <Button variant="ghost" class="header-action" aria-label="Profile" onclick={onProfileClick}>
             <UserCircle size={18} />
             <span class="profile-text">Profile</span>
           </Button>
         {/if}
         {#if onLogout}
-          <Button variant="ghost" class="header-action" onclick={onLogout}>Logout</Button>
+          <Button variant="ghost" class="header-action" aria-label="Logout" onclick={onLogout}>
+            <span class="logout-icon"><LogOut size={18} /></span>
+            <span class="logout-text">Logout</span>
+          </Button>
         {/if}
       </div>
     </div>
@@ -89,6 +237,15 @@
     background: var(--color-shell-surface);
     box-shadow: none;
     backdrop-filter: blur(10px);
+    transition:
+      box-shadow var(--duration-standard) var(--ease-standard),
+      background-color var(--duration-standard) var(--ease-standard);
+  }
+
+  /* Set by ScrollTrigger once content scrolls under the header. */
+  .header:global(.is-scrolled) {
+    background: color-mix(in srgb, var(--color-bg-pure) 86%, transparent);
+    box-shadow: var(--color-shell-shadow-strong);
   }
 
   .header-content {
@@ -153,17 +310,42 @@
   }
 
   .nav-links {
+    position: relative;
     display: flex;
     align-items: center;
-    gap: 0.5rem;
+    gap: 0.25rem;
     padding: 0;
     border: none;
     border-radius: 0;
     background: transparent;
-    overflow-x: auto;
-    scrollbar-width: none;
     box-shadow: none;
     min-width: 0;
+  }
+
+  /* Both are placed by GSAP from the link they belong to. */
+  .nav-pill,
+  .nav-bar {
+    position: absolute;
+    left: 0;
+    width: 0;
+    visibility: hidden;
+    pointer-events: none;
+  }
+
+  .nav-pill {
+    top: 50%;
+    height: 2.25rem;
+    margin-top: -1.125rem;
+    border-radius: 0.625rem;
+    background: var(--color-bg-subtle);
+  }
+
+  .nav-bar {
+    /* Sits on the header's bottom border. */
+    bottom: calc(-0.75rem - 1px);
+    height: 2px;
+    border-radius: 2px 2px 0 0;
+    background: var(--color-info);
   }
 
   .nav-links::-webkit-scrollbar {
@@ -171,8 +353,9 @@
   }
 
   .nav-link {
+    position: relative;
     flex: 0 0 auto;
-    padding: 0.65rem 0.5rem;
+    padding: 0.65rem 0.75rem;
     font-size: var(--text-body-sm);
     font-weight: var(--font-medium);
     color: var(--color-fg-muted);
@@ -189,6 +372,10 @@
 
   .nav-link:hover {
     color: var(--color-fg-primary);
+  }
+
+  /* Without the moving pill (no JS), each link still shows its own hover. */
+  :global(html:not(.js-motion)) .nav-link:hover {
     background: var(--color-bg-subtle);
   }
 
@@ -232,35 +419,70 @@
     display: inline;
   }
 
+  .logout-icon {
+    display: none;
+  }
+
+  /* Small screens: brand and account actions share the first row, the
+     section links take the second. Two rows, not three. */
   @media (max-width: 767px) {
     .header-content {
-      padding-block: var(--space-sm);
+      padding-block: 0.5rem 0;
     }
 
     .header-main {
-      grid-template-columns: 1fr;
-      gap: 0.75rem;
-      align-items: stretch;
+      grid-template-columns: minmax(0, 1fr) auto;
+      grid-template-areas:
+        'brand actions'
+        'nav nav';
+      gap: 0.25rem var(--space-sm);
     }
 
     .nav-cluster {
-      grid-template-columns: 1fr;
-      align-items: stretch;
-      padding: 0;
-      border-radius: 0;
+      display: contents;
     }
 
-    .brand-lockup,
+    .brand-lockup {
+      grid-area: brand;
+    }
+
+    .nav-links {
+      grid-area: nav;
+      margin-inline: -0.5rem;
+      overflow-x: auto;
+      scrollbar-width: none;
+    }
+
+    .nav-link {
+      padding-block: 0.7rem;
+    }
+
+    .nav-bar {
+      bottom: 0;
+    }
+
     .header-right {
-      justify-content: space-between;
+      grid-area: actions;
+      gap: 0.35rem;
     }
 
-    .profile-text {
+    .profile-text,
+    .logout-text {
       display: none;
     }
 
+    .logout-icon {
+      display: inline-flex;
+    }
+
     .header-right :global(.header-action) {
-      padding-inline: 0.75rem;
+      width: 2.75rem;
+      height: 2.75rem;
+    }
+
+    /* The icon keeps its size and centers in the square button. */
+    .header-right :global(.header-action svg) {
+      flex-shrink: 0;
     }
   }
 </style>

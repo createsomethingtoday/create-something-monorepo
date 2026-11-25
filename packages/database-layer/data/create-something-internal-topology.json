@@ -4,14 +4,14 @@
   "atlasCanvasId": "create-something-internal-operating-topology",
   "rootNodeId": "substrate:create-something:root",
   "coverage": {
-    "generatedAt": "2026-11-10T15:39:04.857Z",
+    "generatedAt": "2026-11-22T16:47:41.405Z",
     "rootPath": ".",
-    "packageCount": 252,
-    "appCount": 15,
-    "workerCount": 121,
+    "packageCount": 258,
+    "appCount": 16,
+    "workerCount": 125,
     "clientOverlayCount": 8,
     "policyCount": 64,
-    "guideCount": 86,
+    "guideCount": 88,
     "configCount": 40
   },
   "nodes": [
@@ -31,6 +31,23 @@
         "substrate",
         "topology"
       ]
+    },
+    {
+      "id": "substrate:create-something:package:window-take-scripts-agents-skills-window-take-scripts",
+      "atlasNodeId": "atlas_create-something_package_window-take-scripts-agents-skills-window-take-scripts",
+      "title": "window-take-scripts",
+      "path": ".agents/skills/window-take/scripts",
+      "tier": "Automation",
+      "surface": "agent",
+      "owner": "CREATE SOMETHING",
+      "status": "mapped",
+      "summary": "Workspace package at .agents/skills/window-take/scripts.",
+      "tags": [
+        "package",
+        "agent"
+      ],
+      "packageName": "window-take-scripts",
+      "runtime": "node"
     },
     {
       "id": "substrate:create-something:package:create-something-components-archive-components-deprecated",
@@ -157,6 +174,23 @@
       ],
       "packageName": "@create-something/create-something-scheduler",
       "runtime": "cloudflare, node"
+    },
+    {
+      "id": "substrate:create-something:app:create-something-draw-landing-webflow-apps-draw-landing-webflow",
+      "atlasNodeId": "atlas_create-something_app_create-something-draw-landing-webflow-apps-draw-landing-webflow",
+      "title": "@create-something/draw-landing-webflow",
+      "path": "apps/draw-landing-webflow",
+      "tier": "Mixed",
+      "surface": "app",
+      "owner": "CREATE SOMETHING",
+      "status": "mapped",
+      "summary": "Workspace package at apps/draw-landing-webflow.",
+      "tags": [
+        "package",
+        "app"
+      ],
+      "packageName": "@create-something/draw-landing-webflow",
+      "runtime": "node"
     },
     {
       "id": "substrate:create-something:app:create-something-draw-native-apps-draw-native",
@@ -1174,7 +1208,7 @@
       "surface": "package",
       "owner": "CREATE SOMETHING <hello@createsomething.io>",
       "status": "mapped",
-      "summary": "Canon Design Tokens - Framework-agnostic CSS custom properties for dark-mode interfaces. Golden ratio spacing, WCAG-compliant colors, glass effects.",
+      "summary": "Canon design tokens: approachable neutral light and explicit dark foundations, semantic states, typography and portable CSS/SCSS/JSON.",
       "tags": [
         "package",
         "package",
@@ -2225,6 +2259,23 @@
       "runtime": "cloudflare, node"
     },
     {
+      "id": "substrate:create-something:package:create-something-halfdozen-transcript-monitor-packages-halfdozen-transcript-monitor",
+      "atlasNodeId": "atlas_create-something_package_create-something-halfdozen-transcript-monitor-packages-halfdozen-transcript-monitor",
+      "title": "@create-something/halfdozen-transcript-monitor",
+      "path": "packages/halfdozen-transcript-monitor",
+      "tier": "Mixed",
+      "surface": "worker",
+      "owner": "CREATE SOMETHING",
+      "status": "mapped",
+      "summary": "Workspace package at packages/halfdozen-transcript-monitor.",
+      "tags": [
+        "package",
+        "worker"
+      ],
+      "packageName": "@create-something/halfdozen-transcript-monitor",
+      "runtime": "cloudflare, node"
+    },
+    {
       "id": "substrate:create-something:package:create-something-halfdozen-zoom-sync-packages-halfdozen-zoom-sync",
       "atlasNodeId": "atlas_create-something_package_create-something-halfdozen-zoom-sync-packages-halfdozen-zoom-sync",
       "title": "@create-something/halfdozen-zoom-sync",
@@ -2734,6 +2785,23 @@
         "worker"
       ],
       "packageName": "@create-something/marketplace-featured-notifier",
+      "runtime": "cloudflare, node"
+    },
+    {
+      "id": "substrate:create-something:package:create-something-marketplace-insights-cron-packages-marketplace-insights-cron",
+      "atlasNodeId": "atlas_create-something_package_create-something-marketplace-insights-cron-packages-marketplace-insights-cron",
+      "title": "@create-something/marketplace-insights-cron",
+      "path": "packages/marketplace-insights-cron",
+      "tier": "Automation",
+      "surface": "worker",
+      "owner": "CREATE SOMETHING",
+      "status": "mapped",
+      "summary": "Cloudflare Worker cron that publishes the weekly Marketplace Insights snapshot through the webflow-dashboard /api/cron/insights endpoint",
+      "tags": [
+        "package",
+        "worker"
+      ],
+      "packageName": "@create-something/marketplace-insights-cron",
       "runtime": "cloudflare, node"
     },
     {
@@ -4013,6 +4081,23 @@
       "runtime": "cloudflare, node"
     },
     {
+      "id": "substrate:create-something:package:create-something-webflow-app-review-portal-packages-webflow-app-review-portal",
+      "atlasNodeId": "atlas_create-something_package_create-something-webflow-app-review-portal-packages-webflow-app-review-portal",
+      "title": "@create-something/webflow-app-review-portal",
+      "path": "packages/webflow-app-review-portal",
+      "tier": "Automation",
+      "surface": "worker",
+      "owner": "CREATE SOMETHING",
+      "status": "mapped",
+      "summary": "Workspace package at packages/webflow-app-review-portal.",
+      "tags": [
+        "package",
+        "worker"
+      ],
+      "packageName": "@create-something/webflow-app-review-portal",
+      "runtime": "cloudflare, node"
+    },
+    {
       "id": "substrate:create-something:package:create-something-webflow-apps-audit-dashboard-packages-webflow-apps-admin-dashboard",
       "atlasNodeId": "atlas_create-something_package_create-something-webflow-apps-audit-dashboard-packages-webflow-apps-admin-dashboard",
       "title": "@create-something/webflow-apps-audit-dashboard",
@@ -4153,6 +4238,23 @@
         "worker"
       ],
       "packageName": "@create-something/webflow-dashboard",
+      "runtime": "cloudflare, node"
+    },
+    {
+      "id": "substrate:create-something:package:create-something-webflow-sla-notifications-packages-webflow-dashboard-workers-sla-notifications",
+      "atlasNodeId": "atlas_create-something_package_create-something-webflow-sla-notifications-packages-webflow-dashboard-workers-sla-notifications",
+      "title": "@create-something/webflow-sla-notifications",
+      "path": "packages/webflow-dashboard/workers/sla-notifications",
+      "tier": "Automation",
+      "surface": "worker",
+      "owner": "CREATE SOMETHING",
+      "status": "mapped",
+      "summary": "Workspace package at packages/webflow-dashboard/workers/sla-notifications.",
+      "tags": [
+        "package",
+        "worker"
+      ],
+      "packageName": "@create-something/webflow-sla-notifications",
       "runtime": "cloudflare, node"
     },
     {
@@ -5738,6 +5840,23 @@
       "runtime": "cloudflare"
     },
     {
+      "id": "substrate:create-something:worker:packages-halfdozen-transcript-monitor-wrangler-jsonc",
+      "atlasNodeId": "atlas_create-something_worker_packages-halfdozen-transcript-monitor-wrangler-jsonc",
+      "title": "packages/halfdozen-transcript-monitor/wrangler.jsonc",
+      "path": "packages/halfdozen-transcript-monitor/wrangler.jsonc",
+      "tier": "Automation",
+      "surface": "worker",
+      "owner": "CREATE SOMETHING",
+      "status": "mapped",
+      "summary": "Cloudflare runtime configuration at packages/halfdozen-transcript-monitor/wrangler.jsonc.",
+      "tags": [
+        "worker",
+        "cloudflare",
+        "runtime"
+      ],
+      "runtime": "cloudflare"
+    },
+    {
       "id": "substrate:create-something:worker:packages-halfdozen-zoom-sync-worker-wrangler-toml",
       "atlasNodeId": "atlas_create-something_worker_packages-halfdozen-zoom-sync-worker-wrangler-toml",
       "title": "halfdozen-zoom-sync worker",
@@ -6019,6 +6138,23 @@
       "owner": "CREATE SOMETHING",
       "status": "mapped",
       "summary": "Cloudflare runtime configuration at packages/marketplace-featured-notifier/wrangler.jsonc.",
+      "tags": [
+        "worker",
+        "cloudflare",
+        "runtime"
+      ],
+      "runtime": "cloudflare"
+    },
+    {
+      "id": "substrate:create-something:worker:packages-marketplace-insights-cron-wrangler-jsonc",
+      "atlasNodeId": "atlas_create-something_worker_packages-marketplace-insights-cron-wrangler-jsonc",
+      "title": "packages/marketplace-insights-cron/wrangler.jsonc",
+      "path": "packages/marketplace-insights-cron/wrangler.jsonc",
+      "tier": "Automation",
+      "surface": "worker",
+      "owner": "CREATE SOMETHING",
+      "status": "mapped",
+      "summary": "Cloudflare runtime configuration at packages/marketplace-insights-cron/wrangler.jsonc.",
       "tags": [
         "worker",
         "cloudflare",
@@ -6554,6 +6690,23 @@
       "runtime": "cloudflare"
     },
     {
+      "id": "substrate:create-something:worker:packages-webflow-app-review-portal-wrangler-json",
+      "atlasNodeId": "atlas_create-something_worker_packages-webflow-app-review-portal-wrangler-json",
+      "title": "packages/webflow-app-review-portal/wrangler.json",
+      "path": "packages/webflow-app-review-portal/wrangler.json",
+      "tier": "Automation",
+      "surface": "worker",
+      "owner": "CREATE SOMETHING",
+      "status": "mapped",
+      "summary": "Cloudflare runtime configuration at packages/webflow-app-review-portal/wrangler.json.",
+      "tags": [
+        "worker",
+        "cloudflare",
+        "runtime"
+      ],
+      "runtime": "cloudflare"
+    },
+    {
       "id": "substrate:create-something:worker:packages-webflow-apps-admin-dashboard-wrangler-toml",
       "atlasNodeId": "atlas_create-something_worker_packages-webflow-apps-admin-dashboard-wrangler-toml",
       "title": "packages/webflow-apps-admin/dashboard/wrangler.toml",
@@ -6597,6 +6750,23 @@
       "owner": "CREATE SOMETHING",
       "status": "mapped",
       "summary": "Cloudflare runtime configuration at packages/webflow-automation/worker/wrangler.toml.",
+      "tags": [
+        "worker",
+        "cloudflare",
+        "runtime"
+      ],
+      "runtime": "cloudflare"
+    },
+    {
+      "id": "substrate:create-something:worker:packages-webflow-dashboard-workers-sla-notifications-wrangler-toml",
+      "atlasNodeId": "atlas_create-something_worker_packages-webflow-dashboard-workers-sla-notifications-wrangler-toml",
+      "title": "packages/webflow-dashboard/workers/sla-notifications/wrangler.toml",
+      "path": "packages/webflow-dashboard/workers/sla-notifications/wrangler.toml",
+      "tier": "Automation",
+      "surface": "worker",
+      "owner": "CREATE SOMETHING",
+      "status": "mapped",
+      "summary": "Cloudflare runtime configuration at packages/webflow-dashboard/workers/sla-notifications/wrangler.toml.",
       "tags": [
         "worker",
         "cloudflare",
@@ -8096,6 +8266,21 @@
       ]
     },
     {
+      "id": "substrate:create-something:guide:docs-guides-ai-native-sdlc-md",
+      "atlasNodeId": "atlas_create-something_guide_docs-guides-ai-native-sdlc-md",
+      "title": "AI_NATIVE_SDLC.md",
+      "path": "docs/guides/AI_NATIVE_SDLC.md",
+      "tier": "Mixed",
+      "surface": "guide",
+      "owner": "CREATE SOMETHING",
+      "status": "mapped",
+      "summary": "guide artifact in the CREATE SOMETHING operating topology.",
+      "tags": [
+        "guide",
+        "documentation"
+      ]
+    },
+    {
       "id": "substrate:create-something:guide:docs-guides-antigravity-mcp-enablement-md",
       "atlasNodeId": "atlas_create-something_guide_docs-guides-antigravity-mcp-enablement-md",
       "title": "ANTIGRAVITY_MCP_ENABLEMENT.md",
@@ -8175,6 +8360,21 @@
       "atlasNodeId": "atlas_create-something_guide_docs-guides-browser-proof-and-closeout-runbook-md",
       "title": "BROWSER_PROOF_AND_CLOSEOUT_RUNBOOK.md",
       "path": "docs/guides/BROWSER_PROOF_AND_CLOSEOUT_RUNBOOK.md",
+      "tier": "Mixed",
+      "surface": "guide",
+      "owner": "CREATE SOMETHING",
+      "status": "mapped",
+      "summary": "guide artifact in the CREATE SOMETHING operating topology.",
+      "tags": [
+        "guide",
+        "documentation"
+      ]
+    },
+    {
+      "id": "substrate:create-something:guide:docs-guides-canon-character-migration-md",
+      "atlasNodeId": "atlas_create-something_guide_docs-guides-canon-character-migration-md",
+      "title": "CANON_CHARACTER_MIGRATION.md",
+      "path": "docs/guides/CANON_CHARACTER_MIGRATION.md",
       "tier": "Mixed",
       "surface": "guide",
       "owner": "CREATE SOMETHING",
@@ -9893,6 +10093,13 @@
   ],
   "edges": [
     {
+      "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-package-window-take-scripts-agents-skills-window-take-scripts",
+      "source": "substrate:create-something:root",
+      "target": "substrate:create-something:package:window-take-scripts-agents-skills-window-take-scripts",
+      "relation": "contains",
+      "evidence": ".agents/skills/window-take/scripts is present in the repo scan."
+    },
+    {
       "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-package-create-something-components-archive-components-deprecated",
       "source": "substrate:create-something:root",
       "target": "substrate:create-something:package:create-something-components-archive-components-deprecated",
@@ -9940,6 +10147,13 @@
       "target": "substrate:create-something:app:create-something-create-something-scheduler-apps-create-something-scheduler",
       "relation": "contains",
       "evidence": "apps/create-something-scheduler is present in the repo scan."
+    },
+    {
+      "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-app-create-something-draw-landing-webflow-apps-draw-landing-webflow",
+      "source": "substrate:create-something:root",
+      "target": "substrate:create-something:app:create-something-draw-landing-webflow-apps-draw-landing-webflow",
+      "relation": "contains",
+      "evidence": "apps/draw-landing-webflow is present in the repo scan."
     },
     {
       "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-app-create-something-draw-native-apps-draw-native",
@@ -10705,6 +10919,13 @@
       "evidence": "packages/halfdozen-telemetry-mcp/worker is present in the repo scan."
     },
     {
+      "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-package-create-something-halfdozen-transcript-monitor-packages-halfdozen-transcript-monitor",
+      "source": "substrate:create-something:root",
+      "target": "substrate:create-something:package:create-something-halfdozen-transcript-monitor-packages-halfdozen-transcript-monitor",
+      "relation": "contains",
+      "evidence": "packages/halfdozen-transcript-monitor is present in the repo scan."
+    },
+    {
       "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-package-create-something-halfdozen-zoom-sync-packages-halfdozen-zoom-sync",
       "source": "substrate:create-something:root",
       "target": "substrate:create-something:package:create-something-halfdozen-zoom-sync-packages-halfdozen-zoom-sync",
@@ -10885,6 +11106,13 @@
       "target": "substrate:create-something:package:create-something-marketplace-featured-notifier-packages-marketplace-featured-notifier",
       "relation": "contains",
       "evidence": "packages/marketplace-featured-notifier is present in the repo scan."
+    },
+    {
+      "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-package-create-something-marketplace-insights-cron-packages-marketplace-insights-cron",
+      "source": "substrate:create-something:root",
+      "target": "substrate:create-something:package:create-something-marketplace-insights-cron-packages-marketplace-insights-cron",
+      "relation": "contains",
+      "evidence": "packages/marketplace-insights-cron is present in the repo scan."
     },
     {
       "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-package-create-something-maverick-admin-packages-maverick-admin",
@@ -11335,6 +11563,13 @@
       "evidence": "packages/webflow-app-review-mcp/worker is present in the repo scan."
     },
     {
+      "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-package-create-something-webflow-app-review-portal-packages-webflow-app-review-portal",
+      "source": "substrate:create-something:root",
+      "target": "substrate:create-something:package:create-something-webflow-app-review-portal-packages-webflow-app-review-portal",
+      "relation": "contains",
+      "evidence": "packages/webflow-app-review-portal is present in the repo scan."
+    },
+    {
       "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-package-create-something-webflow-apps-audit-dashboard-packages-webflow-apps-admin-dashboard",
       "source": "substrate:create-something:root",
       "target": "substrate:create-something:package:create-something-webflow-apps-audit-dashboard-packages-webflow-apps-admin-dashboard",
@@ -11389,6 +11624,13 @@
       "target": "substrate:create-something:package:create-something-webflow-dashboard-packages-webflow-dashboard",
       "relation": "contains",
       "evidence": "packages/webflow-dashboard is present in the repo scan."
+    },
+    {
+      "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-package-create-something-webflow-sla-notifications-packages-webflow-dashboard-workers-sla-notifications",
+      "source": "substrate:create-something:root",
+      "target": "substrate:create-something:package:create-something-webflow-sla-notifications-packages-webflow-dashboard-workers-sla-notifications",
+      "relation": "contains",
+      "evidence": "packages/webflow-dashboard/workers/sla-notifications is present in the repo scan."
     },
     {
       "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-package-create-something-webflow-guidelines-registry-packages-webflow-guidelines-registry",
@@ -12021,6 +12263,13 @@
       "evidence": "packages/halfdozen-telemetry-mcp/worker/wrangler.toml is present in the repo scan."
     },
     {
+      "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-worker-packages-halfdozen-transcript-monitor-wrangler-jsonc",
+      "source": "substrate:create-something:root",
+      "target": "substrate:create-something:worker:packages-halfdozen-transcript-monitor-wrangler-jsonc",
+      "relation": "contains",
+      "evidence": "packages/halfdozen-transcript-monitor/wrangler.jsonc is present in the repo scan."
+    },
+    {
       "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-worker-packages-halfdozen-zoom-sync-worker-wrangler-toml",
       "source": "substrate:create-something:root",
       "target": "substrate:create-something:worker:packages-halfdozen-zoom-sync-worker-wrangler-toml",
@@ -12138,6 +12387,13 @@
       "target": "substrate:create-something:worker:packages-marketplace-featured-notifier-wrangler-jsonc",
       "relation": "contains",
       "evidence": "packages/marketplace-featured-notifier/wrangler.jsonc is present in the repo scan."
+    },
+    {
+      "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-worker-packages-marketplace-insights-cron-wrangler-jsonc",
+      "source": "substrate:create-something:root",
+      "target": "substrate:create-something:worker:packages-marketplace-insights-cron-wrangler-jsonc",
+      "relation": "contains",
+      "evidence": "packages/marketplace-insights-cron/wrangler.jsonc is present in the repo scan."
     },
     {
       "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-worker-packages-maverick-admin-wrangler-toml",
@@ -12357,6 +12613,13 @@
       "evidence": "packages/webflow-app-review-mcp/worker/wrangler.toml is present in the repo scan."
     },
     {
+      "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-worker-packages-webflow-app-review-portal-wrangler-json",
+      "source": "substrate:create-something:root",
+      "target": "substrate:create-something:worker:packages-webflow-app-review-portal-wrangler-json",
+      "relation": "contains",
+      "evidence": "packages/webflow-app-review-portal/wrangler.json is present in the repo scan."
+    },
+    {
       "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-worker-packages-webflow-apps-admin-dashboard-wrangler-toml",
       "source": "substrate:create-something:root",
       "target": "substrate:create-something:worker:packages-webflow-apps-admin-dashboard-wrangler-toml",
@@ -12376,6 +12639,13 @@
       "target": "substrate:create-something:worker:packages-webflow-automation-worker-wrangler-toml",
       "relation": "contains",
       "evidence": "packages/webflow-automation/worker/wrangler.toml is present in the repo scan."
+    },
+    {
+      "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-worker-packages-webflow-dashboard-workers-sla-notifications-wrangler-toml",
+      "source": "substrate:create-something:root",
+      "target": "substrate:create-something:worker:packages-webflow-dashboard-workers-sla-notifications-wrangler-toml",
+      "relation": "contains",
+      "evidence": "packages/webflow-dashboard/workers/sla-notifications/wrangler.toml is present in the repo scan."
     },
     {
       "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-worker-packages-webflow-dashboard-wrangler-jsonc",
@@ -13057,6 +13327,13 @@
       "evidence": "docs/guides/AGENT_LEGIBILITY_CONTRACT.md is present in the repo scan."
     },
     {
+      "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-guide-docs-guides-ai-native-sdlc-md",
+      "source": "substrate:create-something:root",
+      "target": "substrate:create-something:guide:docs-guides-ai-native-sdlc-md",
+      "relation": "contains",
+      "evidence": "docs/guides/AI_NATIVE_SDLC.md is present in the repo scan."
+    },
+    {
       "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-guide-docs-guides-antigravity-mcp-enablement-md",
       "source": "substrate:create-something:root",
       "target": "substrate:create-something:guide:docs-guides-antigravity-mcp-enablement-md",
@@ -13097,6 +13374,13 @@
       "target": "substrate:create-something:guide:docs-guides-browser-proof-and-closeout-runbook-md",
       "relation": "contains",
       "evidence": "docs/guides/BROWSER_PROOF_AND_CLOSEOUT_RUNBOOK.md is present in the repo scan."
+    },
+    {
+      "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-guide-docs-guides-canon-character-migration-md",
+      "source": "substrate:create-something:root",
+      "target": "substrate:create-something:guide:docs-guides-canon-character-migration-md",
+      "relation": "contains",
+      "evidence": "docs/guides/CANON_CHARACTER_MIGRATION.md is present in the repo scan."
     },
     {
       "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-guide-docs-guides-chatgpt-mcp-oauth-managed-bearer-md",
@@ -14849,6 +15133,13 @@
       "evidence": "wrangler.toml configures runtime for packages/halfdozen-telemetry-mcp/worker."
     },
     {
+      "id": "substrate:create-something:edge:substrate-create-something-package-create-something-halfdozen-transcript-monitor-packages-halfdozen-transcript-monitor-runs-substrate-create-something-worker-packages-halfdozen-transcript-monitor-wrangler-jsonc",
+      "source": "substrate:create-something:package:create-something-halfdozen-transcript-monitor-packages-halfdozen-transcript-monitor",
+      "target": "substrate:create-something:worker:packages-halfdozen-transcript-monitor-wrangler-jsonc",
+      "relation": "runs",
+      "evidence": "wrangler.jsonc configures runtime for packages/halfdozen-transcript-monitor."
+    },
+    {
       "id": "substrate:create-something:edge:substrate-create-something-package-create-something-halfdozen-zoom-sync-packages-halfdozen-zoom-sync-depends-on-substrate-create-something-package-create-something-composio-bridge-packages-composio-bridge",
       "source": "substrate:create-something:package:create-something-halfdozen-zoom-sync-packages-halfdozen-zoom-sync",
       "target": "substrate:create-something:package:create-something-composio-bridge-packages-composio-bridge",
@@ -15246,6 +15537,13 @@
       "target": "substrate:create-something:worker:packages-marketplace-featured-notifier-wrangler-jsonc",
       "relation": "runs",
       "evidence": "wrangler.jsonc configures runtime for packages/marketplace-featured-notifier."
+    },
+    {
+      "id": "substrate:create-something:edge:substrate-create-something-package-create-something-marketplace-insights-cron-packages-marketplace-insights-cron-runs-substrate-create-something-worker-packages-marketplace-insights-cron-wrangler-jsonc",
+      "source": "substrate:create-something:package:create-something-marketplace-insights-cron-packages-marketplace-insights-cron",
+      "target": "substrate:create-something:worker:packages-marketplace-insights-cron-wrangler-jsonc",
+      "relation": "runs",
+      "evidence": "wrangler.jsonc configures runtime for packages/marketplace-insights-cron."
     },
     {
       "id": "substrate:create-something:edge:substrate-create-something-package-create-something-maverick-admin-packages-maverick-admin-runs-substrate-create-something-worker-packages-maverick-admin-wrangler-toml",
@@ -15780,6 +16078,13 @@
       "evidence": "wrangler.toml configures runtime for packages/webflow-app-review-mcp/worker."
     },
     {
+      "id": "substrate:create-something:edge:substrate-create-something-package-create-something-webflow-app-review-portal-packages-webflow-app-review-portal-runs-substrate-create-something-worker-packages-webflow-app-review-portal-wrangler-json",
+      "source": "substrate:create-something:package:create-something-webflow-app-review-portal-packages-webflow-app-review-portal",
+      "target": "substrate:create-something:worker:packages-webflow-app-review-portal-wrangler-json",
+      "relation": "runs",
+      "evidence": "wrangler.json configures runtime for packages/webflow-app-review-portal."
+    },
+    {
       "id": "substrate:create-something:edge:substrate-create-something-package-create-something-webflow-apps-audit-dashboard-packages-webflow-apps-admin-dashboard-depends-on-substrate-create-something-package-create-something-canon-packages-canon",
       "source": "substrate:create-something:package:create-something-webflow-apps-audit-dashboard-packages-webflow-apps-admin-dashboard",
       "target": "substrate:create-something:package:create-something-canon-packages-canon",
@@ -15848,6 +16153,13 @@
       "target": "substrate:create-something:worker:packages-webflow-dashboard-wrangler-jsonc",
       "relation": "runs",
       "evidence": "wrangler.jsonc configures runtime for packages/webflow-dashboard."
+    },
+    {
+      "id": "substrate:create-something:edge:substrate-create-something-package-create-something-webflow-sla-notifications-packages-webflow-dashboard-workers-sla-notifications-runs-substrate-create-something-worker-packages-webflow-dashboard-workers-sla-notifications-wrangler-toml",
+      "source": "substrate:create-something:package:create-something-webflow-sla-notifications-packages-webflow-dashboard-workers-sla-notifications",
+      "target": "substrate:create-something:worker:packages-webflow-dashboard-workers-sla-notifications-wrangler-toml",
+      "relation": "runs",
+      "evidence": "wrangler.toml configures runtime for packages/webflow-dashboard/workers/sla-notifications."
     },
     {
       "id": "substrate:create-something:edge:substrate-create-something-package-create-something-webflow-marketplace-sync-packages-webflow-marketplace-sync-runs-substrate-create-something-worker-packages-webflow-marketplace-sync-wrangler-toml",
@@ -16648,6 +16960,13 @@
       "evidence": "docs/guides/AGENT_LEGIBILITY_CONTRACT.md is an operating guide."
     },
     {
+      "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-ai-native-sdlc-md-documents-substrate-create-something-root",
+      "source": "substrate:create-something:guide:docs-guides-ai-native-sdlc-md",
+      "target": "substrate:create-something:root",
+      "relation": "documents",
+      "evidence": "docs/guides/AI_NATIVE_SDLC.md is an operating guide."
+    },
+    {
       "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-antigravity-mcp-enablement-md-documents-substrate-create-something-root",
       "source": "substrate:create-something:guide:docs-guides-antigravity-mcp-enablement-md",
       "target": "substrate:create-something:root",
@@ -16688,6 +17007,13 @@
       "target": "substrate:create-something:root",
       "relation": "documents",
       "evidence": "docs/guides/BROWSER_PROOF_AND_CLOSEOUT_RUNBOOK.md is an operating guide."
+    },
+    {
+      "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-canon-character-migration-md-documents-substrate-create-something-root",
+      "source": "substrate:create-something:guide:docs-guides-canon-character-migration-md",
+      "target": "substrate:create-something:root",
+      "relation": "documents",
+      "evidence": "docs/guides/CANON_CHARACTER_MIGRATION.md is an operating guide."
     },
     {
       "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-chatgpt-mcp-oauth-managed-bearer-md-documents-substrate-create-something-root",
@@ -17740,6 +18066,13 @@
       "evidence": "docs/guides/AGENT_LEGIBILITY_CONTRACT.md documents config/dify-agents/aaron-hub.json through matching topology terms."
     },
     {
+      "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-ai-native-sdlc-md-documents-substrate-create-something-package-create-something-arc-packages-arc",
+      "source": "substrate:create-something:guide:docs-guides-ai-native-sdlc-md",
+      "target": "substrate:create-something:package:create-something-arc-packages-arc",
+      "relation": "documents",
+      "evidence": "docs/guides/AI_NATIVE_SDLC.md documents packages/arc through matching topology terms."
+    },
+    {
       "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-antigravity-mcp-enablement-md-documents-substrate-create-something-package-create-something-io-packages-io",
       "source": "substrate:create-something:guide:docs-guides-antigravity-mcp-enablement-md",
       "target": "substrate:create-something:package:create-something-io-packages-io",
@@ -17780,6 +18113,13 @@
       "target": "substrate:create-something:package:create-something-arc-packages-arc",
       "relation": "documents",
       "evidence": "docs/guides/BROWSER_PROOF_AND_CLOSEOUT_RUNBOOK.md documents packages/arc through matching topology terms."
+    },
+    {
+      "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-canon-character-migration-md-documents-substrate-create-something-package-create-something-agency-packages-agency",
+      "source": "substrate:create-something:guide:docs-guides-canon-character-migration-md",
+      "target": "substrate:create-something:package:create-something-agency-packages-agency",
+      "relation": "documents",
+      "evidence": "docs/guides/CANON_CHARACTER_MIGRATION.md documents packages/agency through an explicit repository link."
     },
     {
       "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-chatgpt-mcp-oauth-managed-bearer-md-documents-substrate-create-something-package-create-something-community-mcp-packages-community-mcp",

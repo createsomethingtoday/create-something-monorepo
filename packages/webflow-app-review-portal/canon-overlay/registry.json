@@ -1,0 +1,17 @@
+{
+  "id": "overlay.webflow-app-review-portal",
+  "name": "Webflow App Review Portal",
+  "owner": "webflow-marketplace",
+  "sourcePackage": "@create-something/webflow-app-review-portal",
+  "targetModalities": [
+    "web",
+    "chat",
+    "app",
+    "voice",
+    "glasses"
+  ],
+  "registryItemIds": [
+    "policy.signal-decision-proof"
+  ],
+  "overlayRule": "Webflow controls brand tokens and component language. Keep reviewer evidence, explicit confirmation and provider receipts beside decisions. No Canon runtime components are imported and no shared primitive is proposed."
+}

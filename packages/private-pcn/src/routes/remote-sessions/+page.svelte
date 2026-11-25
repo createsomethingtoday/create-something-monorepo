@@ -49,7 +49,7 @@
 <svelte:head
   ><title>Remote support | PRIVATE</title><meta name="robots" content="noindex" /></svelte:head
 >
-<main id="main" class="builder-workspace">
+<main id="main" class="builder-workspace operator-surface">
   <p class="eyebrow">PRIVATE / WORK TOGETHER</p>
   <h1>Your environment.<br /><SerifPhrase text="A builder beside you." /></h1>
   <p class="lede">

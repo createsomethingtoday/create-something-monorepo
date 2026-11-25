@@ -19,6 +19,8 @@
     domain: string;
     /** Last updated date string */
     lastUpdated?: string;
+    /** Optional stable section anchors for server-rendered contents navigation. */
+    sectionIds?: string[];
     /** Contact email for privacy requests */
     contactEmail?: string;
   }
@@ -27,6 +29,7 @@
     property,
     domain,
     lastUpdated = 'January 29, 2026',
+    sectionIds,
     contactEmail = PUBLIC_CONTACT_EMAIL
   }: Props = $props();
 
@@ -44,7 +47,7 @@
 <article class="privacy-content">
   <!-- What We Collect -->
   <section class="policy-section">
-    <h2 class="section-title">1. What We Collect</h2>
+    <h2 id={sectionIds?.[0]} class="section-title">1. What We Collect</h2>
 
     <p class="body-text">
       {#if property === 'agency'}
@@ -115,7 +118,7 @@
 
   <!-- Why We Collect -->
   <section class="policy-section">
-    <h2 class="section-title">2. Why We Collect It</h2>
+    <h2 id={sectionIds?.[1]} class="section-title">2. Why We Collect It</h2>
 
     <h3 class="subsection-title">2.1 Authentication</h3>
     <p class="body-text">
@@ -138,7 +141,7 @@
 
   <!-- How Long We Keep It -->
   <section class="policy-section">
-    <h2 class="section-title">3. How Long We Keep It</h2>
+    <h2 id={sectionIds?.[2]} class="section-title">3. How Long We Keep It</h2>
 
     <div class="retention-table">
       <div class="retention-row">
@@ -174,7 +177,7 @@
 
   <!-- Third Parties -->
   <section class="policy-section">
-    <h2 class="section-title">4. Third Parties</h2>
+    <h2 id={sectionIds?.[3]} class="section-title">4. Third Parties</h2>
 
     <p class="body-text">
       {#if property === 'agency'}
@@ -235,7 +238,7 @@
 
   <!-- Your Rights -->
   <section class="policy-section">
-    <h2 class="section-title">5. Your Rights</h2>
+    <h2 id={sectionIds?.[4]} class="section-title">5. Your Rights</h2>
 
     <p class="body-text">
       You have full control over your data. These rights apply to all users, regardless of location:
@@ -279,7 +282,7 @@
 
   <!-- Contact -->
   <section class="policy-section">
-    <h2 class="section-title">6. Contact for Privacy Requests</h2>
+    <h2 id={sectionIds?.[5]} class="section-title">6. Contact for Privacy Requests</h2>
 
     <p class="body-text">For any privacy-related requests or questions:</p>
 
@@ -304,7 +307,7 @@
 
   <!-- Legal Compliance -->
   <section class="policy-section">
-    <h2 class="section-title">7. Legal Compliance</h2>
+    <h2 id={sectionIds?.[6]} class="section-title">7. Legal Compliance</h2>
 
     <p class="body-text">This policy is designed to comply with:</p>
     <ul class="policy-list">
@@ -321,7 +324,7 @@
 
   <!-- Changes -->
   <section class="policy-section">
-    <h2 class="section-title">8. Changes to This Policy</h2>
+    <h2 id={sectionIds?.[7]} class="section-title">8. Changes to This Policy</h2>
 
     <p class="body-text">
       We'll notify you of significant changes via email (if you have an account) and update the

@@ -19,9 +19,22 @@ import {
 	ContentQualityAnalysis,
 	ValidationOptions
 } from '../types';
+import {
+	collectClassUsage,
+	createClassUsage,
+	findUnusedStyles,
+	generateUnusedStyleIssues,
+	MIN_PAGES_FOR_UNUSED_STYLES,
+	uncrawledItemPages,
+	type ClassUsage
+} from './unused-styles';
+import { fetchPreviewSiteData, findUnusedStylesInSiteData, parsePreviewLink } from './designer-unused-styles';
 import { fetchHTML, isPlatformManagedHeading, parseHTML } from '../utils/fetch-utils';
 import { analyzeHeadingSequence, extractDocumentOutline, visibleOutlineHeadings } from '../utils/document-outline';
 import { isWebflowGeneratedVideoPosterSource } from '../utils/asset-utils';
+import { hasTemplateTitleSuffix } from '../utils/template-title';
+import { imageSpaceReserved, loadPageStyles, type PageStyles, type StyledNode } from './image-reserved-space';
+import { auditFontLicenses } from './font-licenses';
 import {
 	REVIEWER_UTILITY_PATHS,
 	auditReviewerStandards,
@@ -261,9 +274,10 @@ export async function validateContent(
 		}
 
 		// Default: homepage + additional pages (provided slugs or discovery)
+		const classUsage = createClassUsage();
 		const htmlResult = await fetchHTML(siteUrl);
 		const parsedHTML = parseHTML(htmlResult.html);
-		const pageAnalysis = await analyzePage(siteUrl, parsedHTML);
+		const pageAnalysis = await analyzePage(siteUrl, parsedHTML, classUsage);
 
 		const maxPages = typeof options?.maxPages === 'number' && Number.isFinite(options.maxPages)
 			? Math.max(1, Math.floor(options.maxPages))
@@ -279,9 +293,17 @@ export async function validateContent(
 
 		const additionalPages = maxAdditionalPages === 0
 			? []
-			: await discoverAdditionalPages(parsedHTML, siteUrl, filteredPageSlugs, maxAdditionalPages, excludedSlugs);
+			: await discoverAdditionalPages(parsedHTML, siteUrl, filteredPageSlugs, maxAdditionalPages, excludedSlugs, classUsage);
 
-		const combinedPages = [pageAnalysis, ...additionalPages];
+		// The page list from the Designer has no CMS item pages, and only an
+		// item page shows what a CMS template renders: its images, its SEO
+		// fields and its Open Graph image. A page limit cuts the run short, so
+		// a limited run reads no item pages.
+		const itemPages = maxPages === undefined
+			? await analyzeItemPageSample(siteUrl, classUsage, [pageAnalysis, ...additionalPages].map(page => page.url), excludedSlugs)
+			: [];
+
+		const combinedPages = [pageAnalysis, ...additionalPages, ...itemPages];
 		const allPages = excludedSlugs.size > 0
 			? combinedPages.filter(p => {
 				const norm = normalizeSlugForComparison(p.url);
@@ -291,17 +313,30 @@ export async function validateContent(
 
 		// Generate content validation issues. The reviewer standards also read
 		// the utility pages, which the crawl does not always reach.
-		const utility = await auditUtilityPages(siteUrl, allPages, excludedSlugs);
+		const utility = await auditUtilityPages(siteUrl, allPages, excludedSlugs, classUsage);
 		const issues = [
 			...generateContentIssues(allPages, resolvedChecks),
 			...generateReviewerStandardIssues(
 				[...allPages.flatMap(page => (page.reviewerAudit ? [page.reviewerAudit] : [])), ...utility.audits],
 				{ missingPaths: utility.missingPaths }
-			)
+			),
+			// The check needs every static page. Only the page list from the
+			// Designer gives that: a list from a sitemap or from links can be
+			// cut short, and a page limit cuts any list. A style on a page that
+			// was not read is not unused.
+			// With a preview link, the Designer's site data gives the Clean
+			// up list and no page list is necessary.
+			...(await auditFontLicenses(siteUrl, classUsage.stylesheetUrls)),
+			...(await auditDesignerUnusedStyles(options?.previewUrl, options?.previewSiteDataPath)
+				?? (maxPages === undefined && options?.pageListComplete === true && Array.isArray(pageSlugs) && pageSlugs.length > 0 ? await auditUnusedStyles(siteUrl, classUsage, excludedSlugs, allPages.map(page => page.url)) : []))
 		];
 
 		// Calculate content statistics
-		const stats = calculateContentStats(allPages);
+		const stats = {
+			...calculateContentStats(allPages),
+			cmsItemPagesChecked: itemPages.length,
+			cmsItemPagePaths: itemPages.map(page => new URL(page.url).pathname)
+		};
 
 		return {
 			issues,
@@ -338,7 +373,8 @@ export async function validateContent(
 	}
 }
 
-async function analyzePage(url: string, parsedHTML: ParsedHTML): Promise<AnalyzedPage> {
+async function analyzePage(url: string, parsedHTML: ParsedHTML, classUsage?: ClassUsage): Promise<AnalyzedPage> {
+	if (classUsage) collectClassUsage(parsedHTML.rawHtml, classUsage);
 	// Extract page title
 	const titleElement = parsedHTML.document.querySelector('title');
 	const title = titleElement?.textContent || 'Untitled Page';
@@ -370,7 +406,9 @@ async function analyzePage(url: string, parsedHTML: ParsedHTML): Promise<Analyze
 	const imageAltAudit = analyzeContentImages(parsedHTML);
 	const imageCount = imageAltAudit.totalImages;
 	const imagesWithoutAlt = imageAltAudit.imagesWithoutAlt.length;
-	const imageDimensionAudit = analyzeImageDimensions(parsedHTML);
+	// Stylesheets are read only when an image lacks the attributes; most
+	// pages of a template share one cached stylesheet.
+	const imageDimensionAudit = await analyzeImageDimensionsWithStyles(parsedHTML, url);
 	const reviewerAudit = auditReviewerStandards(parsedHTML.rawHtml, url) ?? undefined;
 
 	// Extract comprehensive SEO data
@@ -392,6 +430,7 @@ async function analyzePage(url: string, parsedHTML: ParsedHTML): Promise<Analyze
 		imagesWithoutAltDetails: imageAltAudit.imagesWithoutAlt,
 		imagesMissingDimensions: imageDimensionAudit.missing,
 		imagesMissingDimensionsDetails: imageDimensionAudit.details,
+		imagesSizedByCss: imageDimensionAudit.sizedByCss,
 		reviewerAudit,
 		seo,
 		links,
@@ -406,7 +445,154 @@ async function analyzePage(url: string, parsedHTML: ParsedHTML): Promise<Analyze
  * other path that answers HTTP 404 is reported as missing; a page that fails
  * to load for another reason is skipped, so a network error never blocks.
  */
-async function auditUtilityPages(siteUrl: string, pages: AnalyzedPage[], excludedSlugs: Set<string>) {
+/**
+ * Unused styles need the site stylesheet and the site's own JavaScript. A page
+ * or file that does not load ends the check without a finding: a missing
+ * script could hide the interaction that adds a class.
+ */
+const UNUSED_STYLES_ITEM_PAGE_LIMIT = 30;
+const UNUSED_STYLES_ITEM_ROUNDS = 3;
+
+/**
+ * Unused styles from the Designer's site data, read with the preview link.
+ * `null` means "no answer": no link, a link that is not a Webflow preview
+ * link, no `PREVIEW_SITE_DATA_PATH` secret on the worker, an expired link,
+ * or data in a shape this check does not know. The
+ * caller then compares the published pages.
+ */
+async function auditDesignerUnusedStyles(previewUrl: unknown, siteDataPath: unknown): Promise<ValidationIssue[] | null> {
+	const link = parsePreviewLink(previewUrl);
+	if (!link || !siteDataPath) return null;
+	try {
+		const result = findUnusedStylesInSiteData(await fetchPreviewSiteData(link, siteDataPath));
+		if (!result) {
+			console.warn('Unused styles: no Designer site data for the preview link; the published pages are compared.');
+			return null;
+		}
+		return generateUnusedStyleIssues(result, 0, 'designer');
+	} catch (error) {
+		console.warn('Unused styles: Designer site data check failed:', error);
+		return null;
+	}
+}
+
+async function auditUnusedStyles(siteUrl: string, classUsage: ClassUsage, excludedSlugs: Set<string>, crawledUrls: string[]): Promise<ValidationIssue[]> {
+	// Without a Webflow site stylesheet there is nothing to compare, and no
+	// reason to read more pages.
+	if (classUsage.incomplete || classUsage.stylesheetUrls.size === 0) return [];
+	try {
+		// Pages excluded from the content checks (the Style Guide by default)
+		// still use styles, so their class lists are read here.
+		const excludedUrls = [...excludedSlugs].map(slug => new URL(slug, siteUrl).href);
+		// The default exclusion list names both /style-guide and /styleguide,
+		// and a site has one of them. A path that answers 404 is not a page.
+		await Promise.all(excludedUrls.map(async url => {
+			try {
+				collectClassUsage((await fetchHTML(url)).html, classUsage);
+			} catch (error) {
+				if (!(error instanceof Error && /^HTTP 404\b/.test(error.message))) throw error;
+			}
+		}));
+		// The page list from the Designer has no CMS item pages. One item
+		// page that fails to load is not a reason to stop when another page
+		// of the same collection was read. A collection with no page read
+		// ends the check: its template styles would all look unused.
+		const utilityUrls = REVIEWER_UTILITY_PATHS.map(path => new URL(path, siteUrl).href);
+		const parentOf = (url: string) => new URL(url).pathname.replace(/\/+$/, '').replace(/\/[^/]*$/, '');
+		const readUrls = [...crawledUrls, ...excludedUrls, ...utilityUrls];
+		const readParents = new Set(crawledUrls.map(parentOf));
+		const failedParents = new Set<string>();
+		// An item page can link to a collection that no static page links to
+		// (a post links to its author), so the sample repeats on the new links.
+		let budget = UNUSED_STYLES_ITEM_PAGE_LIMIT;
+		for (let round = 0; ; round++) {
+			const items = uncrawledItemPages(classUsage, siteUrl, readUrls, 2, budget);
+			// More item pages than the sample can hold, or links that go on
+			// and on: some template is unread.
+			if (items.truncated || (items.pages.length > 0 && round >= UNUSED_STYLES_ITEM_ROUNDS)) return [];
+			if (items.pages.length === 0) break;
+			budget -= items.pages.length;
+			readUrls.push(...items.pages);
+			await Promise.all(items.pages.map(async url => {
+				try {
+					collectClassUsage((await fetchHTML(url)).html, classUsage);
+					readParents.add(parentOf(url));
+				} catch {
+					failedParents.add(parentOf(url));
+				}
+			}));
+		}
+		if ([...failedParents].some(parent => !readParents.has(parent))) return [];
+		if (classUsage.pageCount < MIN_PAGES_FOR_UNUSED_STYLES) return [];
+		const load = async (url: string): Promise<string> => {
+			const response = await fetch(url, { signal: AbortSignal.timeout(15000) });
+			if (!response.ok) throw new Error(`HTTP ${response.status} for ${url}`);
+			return response.text();
+		};
+		const [stylesheets, scripts] = await Promise.all([
+			Promise.all([...classUsage.stylesheetUrls].map(load)),
+			Promise.all([...classUsage.scriptUrls].map(load))
+		]);
+		return generateUnusedStyleIssues(findUnusedStyles(stylesheets.join('\n'), classUsage, scripts), classUsage.pageCount);
+	} catch (error) {
+		console.warn('Unused styles check skipped:', error);
+		return [];
+	}
+}
+
+/** Item pages read for each collection (pages that share a parent path). */
+const ITEM_PAGES_PER_COLLECTION = 3;
+/** Item pages read in one run. Each one costs a page fetch and its link checks. */
+const ITEM_PAGE_SAMPLE_LIMIT = 15;
+/** An item page can link to a collection that no static page links to (a post links to its author). */
+const ITEM_PAGE_SAMPLE_ROUNDS = 2;
+
+/**
+ * Analyze a sample of CMS item pages: linked pages under a parent path that
+ * the crawl has not read (`/blog/a`, `/blog/b`). They get the same checks as
+ * the static pages. A sample is enough to find a defect in the template page;
+ * a defect in one item's own content can be outside the sample. An item page
+ * that does not load is skipped: the unused styles check, which needs every
+ * template, makes its own decision about that.
+ */
+async function analyzeItemPageSample(
+	siteUrl: string,
+	classUsage: ClassUsage,
+	crawledUrls: string[],
+	excludedSlugs: Set<string>
+): Promise<AnalyzedPage[]> {
+	const sampled: AnalyzedPage[] = [];
+	try {
+		// Excluded pages and the utility pages are not item pages, and other code reads them.
+		const readUrls = [
+			...crawledUrls,
+			...[...excludedSlugs].map(slug => new URL(slug, siteUrl).href),
+			...REVIEWER_UTILITY_PATHS.map(path => new URL(path, siteUrl).href)
+		];
+		let budget = ITEM_PAGE_SAMPLE_LIMIT;
+		for (let round = 0; round < ITEM_PAGE_SAMPLE_ROUNDS && budget > 0; round++) {
+			const items = uncrawledItemPages(classUsage, siteUrl, readUrls, ITEM_PAGES_PER_COLLECTION, budget);
+			if (items.pages.length === 0) break;
+			budget -= items.pages.length;
+			readUrls.push(...items.pages);
+			const analyzed = await Promise.all(items.pages.map(async url => {
+				try {
+					const html = await fetchHTML(url);
+					return { ...(await analyzePage(url, parseHTML(html.html), classUsage)), isCmsItemSample: true };
+				} catch (error) {
+					console.warn(`Item page not analyzed: ${url}`, error);
+					return null;
+				}
+			}));
+			sampled.push(...analyzed.filter((page): page is NonNullable<typeof page> => page !== null));
+		}
+	} catch (error) {
+		console.warn('Item page sample stopped:', error);
+	}
+	return sampled;
+}
+
+async function auditUtilityPages(siteUrl: string, pages: AnalyzedPage[], excludedSlugs: Set<string>, classUsage?: ClassUsage) {
 	const crawled = new Set(pages.map(page => page.reviewerAudit?.path).filter(Boolean));
 	const paths = REVIEWER_UTILITY_PATHS.filter(path => !crawled.has(path) && !excludedSlugs.has(normalizeSlugForComparison(path) ?? ''));
 	const missingPaths: string[] = [];
@@ -415,9 +601,11 @@ async function auditUtilityPages(siteUrl: string, pages: AnalyzedPage[], exclude
 			const pageUrl = new URL(path, siteUrl).href;
 			try {
 				const page = await fetchHTML(pageUrl, path === '/404' ? { acceptStatus: [404] } : undefined);
+				if (classUsage) collectClassUsage(page.html, classUsage);
 				return auditReviewerStandards(page.html, pageUrl);
 			} catch (error) {
 				if (error instanceof Error && /^HTTP 404\b/.test(error.message)) missingPaths.push(path);
+				else if (classUsage) classUsage.incomplete = true;
 				return null;
 			}
 		})
@@ -475,21 +663,35 @@ function analyzeContentImages(parsedHTML: ParsedHTML): { totalImages: number; im
 const MAX_DIMENSION_DETAILS_PER_PAGE = 10;
 
 /**
- * Images without a positive width and height attribute. Webflow writes the
- * attributes only when they are set in the image settings, and reviewers ask
- * for both (same rule as the template-preflight skill). Background video
- * fallback and poster images are platform markup, so they are skipped.
+ * Images whose space is not reserved before they load. An image passes with a
+ * positive width and height attribute (Webflow writes them only when they are
+ * set in the image settings), or when the published CSS reserves the space
+ * (see image-reserved-space.ts). Background video fallback and poster images
+ * are platform markup, so they are skipped. So are Ecommerce cart item
+ * images: Webflow renders them and their image settings have no width and
+ * height.
+ *
+ * Without `styles` the check reads attributes only.
  */
-export function analyzeImageDimensions(parsedHTML: ParsedHTML): {
+export function analyzeImageDimensions(parsedHTML: ParsedHTML, styles?: PageStyles | null): {
 	missing: number;
+	sizedByCss: number;
 	details: Array<{ src: string; selector: string }>;
 } {
 	const details: Array<{ src: string; selector: string }> = [];
 	let missing = 0;
+	let sizedByCss = 0;
 
 	renderedImages(parsedHTML).forEach((img, index) => {
 		if (isLikelyPlatformVideoFallbackImage(img)) return;
+		if (isPlatformCartItemImage(img)) return;
+		// An image in a Rich Text element has no size settings in the Designer or in the CMS editor.
+		if (img.closest?.('.w-richtext')) return;
 		if (hasPositiveDimension(img, 'width') && hasPositiveDimension(img, 'height')) return;
+		if (styles && img.node && imageSpaceReserved(img.node as StyledNode, styles)) {
+			sizedByCss++;
+			return;
+		}
 
 		missing++;
 		if (details.length < MAX_DIMENSION_DETAILS_PER_PAGE) {
@@ -497,7 +699,18 @@ export function analyzeImageDimensions(parsedHTML: ParsedHTML): {
 		}
 	});
 
-	return { missing, details };
+	return { missing, sizedByCss, details };
+}
+
+/** The image size audit, with the page's stylesheets read when an image needs them. */
+export async function analyzeImageDimensionsWithStyles(
+	parsedHTML: ParsedHTML,
+	pageUrl: string
+): Promise<ReturnType<typeof analyzeImageDimensions>> {
+	const byAttributes = analyzeImageDimensions(parsedHTML);
+	if (byAttributes.missing === 0 || !parsedHTML.rawHtml) return byAttributes;
+	const styles = await loadPageStyles(parsedHTML.rawHtml, pageUrl).catch(() => null);
+	return styles ? analyzeImageDimensions(parsedHTML, styles) : byAttributes;
 }
 
 /**
@@ -511,6 +724,8 @@ function renderedImages(parsedHTML: ParsedHTML): Array<HTMLImageElement | any> {
 		.filter(el => el.name === 'img')
 		.map(img => ({
 			getAttribute: (name: string) => img.attribs?.[name] ?? null,
+			// The parsed element, for the CSS read in image-reserved-space.ts.
+			node: img,
 			// Keeps the ancestor exemption in isLikelyPlatformVideoFallbackImage working.
 			closest: (selector: string) => closestNode(img, selector)
 		}));
@@ -545,6 +760,11 @@ function shouldIgnoreImageForAltAudit(img: HTMLImageElement | any): boolean {
 	if ((img.getAttribute?.('aria-hidden') || '').toLowerCase() === 'true') return true;
 
 	return isLikelyPlatformVideoFallbackImage(img);
+}
+
+function isPlatformCartItemImage(img: HTMLImageElement | any): boolean {
+	const className = String(img.getAttribute?.('class') || img.className || '');
+	return className.split(/\s+/).includes('w-commerce-commercecartitemimage');
 }
 
 function isLikelyPlatformVideoFallbackImage(img: HTMLImageElement | any): boolean {
@@ -677,18 +897,18 @@ function decodeBasicHtmlEntities(value: string): string {
 		.replace(/&#39;/g, "'");
 }
 
-function extractSEOData(parsedHTML: ParsedHTML): PageSEOData {
+export function extractSEOData(parsedHTML: ParsedHTML): PageSEOData {
 	const document = parsedHTML.document;
 
 	// Title extraction and validation
 	const titleElement = document.querySelector('title');
-	const title = titleElement?.textContent?.trim() || null;
+	const title = decodeCommonHtmlEntities(titleElement?.textContent ?? '').trim() || null;
 	const titleLength = title?.length || 0;
 	const hasValidTitle = title !== null && titleLength >= 30 && titleLength <= 60;
 
 	// Meta description extraction and validation
 	const metaDescElement = document.querySelector('meta[name="description"]');
-	const metaDescription = metaDescElement?.getAttribute('content')?.trim() || null;
+	const metaDescription = decodeCommonHtmlEntities(metaDescElement?.getAttribute('content') ?? '').trim() || null;
 	const metaDescriptionLength = metaDescription?.length || 0;
 	const hasValidDescription = metaDescription !== null && metaDescriptionLength >= 150 && metaDescriptionLength <= 160;
 
@@ -752,7 +972,8 @@ async function discoverAdditionalPages(
 	baseUrl: string,
 	pageSlugs?: string[],
 	maxAdditionalPages?: number,
-	excludedSlugs?: Set<string>
+	excludedSlugs?: Set<string>,
+	classUsage?: ClassUsage
 ): Promise<AnalyzedPage[]> {
 	const additionalPages: AnalyzedPage[] = [];
 	const discoveredUrls = new Set<string>();
@@ -843,9 +1064,11 @@ async function discoverAdditionalPages(
 			try {
 				const htmlResult = await fetchHTML(pageUrl);
 				const parsedPageHTML = parseHTML(htmlResult.html);
-				results[index] = await analyzePage(pageUrl, parsedPageHTML);
+				results[index] = await analyzePage(pageUrl, parsedPageHTML, classUsage);
 			} catch (error) {
 				console.warn(`Failed to analyze page ${pageUrl}:`, error);
+				// The styles of a page that did not load look unused.
+				if (classUsage) classUsage.incomplete = true;
 			}
 		}
 	}
@@ -1034,9 +1257,9 @@ export function generateContentIssues(
 			id: 'images-missing-dimensions',
 			category: 'Content & Accessibility',
 			severity: 'error',
-			message: `${totalMissingDimensions} image(s) on ${pagesMissingDimensions.length} page(s) have no width and height attributes`,
-			description: 'Every image needs a defined width and height. Without them, the browser cannot reserve space before the image loads, so the layout shifts.',
-			howToFix: 'In the Designer, select each image and set its Width and Height in the image settings, using the image\'s own size. Classes still control how the image displays.',
+			message: `${totalMissingDimensions} image(s) on ${pagesMissingDimensions.length} page(s) have no reserved width and height`,
+			description: 'The browser must know the size of every image before it loads. Without that, it cannot reserve the space, so the layout shifts.',
+			howToFix: 'Give the image a class that fixes its size: a width and a height, or an aspect ratio with a width or a height. Or select the image in the Designer and set its Width and Height in the image settings.',
 			details: {
 				imagesMissingDimensions: totalMissingDimensions,
 				pagesWithIssues: pagesMissingDimensions.map(page => ({
@@ -1072,15 +1295,15 @@ function normalizeHeadingText(text: string): string {
 	return normalized.length > 80 ? `${normalized.slice(0, 77)}...` : normalized;
 }
 
+const NAMED_HTML_ENTITIES: Record<string, string> = { nbsp: ' ', amp: '&', quot: '"', apos: "'", lt: '<', gt: '>' };
+
+/** Decodes numeric entities (&#39; &#x27;) and the common named ones, so text is measured as the reader sees it. */
 function decodeCommonHtmlEntities(value: string): string {
-	return value
-		.replace(/&nbsp;/gi, ' ')
-		.replace(/&amp;/gi, '&')
-		.replace(/&quot;/gi, '"')
-		.replace(/&#39;/gi, "'")
-		.replace(/&#x27;/gi, "'")
-		.replace(/&lt;/gi, '<')
-		.replace(/&gt;/gi, '>');
+	return value.replace(/&(?:#(\d+)|#x([0-9a-f]+)|([a-z]+));/gi, (entity, decimal, hex, name) => {
+		if (name) return NAMED_HTML_ENTITIES[name.toLowerCase()] ?? entity;
+		const codePoint = decimal ? Number.parseInt(decimal, 10) : Number.parseInt(hex, 16);
+		return codePoint > 0 && codePoint <= 0x10ffff ? String.fromCodePoint(codePoint) : entity;
+	});
 }
 
 function generateSEOIssues(pages: AnalyzedPage[]): ValidationIssue[] {
@@ -1142,7 +1365,7 @@ function generateSEOIssues(pages: AnalyzedPage[]): ValidationIssue[] {
 					recommendedLength: '30-60 characters'
 				}
 			});
-		} else if (seo.titleLength > 60) {
+		} else if (seo.titleLength > 60 && !hasTemplateTitleSuffix(seo.title)) {
 			seoIssues.push({
 				id: `title-too-long-${generatePageId(page.url)}`,
 				category: 'Content & Accessibility',
@@ -1185,7 +1408,7 @@ function generateSEOIssues(pages: AnalyzedPage[]): ValidationIssue[] {
 				severity: 'warning',
 				message: `"${pageName}" meta description is too short (${seo.metaDescriptionLength} characters)`,
 				description: 'Meta descriptions should be 150-160 characters for optimal search result display.',
-				howToFix: 'Expand the meta description to include more compelling details about the page',
+				howToFix: `Write a meta description of 150 to 160 characters. This one has ${seo.metaDescriptionLength}.`,
 				location: page.url,
 				details: {
 					page: pageName,
@@ -1202,7 +1425,7 @@ function generateSEOIssues(pages: AnalyzedPage[]): ValidationIssue[] {
 				severity: 'warning',
 				message: `"${pageName}" meta description is too long (${seo.metaDescriptionLength} characters)`,
 				description: 'Meta descriptions longer than 160 characters may be truncated in search results.',
-				howToFix: 'Shorten the meta description while maintaining key information',
+				howToFix: `Write a meta description of 150 to 160 characters. This one has ${seo.metaDescriptionLength}.`,
 				location: page.url,
 				details: {
 					page: pageName,
@@ -1210,6 +1433,25 @@ function generateSEOIssues(pages: AnalyzedPage[]): ValidationIssue[] {
 					currentLength: seo.metaDescriptionLength,
 					currentDescription: seo.metaDescription,
 					recommendedLength: '150-160 characters'
+				}
+			});
+		}
+
+		// WebP and AVIF Open Graph images do not show on every platform that reads the tag.
+		const ogImageFormat = unsupportedSocialImageFormat(seo.openGraph.image);
+		if (ogImageFormat) {
+			seoIssues.push({
+				id: `og-image-format-${generatePageId(page.url)}`,
+				category: 'Content & Accessibility',
+				severity: 'warning',
+				message: `"${pageName}" has an Open Graph image in ${ogImageFormat} format`,
+				description: 'Some social platforms and chat apps do not show WebP or AVIF link previews. JPEG and PNG show everywhere.',
+				howToFix: 'Use a JPEG or PNG file for the Open Graph image only. Keep WebP or AVIF for the images that show on the page. On a CMS template page, set one static JPEG or PNG, or add an image field that only the Open Graph image reads.',
+				location: page.url,
+				details: {
+					page: pageName,
+					url: page.url,
+					image: seo.openGraph.image
 				}
 			});
 		}
@@ -1234,6 +1476,20 @@ function generateSEOIssues(pages: AnalyzedPage[]): ValidationIssue[] {
 	});
 
 	return seoIssues;
+}
+
+/** "WebP" or "AVIF" when the image URL's path ends in that extension; null for every other URL. */
+export function unsupportedSocialImageFormat(imageUrl: string | null): 'WebP' | 'AVIF' | null {
+	if (!imageUrl) return null;
+	let path: string;
+	try {
+		path = new URL(imageUrl, 'https://placeholder.invalid').pathname.toLowerCase();
+	} catch {
+		return null;
+	}
+	if (path.endsWith('.webp')) return 'WebP';
+	if (path.endsWith('.avif')) return 'AVIF';
+	return null;
 }
 
 function isNoindexUtilityPage(url: string): boolean {

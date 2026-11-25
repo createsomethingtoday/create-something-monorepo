@@ -17,6 +17,7 @@ routes = [{ pattern = "id.createsomething.space", custom_domain = true }]
 PUBLIC_ENROLLMENT_ENABLED = "false"
 # GiGi-specific activation; does not open Private or other application admission.
 GIGI_ENROLLMENT_ENABLED = "false"
+A2A_ENROLLMENT_ENABLED = "false"
 # Separate policy activations require reviewed production approval, not deployment alone.
 VERIFIED_RECOVERY_ENABLED = "false"
 ENROLLMENT_INVITATIONS_ENABLED = "false"

@@ -110,7 +110,7 @@ test('bounded source window filters a page without losing its continuation or cl
     assert.deepEqual(value.records.map((row) => row.title), ['Inside']);
     assert.equal(value.nextCursor, 'another-page');
     assert.deepEqual(value.coverage, { scannedCount: 2, selectedCount: 1, excludedCount: 1, unknownDateCount: 0,
-      complete: false, dateFiltering: 'page-local', dateWindow: 'message-date-or-event-overlap' });
+      complete: false, pageSequenceComplete:false, providerDateWindow:false, calendarScope:undefined, continuousSync:false, dateFiltering: 'page-local', dateWindow: 'message-date-or-event-overlap' });
     assert.equal(requests, 1);
   } finally { await rm(root, { recursive: true }); }
 });
@@ -154,9 +154,9 @@ test('calendar windows include overlapping timed events, report all-day uncertai
     assert.equal(result.ok, true);
     if (!result.ok) return;
     const value = result.value as { records: Array<{ title: string; source: { calendarTiming: unknown } }>; coverage: Record<string, unknown> };
-    assert.deepEqual(value.records.map((row) => row.title), ['overlap']);
+    assert.deepEqual(value.records.map((row) => row.title), ['overlap', 'all-day']);
     assert.deepEqual(value.records[0]?.source.calendarTiming, { start: { dateTime: '2026-09-30T23:00:00Z', timeZone: 'UTC' }, end: { dateTime: '2026-10-01T01:00:00Z', timeZone: 'UTC' }, endExclusive: true });
-    assert.equal(value.coverage.unknownDateCount, 1);
+    assert.equal(value.coverage.unknownDateCount, 0);
     assert.equal(value.coverage.scannedCount, 3);
     const empty = await runOperation(request, { dataDir: root, fetch: async () => Response.json({ provider: 'googlecalendar', connectedAccountId: 'ca_123', nextCursor: 'more', records: [
       record('at-end', { dateTime: '2026-10-02T00:00:00Z' }, { dateTime: '2026-10-02T01:00:00Z' }),

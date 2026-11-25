@@ -1,8 +1,8 @@
 # @createsomething/canon-tokens
 
-**Framework-agnostic CSS design tokens** for dark-mode interfaces.
+**Framework-agnostic CSS design tokens** with a black default foundation and explicit light scopes.
 
-Golden ratio spacing, WCAG-compliant colors, glass effects, and more — as pure CSS custom properties.
+Shared semantic roles, readable typography, soft-square geometry and scoped palette boundaries as CSS custom properties. Contrast evidence is specific to the tested role pairs; it is not a blanket certification for arbitrary compositions.
 
 ## Installation
 
@@ -89,16 +89,18 @@ module.exports = {
 
 ### Colors
 
+These values describe the default black scope. Explicit light boundaries rebind the same roles; do not copy only part of a palette.
+
 | Token | Value | Use |
 |-------|-------|-----|
 | `--color-performance-bg-pure` | `#000000` | Page background |
-| `--color-performance-bg-elevated` | `#0a0a0a` | Slightly raised surfaces |
+| `--color-performance-bg-elevated` | `#111111` | Slightly raised surfaces |
 | `--color-performance-bg-surface` | `#111111` | Cards, modals |
 | `--color-performance-bg-subtle` | `#1a1a1a` | Subtle backgrounds |
-| `--color-performance-fg-primary` | `#ffffff` | Main content |
-| `--color-performance-fg-secondary` | `rgba(255,255,255,0.8)` | Supporting content |
-| `--color-performance-fg-tertiary` | `rgba(255,255,255,0.6)` | De-emphasized |
-| `--color-performance-fg-muted` | `rgba(255,255,255,0.46)` | Very subtle (WCAG AA) |
+| `--color-performance-fg-primary` | `#f2f2f2` | Main content |
+| `--color-performance-fg-secondary` | `#c7c7c7` | Supporting content |
+| `--color-performance-fg-tertiary` | `#aaaaaa` | De-emphasized |
+| `--color-performance-fg-muted` | `#aaaaaa` | Muted supporting text |
 
 ### Spacing (Golden Ratio)
 
@@ -122,30 +124,30 @@ Based on φ = 1.618:
 | `--text-performance-h2` | `clamp(1.2rem, 2vw + 0.5rem, 1.618rem)` | Section titles |
 | `--text-performance-body` | `1rem` | Body text |
 | `--text-performance-body-sm` | `0.913rem` | Small text |
-| `--text-performance-caption` | `0.833rem` | Captions |
+| `--text-performance-caption` | `0.875rem` | Captions |
 
 ### Border Radius
 
 | Token | Value | Use |
 |-------|-------|-----|
-| `--radius-performance-scale-sm` | `6px` | Small elements |
-| `--radius-performance-scale-md` | `8px` | Buttons, badges |
-| `--radius-performance-scale-lg` | `12px` | Cards, modals |
-| `--radius-performance-scale-xl` | `16px` | Large containers |
+| `--radius-performance-scale-sm` | `8px` | Small elements |
+| `--radius-performance-scale-md` | `12px` | Buttons, badges |
+| `--radius-performance-scale-lg` | `20px` | Cards, modals |
+| `--radius-performance-scale-xl` | `24px` | Large containers |
 | `--radius-performance-scale-full` | `9999px` | Pills, avatars |
 
 ### Animation
 
 | Token | Value | Use |
 |-------|-------|-----|
-| `--ease-performance-standard` | `cubic-bezier(0.4, 0.0, 0.2, 1)` | Most transitions |
-| `--duration-performance-micro` | `200ms` | Hover states |
-| `--duration-performance-standard` | `300ms` | Page transitions |
-| `--duration-performance-complex` | `500ms` | Multi-step |
+| `--ease-performance-standard` | `cubic-bezier(0.4, 0, 0.2, 1)` | Most transitions |
+| `--duration-performance-micro` | `150ms` | Hover states |
+| `--duration-performance-standard` | `220ms` | Page transitions |
+| `--duration-performance-complex` | `350ms` | Multi-step |
 
-### Glass Effects
+### Optional glass compatibility
 
-For frosted glass / glassmorphism:
+Ordinary interface surfaces are solid. These retained tokens support explicitly chosen glass effects; they do not define the default material:
 
 ```css
 .glass-card {
@@ -166,10 +168,10 @@ Apply `data-theme="light"` to enable light mode:
 
 ## Accessibility
 
-- All semantic colors are **WCAG AA compliant** (4.5:1+ contrast)
-- `--color-performance-fg-muted` at 46% opacity = 4.56:1 contrast ratio
-- High contrast mode support via `@media (prefers-contrast: more)`
-- Reduced motion support via `@media (prefers-reduced-motion)`
+- Verify contrast for actual foreground/background pairs, states and owning palettes. A semantic token name does not establish conformance.
+- Preserve readable text, visible focus and meaningful control boundaries. Subtle colors and separator borders are not general-purpose control or text roles.
+- Inspect `prefers-contrast: more` and forced-colors in the consuming surface.
+- Honor `prefers-reduced-motion: reduce` while retaining meaning and available actions.
 
 ## Philosophy
 
@@ -179,12 +181,12 @@ Canon tokens encode design decisions, not just values:
 
 - **Golden ratio** creates natural visual harmony
 - **Semantic naming** tells you what tokens are for
-- **WCAG compliance** is built-in, not bolted-on
-- **Dark-first** because most developer tools are dark
+- **Accessible composition** requires correct roles, interactions and review of the actual output
+- **Black foundation** preserves CREATE SOMETHING's measured identity, with explicit light work surfaces
 
 ## Full Token Reference
 
-See [tokens.css](./tokens.css) for the complete 750+ line reference with mathematical derivations.
+See [tokens.css](./tokens.css) for the complete source, scoped palettes and compatibility aliases.
 
 ## Related
 
@@ -205,3 +207,9 @@ See [tokens.css](./tokens.css) for the complete 750+ line reference with mathema
 ## License
 
 MIT
+
+## Approachable canonical foundation
+
+The canonical default is black: black canvas, neutral raised surfaces and clear light actions. Existing CSS variable names remain public. Use `data-theme="light"` or `.theme-light` for an explicit light work surface, and `data-theme="dark"`/`.theme-dark` to restore the black foundation inside it. `.cs-workspace` retains its explicit dark contract. Theme boundaries rebind derived state and legacy aliases, so nested scopes resolve against their own palette.
+
+CSS is generated byte-for-byte from Canon `src/lib/styles/tokens.css`. SCSS keeps named variables and emits the same complete CSS boundary contract. JSON retains existing shapes plus `performanceContract` and `foundationThemes`; the latter include complete light/dark declarations. Generate with `node packages/canon/scripts/generate-foundation-artifacts.mjs` from the monorepo root. That command writes only Canon and this portable package, never consumer source.

@@ -516,8 +516,12 @@ function validateGsapUsage(html, pageUrl, customPatterns = []) {
     /documentElement[\s\S]*w-mod-|w-mod-[\s\S]*documentElement/i,
     // Simple w-mod signature — this string only appears in Webflow's default script
     /w-mod-/,
-    /var Webflow = Webflow \|\| \[\];/,
-    // Common legitimate scripts
+    // A creator script that only calls Webflow.push( or Webflow.require( is not a
+    // platform script. Those strings used to sit in this list, so any script that
+    // wrapped itself in Webflow.push skipped every check below (a template, 2026-11-16:
+    // a 39KB site script passed with 0 findings). localStorage calls and a
+    // document.createElement("script") loader were in the list too. All of them now
+    // go through the GSAP and security checks like any other script.
     /WebFont\.load\(/,
     // WebFont loading
     /window\.__WEBFLOW_CURRENCY_SETTINGS =/,
@@ -526,17 +530,6 @@ function validateGsapUsage(html, pageUrl, customPatterns = []) {
     // URL-encoded HTML (often in Webflow commerce)
     /\(function\(e\)\{var s=\{r:\[\]\};e\.wf=\{r:s\.r,ready:/,
     // Webflow ready function pattern
-    /Webflow\.require\(/,
-    // Webflow require calls
-    /Webflow\.push\(/,
-    // Webflow push calls
-    // Third-party integrations
-    /localStorage\.removeItem\(/,
-    // Local storage operations
-    /localStorage\.getItem\(/,
-    // Local storage read
-    /localStorage\.setItem\(/,
-    // Local storage write
     /intellimize/,
     // Intellimize integration
     /\.anti-flicker/,
@@ -570,11 +563,8 @@ function validateGsapUsage(html, pageUrl, customPatterns = []) {
     // Webflow password page handlers
     /_handlePasswordPageOnload/,
     // Password page handler function
-    /w-password-page/,
+    /w-password-page/
     // Password page class
-    // Common script patterns
-    /document\.createElement\("script"\)/
-    // Script loading pattern
   ];
   const results = {
     url: pageUrl,
@@ -674,7 +664,8 @@ function validateGsapUsage(html, pageUrl, customPatterns = []) {
       return;
     }
     const hasCustomAnimation = customAnimationPatterns.some((pattern) => testPattern(pattern, script));
-    const hasAnyGsap = /gsap|ScrollTrigger|SplitText|timeline|TweenMax|TweenLite/i.test(script);
+    // The bare word "timeline" is not GSAP: a ".timeline" class name used to switch this check off.
+    const hasAnyGsap = /gsap|ScrollTrigger|SplitText|TweenMax|TweenLite/i.test(script);
     if (hasCustomAnimation && !hasAnyGsap) {
       const matchedPatterns = customAnimationPatterns.filter((pattern) => testPattern(pattern, script)).map((pattern) => pattern.source.substring(0, 50) + "...");
       results.flaggedCode.push({
@@ -781,7 +772,8 @@ function validateGsapUsage(html, pageUrl, customPatterns = []) {
         results.flaggedCode.push({
           scriptIndex: index,
           message: "Mixed GSAP usage with unapproved code",
-          flaggedCode: unacceptedCode
+          flaggedCode: unacceptedCode,
+          guidance: describeUnapprovedGsapScript(script)
         });
       }
     } else {
@@ -1054,6 +1046,207 @@ var NON_GSAP_BEHAVIOR_PATTERN = new RegExp([
   String.raw`\.(?:animate|getAnimations)\s*\(|\bnew\s+(?:Animation|KeyframeEffect)\b`,
   String.raw`\.content\b`
 ].join("|"));
+// Why a script with GSAP in it was still flagged, in words a creator can act
+// on: what the script does besides GSAP, the first line that does it, and the
+// Designer or GSAP way to get the same result. Advisory only: it never changes
+// whether a script passes.
+var GSAP_GUIDANCE_RULES = [
+  {
+    id: "markup",
+    pattern: /createElement\s*\(|\.(?:innerHTML|outerHTML)\s*\+?=(?!=)|insertAdjacent(?:HTML|Element|Text)\s*\(|document\.write(?:ln)?\s*\(/,
+    reason: "It creates or writes HTML.",
+    fix: "Build the elements in the Designer and animate them with GSAP."
+  },
+  {
+    id: "network-or-storage",
+    pattern: /\bfetch\s*\(|XMLHttpRequest|sendBeacon|WebSocket|EventSource|localStorage|sessionStorage|indexedDB|document\.cookie/,
+    reason: "It uses the network or browser storage.",
+    fix: "Remove it. Custom code in a template can only animate with GSAP."
+  },
+  {
+    id: "timer",
+    pattern: /\bset(?:Interval|Timeout)\s*\(|requestAnimationFrame/,
+    reason: "It uses a timer.",
+    fix: "Use a GSAP timeline, a tween delay, or gsap.delayedCall."
+  },
+  {
+    id: "text-write",
+    pattern: /\.(?:textContent|innerText)\s*\+?=(?!=)/,
+    reason: "It writes text into the page.",
+    fix: "Let GSAP write the value. For a counter, tween textContent and round it with snap: gsap.from(el, { textContent: 0, snap: { textContent: 1 } })."
+  },
+  {
+    id: "style-write",
+    pattern: /\.style\.[\w$]+\s*\+?=(?!=)|\.style\[|\.style\.(?:setProperty|cssText)|setAttribute\s*\(\s*['"]style['"]|removeAttribute\s*\(\s*['"]style['"]/,
+    reason: "It sets styles directly.",
+    fix: "Set the style in the Designer (Style panel, or Custom properties for CSS that has no control), or use gsap.set and clearProps."
+  },
+  {
+    id: "class-change",
+    pattern: /classList\.(?:add|remove|toggle|replace)\s*\(|\.className\s*\+?=(?!=)/,
+    reason: "It changes classes.",
+    fix: "Animate the change with a GSAP tween, or use a Set action in Interactions with GSAP."
+  },
+  {
+    id: "attribute-write",
+    pattern: /(?:set|remove|toggle)Attribute\s*\(\s*(?!['"]style['"])|\.dataset\.[\w$]+\s*=(?!=)|\.dataset\[/,
+    reason: "It sets attributes.",
+    fix: "Use a native Webflow element for this state, or Interactions with GSAP."
+  },
+  {
+    id: "url-write",
+    pattern: /\.(?:src|href|srcdoc|action)\s*\+?=(?!=)|\blocation\b/,
+    reason: "It changes a link, a source, or the page address.",
+    fix: "Set links and sources in the Designer."
+  },
+  {
+    id: "non-gsap-animation",
+    pattern: /\.(?:animate|getAnimations)\s*\(|\bnew\s+(?:Animation|KeyframeEffect)\b/,
+    reason: "It animates without GSAP.",
+    fix: "Use a GSAP tween or Interactions with GSAP."
+  }
+];
+var GSAP_GUIDANCE_NOT_STATIC_PATTERN = /\bgsap\.(?:to|from|fromTo|timeline|ticker|matchMedia|context|delayedCall|quickTo|quickSetter)\b|ScrollTrigger|Observer\b|matchMedia|addEventListener\s*\(\s*['"](?!DOMContentLoaded['"]|load['"])|\.on[a-z]+\s*=(?!=)/;
+var GSAP_GUIDANCE_LINE_MAX = 140;
+var GSAP_GUIDANCE_MAX = 4;
+// The lines of a script without its comments, each as { text, match }:
+// `text` is the line as written (quoted back to the creator) and `match` is
+// the same line with the contents of string and template literals blanked, so
+// a rule never fires on words inside a message or a code example. Short
+// identifier-like literals ('style', 'resize', 'aria-expanded') are kept in
+// `match` because rules read them as arguments. Used for guidance only, never
+// for the pass or fail decision; a regex literal that contains a quote or a
+// comment marker can be misread.
+function executableLines(script) {
+  const source = String(script || "");
+  let text = "";
+  let match = "";
+  let literal = "";
+  let state = "code";
+  // Open template interpolations: the brace depth inside each \`${ ... }\`.
+  const interpolations = [];
+  const flushLiteral = () => {
+    match += /^[\w-]*$/.test(literal) ? literal : literal.replace(/[^\n]/g, " ");
+    literal = "";
+  };
+  const closeLiteral = () => {
+    flushLiteral();
+    state = "code";
+  };
+  for (let index = 0; index < source.length; index++) {
+    const char = source[index];
+    const next = source[index + 1];
+    if (state === "line-comment") {
+      if (char === "\n") {
+        state = "code";
+        text += char;
+        match += char;
+      }
+      continue;
+    }
+    if (state === "block-comment") {
+      if (char === "*" && next === "/") {
+        state = "code";
+        text += " ";
+        match += " ";
+        index++;
+      } else if (char === "\n") {
+        text += char;
+        match += char;
+      }
+      continue;
+    }
+    if (state === "code") {
+      if (char === "/" && next === "/") {
+        state = "line-comment";
+        index++;
+        continue;
+      }
+      if (char === "/" && next === "*") {
+        state = "block-comment";
+        index++;
+        continue;
+      }
+      if (interpolations.length > 0) {
+        if (char === "{") interpolations[interpolations.length - 1]++;
+        if (char === "}") {
+          if (interpolations[interpolations.length - 1] === 0) {
+            // End of the interpolation: back to the template's text.
+            interpolations.pop();
+            state = "`";
+            text += char;
+            match += char;
+            continue;
+          }
+          interpolations[interpolations.length - 1]--;
+        }
+      }
+      if (char === "'" || char === '"' || char === "`") state = char;
+      text += char;
+      match += char;
+      continue;
+    }
+    // Inside a string or template literal, up to its closing quote.
+    text += char;
+    if (char === "\\" && next !== undefined) {
+      text += next;
+      literal += "  ";
+      index++;
+    } else if (state === "`" && char === "$" && next === "{") {
+      // Code inside a template interpolation is executable: read it as code.
+      flushLiteral();
+      text += next;
+      match += "${";
+      index++;
+      interpolations.push(0);
+      state = "code";
+    } else if (char === state) {
+      closeLiteral();
+      match += char;
+    } else if (char === "\n" && state !== "`") {
+      closeLiteral();
+      match += char;
+    } else {
+      literal += char;
+    }
+  }
+  if (literal) closeLiteral();
+  const textLines = text.split("\n");
+  const matchLines = match.split("\n");
+  return textLines.map((line, index) => ({ text: line.trim(), match: (matchLines[index] || "").trim() })).filter((line) => line.match);
+}
+__name(executableLines, "executableLines");
+function describeUnapprovedGsapScript(script) {
+  const lines = executableLines(script);
+  const guidance = [];
+  for (const rule of GSAP_GUIDANCE_RULES) {
+    const line = lines.find((candidate) => rule.pattern.test(candidate.match));
+    if (!line) continue;
+    guidance.push({ id: rule.id, reason: rule.reason, fix: rule.fix, line: truncateScript(line.text, GSAP_GUIDANCE_LINE_MAX) });
+    if (guidance.length >= GSAP_GUIDANCE_MAX) return guidance;
+  }
+  // A lone gsap.set that runs once at load has no motion, so the Designer can
+  // hold the same style. A set that can run again (on resize, pointer events,
+  // the ticker, an observer or a media query) is behavior, not a static style.
+  const staticLine = lines.find((candidate) => /\bgsap\.set\s*\(/.test(candidate.match));
+  if (staticLine && !lines.some((candidate) => GSAP_GUIDANCE_NOT_STATIC_PATTERN.test(candidate.match))) {
+    guidance.push({
+      id: "static-style",
+      reason: "It sets a style one time, with no motion.",
+      fix: "Set the style in the Designer (Style panel, or Custom properties for CSS that has no control). No script is needed.",
+      line: truncateScript(staticLine.text, GSAP_GUIDANCE_LINE_MAX)
+    });
+  }
+  if (guidance.length === 0) {
+    guidance.push({
+      id: "unrecognized",
+      reason: "It contains code that the check does not recognize as GSAP.",
+      fix: "Keep only GSAP calls and the element lookups they need, and use fixed values in tweens. Or build the effect with Interactions with GSAP."
+    });
+  }
+  return guidance;
+}
+__name(describeUnapprovedGsapScript, "describeUnapprovedGsapScript");
 var GSAP_WIRING_LISTENER_EVENTS = "DOMContentLoaded|load|click|resize|mouseenter|mouseleave|pointerenter|pointerleave";
 var GSAP_WIRING_CALLBACK = String.raw`(?:\(?[\w$\s,]*\)?\s*=>|function\s*[\w$]*\s*\([\w$\s,]*\))`;
 // Tween vars GSAP treats as data. A key outside this list could name a
@@ -1305,15 +1498,36 @@ function isCommonStylingCSS(css) {
     /color\s*:\s*inherit\s*[;!]/i
   ];
   const cleanCSS = css.replace(/\/\*[\s\S]*?\*\//g, "").replace(/\s+/g, " ").trim();
-  const onlyHarmlessPatterns = harmlessPatterns.some((pattern) => pattern.test(cleanCSS));
-  if (onlyHarmlessPatterns) return true;
-  if (cleanCSS.length < 200) {
-    const fontSmoothingOnly = /^[^{}]*\{[^{}]*(-webkit-font-smoothing|-moz-osx-font-smoothing)[^{}]*\}[^{}]*$/i.test(cleanCSS);
-    if (fontSmoothingOnly) return true;
-  }
-  return false;
+  // Every rule must be one of the allowed kinds. One allowed line used to pass the
+  // whole block, so a full custom stylesheet passed when it held a font-smoothing rule.
+  const rules = splitTopLevelCssRules(cleanCSS);
+  return rules.length > 0 && rules.every((rule) => harmlessPatterns.some((pattern) => pattern.test(rule)));
 }
 __name(isCommonStylingCSS, "isCommonStylingCSS");
+// Top-level rules of a stylesheet. An at-rule with a block (@media) is one rule.
+function splitTopLevelCssRules(css) {
+  const rules = [];
+  let depth = 0;
+  let start = 0;
+  for (let index = 0; index < css.length; index += 1) {
+    const char = css[index];
+    if (char === "{") depth += 1;
+    else if (char === "}") {
+      depth = Math.max(0, depth - 1);
+      if (depth === 0) {
+        rules.push(css.slice(start, index + 1).trim());
+        start = index + 1;
+      }
+    } else if (char === ";" && depth === 0) {
+      rules.push(css.slice(start, index + 1).trim());
+      start = index + 1;
+    }
+  }
+  const rest = css.slice(start).trim();
+  if (rest) rules.push(rest);
+  return rules.filter(Boolean);
+}
+__name(splitTopLevelCssRules, "splitTopLevelCssRules");
 // Keyboard listeners are listed under "Keylogging" in securityRiskPatterns, but a
 // keylogger reads whatever key was pressed and stores or transmits it. Handlers
 // that only dispatch on specific navigation keys (Escape closes a menu, Enter or
@@ -1917,8 +2131,7 @@ var ALLOWED_ORIGINS = [
   "https://wf-form-validation-with-airtable-databa.webflow.io",
   "https://webflow.com",
   "https://www.webflow.com",
-  "https://gsap-validator.vercel.app",
-  "https://wf.createsomething.io"
+  "https://gsap-validator.vercel.app"
 ];
 var ALLOWED_ORIGIN_PATTERNS = [
   /^https:\/\/([a-z0-9-]+\.)*webflow\.com$/i,

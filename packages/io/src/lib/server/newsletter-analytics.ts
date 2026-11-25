@@ -129,3 +129,46 @@ export function mergeNewsletterDeliveryEntries(rows: NewsletterAudienceDeliveryR
   }
   return [...entries.values()];
 }
+
+
+/** Reuse configured campaign and resource-use rules on already filtered public sessions. */
+export function summarizeNewsletterSessions(
+  events: Array<{
+    session_id: string;
+    action: string;
+    created_at: string;
+    campaign: string | null;
+    measurement: string | null;
+  }>,
+  window: { start: string; end: string }
+) {
+  const landings = new Map<string, Map<string, number>>();
+  for (const e of events) {
+    if (
+      e.action !== 'page_view' ||
+      e.measurement !== 'first-party-v1' ||
+      !NEWSLETTER_CAMPAIGNS.some((id) => id === e.campaign?.replaceAll('_', '-')) ||
+      e.created_at < window.start ||
+      e.created_at >= window.end
+    )
+      continue;
+    const time = Date.parse(e.created_at);
+    const campaign = e.campaign!.replaceAll('_', '-');
+    const sessionLandings = landings.get(e.session_id) ?? new Map<string, number>();
+    sessionLandings.set(campaign, Math.min(sessionLandings.get(campaign) ?? Infinity, time));
+    landings.set(e.session_id, sessionLandings);
+  }
+  const used = new Set<string>();
+  for (const e of events) {
+    const starts = landings.get(e.session_id);
+    const time = Date.parse(e.created_at);
+    if (
+      starts !== undefined &&
+      ['content_copy', 'content_link_click'].includes(e.action) &&
+      [...starts.values()].some(start => time >= start && time <= start + 30 * 60000) &&
+      e.created_at < window.end
+    )
+      used.add(e.session_id);
+  }
+  return { landings: landings.size, resourceUse: used.size };
+}

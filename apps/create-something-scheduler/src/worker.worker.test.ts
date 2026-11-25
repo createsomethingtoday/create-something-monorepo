@@ -53,6 +53,14 @@ describe('scheduler Worker transport', () => {
     expect(pageHtml).toContain("notifyParent('booking_completed'");
     expect(pageHtml).not.toContain('must-not-cross@example.com');
 
+    const previewOrigin = 'https://create-something-agency-staging.webflow.io';
+    expect(page.headers.get('content-security-policy')).not.toContain(previewOrigin);
+    const embedded = await SELF.fetch('https://scheduler.local/createsomething/together?embed=editorial');
+    expect(embedded.headers.get('content-security-policy')).toContain(
+      'frame-ancestors https://createsomething.agency ' + previewOrigin
+    );
+    expect(await embedded.text()).toContain('data-scheduler-embed="editorial"');
+
     const integrationPage = await SELF.fetch(
       'https://scheduler.local/createsomething/together?intent=compiler-integration'
     );
@@ -144,7 +152,7 @@ describe('scheduler Worker transport', () => {
         eventCalendarId: 'micah@createsomething.io'
       });
     });
-    const provider = vi.spyOn(globalThis, 'fetch');
+    const provider = vi.spyOn(globalThis, 'fetch').mockResolvedValue(Response.json({ calendars: {} }));
 
     const readiness = await SELF.fetch('https://scheduler.local/ready');
     expect(readiness.status).toBe(503);
@@ -163,7 +171,7 @@ describe('scheduler Worker transport', () => {
       reason: 'webflow_projection_missing',
       slots: []
     });
-    expect(provider).not.toHaveBeenCalled();
+    expect(provider).toHaveBeenCalledTimes(1); // Readiness probes required calendar access.
   });
 
   it('discovers the direct Google calendar independently from the Webflow projection', async () => {
@@ -210,7 +218,7 @@ describe('scheduler Worker transport', () => {
     expect(response.status).toBe(200);
     expect(await response.json()).toEqual({
       status: 'available',
-      selectedCalendarIds: ['micah@createsomething.io'],
+      selectedCalendarIds: ['micah@createsomething.io', 'mj@halfdozen.co'],
       eventCalendarId: 'micah@createsomething.io'
     });
   });
@@ -236,7 +244,7 @@ describe('scheduler Worker transport', () => {
     vi.spyOn(globalThis, 'fetch').mockImplementation(async (input) => {
       expect(String(input)).toBe('https://www.googleapis.com/calendar/v3/freeBusy');
       return Response.json({
-        calendars: { 'micah@createsomething.io': { busy: [] } }
+        calendars: { 'micah@createsomething.io': { busy: [] }, 'mj@halfdozen.co': { busy: [] } }
       });
     });
 
@@ -335,7 +343,7 @@ describe('scheduler Worker transport', () => {
       expect(String(input)).toBe('https://www.googleapis.com/calendar/v3/freeBusy');
       return Response.json({
         calendars: {
-          'micah@createsomething.io': { busy: [] }
+          'micah@createsomething.io': { busy: [] }, 'mj@halfdozen.co': { busy: [] }
         }
       });
     });
@@ -458,7 +466,7 @@ describe('scheduler Worker transport', () => {
         freeBusyCalls += 1;
         return Response.json({
           calendars: {
-            'micah@createsomething.io': { busy: [] }
+            'micah@createsomething.io': { busy: [] }, 'mj@halfdozen.co': { busy: [] }
           }
         });
       }
@@ -658,7 +666,7 @@ describe('scheduler Worker transport', () => {
         text: expect.stringContaining('Friday, July 17, 2037')
       })
     ]);
-    expect(freeBusyCalls).toBe(3);
+    expect(freeBusyCalls).toBe(5);
   });
 
   it('enforces a durable fixed-window rate limit without storing the raw subject', async () => {

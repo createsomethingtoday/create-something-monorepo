@@ -50,6 +50,8 @@
 	}: Props = $props();
 
 	let wrapperRef: HTMLDivElement;
+	let triggerRef:HTMLButtonElement;
+	const menuId=$props.id();
 	let menuRef: HTMLDivElement | undefined = $state();
 	let focusedIndex = $state(-1);
 
@@ -65,7 +67,8 @@
 		}
 	}
 
-	function close() {
+	function close(restoreFocus=false) {
+		if(restoreFocus)triggerRef?.focus();
 		open = false;
 		focusedIndex = -1;
 		onclose?.();
@@ -74,7 +77,7 @@
 	function selectItem(item: MenuItem) {
 		if (!item.disabled) {
 			onselect?.(item.id);
-			close();
+			close(true);
 		}
 	}
 
@@ -87,6 +90,7 @@
 			return;
 		}
 
+		if (!enabledItems.length && !['Escape','Tab'].includes(event.key)) return;
 		switch (event.key) {
 			case 'ArrowDown':
 				event.preventDefault();
@@ -113,7 +117,7 @@
 				break;
 			case 'Escape':
 				event.preventDefault();
-				close();
+				close(true);
 				break;
 			case 'Tab':
 				close();
@@ -149,6 +153,8 @@
 		<button
 			type="button"
 			class="dropdown-trigger"
+			bind:this={triggerRef}
+			aria-controls={open ? menuId : undefined}
 			aria-haspopup="menu"
 			aria-expanded={open}
 			onclick={toggle}
@@ -161,6 +167,8 @@
 			<div
 				class="dropdown-menu dropdown-{position}"
 				role="menu"
+				id={menuId}
+				aria-label="Actions"
 				bind:this={menuRef}
 				tabindex={0}
 				onkeydown={handleKeyDown}
@@ -199,6 +207,7 @@
 	}
 
 	.dropdown-trigger {
+		min-height:44px;min-width:44px;color:var(--color-performance-ink);font:inherit;
 		display: inline-flex;
 		align-items: center;
 		background: none;
@@ -208,6 +217,7 @@
 	}
 
 	.dropdown-menu {
+		background:var(--color-performance-panel);color:var(--color-performance-ink);border:1px solid var(--color-performance-line);
 		position: absolute;
 		z-index: var(--z-performance-dropdown, 20);
 		min-width: 160px;
@@ -258,6 +268,7 @@
 
 	/* Menu item */
 	.dropdown-item {
+		min-height:44px;
 		display: flex;
 		align-items: center;
 		gap: var(--space-performance-sm);

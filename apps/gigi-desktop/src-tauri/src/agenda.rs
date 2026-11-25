@@ -116,7 +116,7 @@ fn range(db:&Connection,wid:&str,today:&str,time_zone:&str,kind:Option<&str>,off
         for row in rows {
             let (id, title, status, fields, source) = row.map_err(|e| e.to_string())?;
             if status.as_deref().is_some_and(|s| {
-                ["done", "complete", "completed", "cancelled", "canceled"]
+                ["done", "complete", "completed", "cancelled", "canceled", "superseded"]
                     .contains(&s.trim().to_lowercase().as_str())
             }) {
                 continue;

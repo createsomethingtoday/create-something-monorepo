@@ -315,7 +315,7 @@ function SourceImport({ provider, account, draft = {}, run, busy, ctx }) {
   };
   return (
     <VStack gap={4} aria-label={`${provider === 'gmail' ? 'Gmail' : 'Calendar'} read and import`}>
-      <HStack gap={4}>
+      <HStack gap={4} wrap="wrap" className="source-date-bounds">
         <Field
           id={`source-${provider}-from`}
           label="From (UTC)"
@@ -341,9 +341,10 @@ function SourceImport({ provider, account, draft = {}, run, busy, ctx }) {
         muted(
           `Continuing the saved selection exactly: ${current.selection?.from || 'no lower date bound'} to ${current.selection?.to || 'no upper date bound'}. Editing a date starts a new scan.`
         )}
-      {muted(
-        `Dates apply within scanned pages, not a complete source search. ${provider === 'googlecalendar' ? 'Primary calendar only; all-day events without a clear timezone may be excluded.' : 'Sender, subject, date and a short snippet; full email and attachments are not read.'} Each preview scans one bounded page.`
-      )}
+      <Text type="supporting" color="secondary">{provider === 'googlecalendar' ? 'Primary calendar · selected UTC window · manual fetch' : 'One page of Gmail summaries · manual fetch'}</Text>
+      <Disclosure title="What this preview reads">
+        {muted(provider === 'googlecalendar' ? 'Selected dates are sent on every page. Date-only events use the calendar timezone when known. Each preview scans one bounded page, not continuous sync.' : 'Dates filter scanned pages, not a complete mailbox search. Sender, subject, date and a short snippet only; full email and attachments are not read.')}
+      </Disclosure>
       <HStack gap={2} wrap="wrap">
         <B data-source-preview={provider} disabled={Boolean(busy || running)}>
           {['preview', 'fresh'].includes(busy)
@@ -361,8 +362,9 @@ function SourceImport({ provider, account, draft = {}, run, busy, ctx }) {
         )}
       </HStack>
       {preview && (
-        <VStack gap={3} aria-label="Source preview">
+        <VStack gap={2} aria-label="Source preview" className="source-preview-review">
           <Heading level={3}>Review before importing</Heading>
+          {muted(`Source fetched: ${preview.fetchedAt ? new Date(preview.fetchedAt * 1000).toLocaleString() : 'Not recorded'}`)}
           <Text>
             {preview.scannedCount} scanned · {preview.selectedCount} selected · {preview.newCount}{' '}
             new · {preview.existingCount} existing.
@@ -371,11 +373,11 @@ function SourceImport({ provider, account, draft = {}, run, busy, ctx }) {
             muted(
               `${preview.excludedCount || 0} outside selection · ${preview.unknownDateCount || 0} without a usable date.`
             )}
-          {muted(
+          <Text weight="semibold" className="source-coverage">{
             preview.coverage === 'complete'
-              ? 'Reached the end of this source scan.'
-              : 'More source pages may remain. This preview does not establish complete date coverage.'
-          )}
+              ? 'Scan complete · reached the end of this source.' : preview.coverage === 'uncertain' ? 'Coverage incomplete · some dates are unknown.'
+              : 'Partial coverage · more source pages may remain.'
+          }</Text>
           {preview.records?.length ? (
             <ul>
               {preview.records.slice(0, 25).map((r, i) => (
@@ -433,6 +435,7 @@ function SourceImport({ provider, account, draft = {}, run, busy, ctx }) {
                   ? 'More source pages remain; preview the next page when needed.'
                   : 'No next page recorded for this import.'
           )}
+          {muted(`Source fetch: ${receipt.fetchedAt ? new Date(receipt.fetchedAt * 1000).toLocaleString() : 'Not recorded'} · Import finished: ${receipt.finishedAt ? new Date(receipt.finishedAt * 1000).toLocaleString() : running ? 'Still running' : 'Not recorded'}. Coverage: ${receipt.coverage || 'Not recorded'}.`)}
           {receipt.guidance && muted(receipt.guidance)}
           {receipt.recoveredAfterInterruption &&
             muted(
@@ -491,7 +494,7 @@ function SourceCard({ ctx, provider, title }) {
             : 'Google account label is unavailable. Check status again to confirm the account; your GiGi sign-in email does not identify this Google source.'
         )}
       {muted(
-        `${provider === 'gmail' ? 'Turn a booking email into a follow-up task or gig. Each import reads up to 2 messages: sender, subject, date and a short snippet.' : 'Turn an event into a local gig or preparation task. Each import reads up to 10 events from the primary calendar, including dates and event details.'} Connecting does not import records.`
+        `${provider === 'gmail' ? 'Preview up to 2 email summaries per page.' : 'Preview up to 10 primary-calendar events per page.'} Connecting does not import records.`
       )}
       <HStack gap={2} wrap="wrap">
         <B data-source-refresh={provider}>Check status</B>
@@ -534,9 +537,11 @@ function SourceCard({ ctx, provider, title }) {
           <Text>{sourceErrorMessage(source.detail) || source.detail}</Text>
         </Disclosure>
       )}
+      <Disclosure title="Turn imported records into work">
       {muted(
         `After importing, open a record in ${provider === 'gmail' ? 'Interactions' : 'Schedule'} and choose Create task from source or Create gig from source. Review before saving; the new record stays linked to its source.`
       )}
+      </Disclosure>
       {connected && account && (
         <SourceImport
           ctx={ctx}

@@ -1,6 +1,6 @@
 # Bettermode Marketplace Creator MCP
 
-Read-only MCP server exposing Bettermode + Airtable + community queue helpers to a Dify agent (or any MCP client) drafting admin replies for the Webflow Community **Marketplace Creators** space.
+MCP server exposing Bettermode + Airtable + response-queue helpers to an agent (any MCP client) drafting admin replies for the Webflow Community **Marketplace Creators** space. Bettermode and Airtable are read-only. Queue writes are internal: drafts and dismissals. No tool posts to the community.
 
 | | |
 |---|---|
@@ -14,12 +14,23 @@ Read-only MCP server exposing Bettermode + Airtable + community queue helpers to
 
 | Tool | Returns | Used to |
 |---|---|---|
-| `fetch_post_thread(post_id)` | post + reply thread + author | Ground the draft in actual content |
+| `fetch_post_thread(post_id)` | full post + replies and nested replies (oldest first) + author | Ground the draft in actual content |
 | `get_creator_context(email)` | Airtable Creator + linked Assets | Reference templates the creator owns |
 | `list_recent_approved_drafts(limit)` | Recent admin replies that were sent | Few-shot voice examples |
 | `get_draft_status(post_id)` | Existing draft status if any | Avoid double-drafting on retries |
+| `list_response_queue(limit)` | Threads where a creator spoke last, longest wait first, each with its draft and any drafting error | See what needs a reply |
+| `save_draft(post_id, draft, reasoning?)` | `{ ok, queue_id }` | Store a draft for the admin to review and send. Replaces the current draft. |
+| `dismiss_queue_item(post_id, reason)` | `{ ok }` | Close an item that needs no reply. A creator message after the dismissal reopens it. |
+| `get_queue_health()` | Sweep and webhook times, item counts, open drafts, longest wait, sends in 7 days, items with an error | Check that the queue is working |
+| `list_queue_history(limit?)` | Closed items, newest first: sent, answered in Bettermode, dismissed (with reason), removed | See what was handled |
+
+A typical agent pass: `list_response_queue` → `fetch_post_thread` and `get_creator_context` for each item → `save_draft` or `dismiss_queue_item`. The admin then sends from the post page in Bettermode.
 
 All tools return one `text` content block whose body is JSON.
+
+### Dashboard API (`QueueApi`)
+
+`worker/index.ts` also exports `QueueApi`, a named Worker entrypoint with no public URL: `listQueue`, `getThread`, `health`, `history`, `saveDraft`, `dismiss`, `sendDraft`. The Template Review MCP calls it through a service binding for its `template_review_community_*` tools, and that MCP decides who may write. `sendDraft` posts the reply through the agent Worker's `QueueAdmin` entrypoint (`CREATOR_AGENT` binding). No MCP tool here sends.
 
 ## Architecture
 
@@ -31,10 +42,10 @@ bettermode-creator-mcp.workers.dev (Streamable HTTP /mcp, SSE /sse)
    │
    ├─→ Bettermode GraphQL (NETWORK-context limitedToken from app creds)
    ├─→ Airtable REST (Creators table tbljt0plqxdMARZXb)
-   └─→ D1 create-something-db (community_signals + community_queue, READ-ONLY)
+   └─→ D1 create-something-db (community_signals + community_queue: read the queue, write drafts and dismissals)
 ```
 
-The MCP **never writes**. The agent worker (`apps/bettermode-marketplace-creator-agent`) owns webhook ingestion, draft persistence, dynamic-block rendering, and posting as the admin.
+The MCP **never posts to Bettermode**. The agent worker (`apps/bettermode-marketplace-creator-agent`) owns webhook ingestion, thread state, automatic drafts, dynamic-block rendering, and sending.
 
 ## Deploy
 

@@ -29,8 +29,8 @@
     content="noindex"
   /></svelte:head
 >
-<main id="main" tabindex="-1" class="form-page">
-  <p class="eyebrow">PRIVATE / BUILDER ACCESS</p>
+<main id="main" tabindex="-1" class="form-page operator-surface">
+  <p class="eyebrow">Private / builder access</p>
   <h1>Welcome<br /><SerifPhrase text="back." /></h1>
   <p>
     Sign in to your CREATE SOMETHING account to open your collection or manage your network. Private

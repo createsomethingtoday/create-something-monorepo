@@ -25,16 +25,18 @@
 {#if $page.url.pathname === '/admin/login'}
 	<slot />
 {:else}
-	<div class="admin-layout">
+	<div class="admin-layout" class:newsletter-desk={$page.url.pathname === '/admin/newsletter'}
+		class:newsletter-report={$page.url.pathname.replace(/\/$/, '') === '/admin/newsletter-analytics'}>
 		<!-- Admin Navigation -->
-		<nav class="admin-nav">
+		<nav class="admin-nav" aria-label="Administration">
 			<div class="max-w-7xl mx-auto px-6">
-				<div class="flex items-center justify-between">
-					<div class="flex gap-6">
+				<div class="nav-toolbar flex items-center justify-between">
+					<div class="nav-items flex gap-6">
 						{#each navItems as item}
 							<a
 								href={item.href}
 								class="nav-link {$page.url.pathname === item.href ? 'active' : ''}"
+                aria-current={$page.url.pathname === item.href ? 'page' : undefined}
 							>
 								{item.label}
 							</a>
@@ -61,9 +63,32 @@
 {/if}
 
 <style>
-	:global(body) {
-		background: var(--color-performance-bg-pure);
-	}
+  .admin-layout.newsletter-desk {
+    background: white;
+    color: #0a0a0a;
+  }
+  .newsletter-desk .admin-nav {
+    background: white;
+    border-bottom: 1px solid #d1d1cb;
+  }
+  .newsletter-desk .nav-link,
+  .newsletter-desk .utility-link {
+    color: #545450;
+  }
+  .newsletter-desk .nav-link.active {
+    color: #0a0a0a;
+    border-bottom-color: #4a78ff;
+  }
+  .newsletter-desk .admin-content {
+    max-width: 88rem;
+    padding: 24px clamp(0px, 2vw, 32px);
+  }
+  .newsletter-desk .nav-link:focus-visible,
+  .newsletter-desk .utility-link:focus-visible {
+    outline: 3px solid #2349ac;
+    outline-offset: 3px;
+  }
+
 
 	.admin-layout {
 		min-height: 100vh;
@@ -104,9 +129,25 @@
 		color: var(--color-performance-fg-primary);
 	}
 
+	@media (max-width: 1024px) {
+		.nav-toolbar { flex-wrap: wrap; gap: var(--space-performance-sm); padding-block: var(--space-performance-sm); }
+		.nav-items { flex-wrap: wrap; gap: var(--space-performance-sm) var(--space-performance-md); }
+		.nav-link { min-height: 44px; display: inline-flex; align-items: center; padding: 0; font-size: var(--text-performance-body-sm); }
+		.utility-link { min-height: 44px; display: inline-flex; align-items: center; }
+	}
+
 	.admin-content {
 		max-width: 80rem;
 		margin: 0 auto;
 		padding: var(--space-performance-lg) var(--space-performance-md);
 	}
+  .newsletter-report {
+    --color-performance-bg-pure: oklch(98% 0.005 80.72);
+    --color-performance-bg-surface: oklch(98% 0.005 80.72);
+    --color-performance-fg-primary: oklch(26.45% 0 89.88);
+    --color-performance-fg-tertiary: #64615a;
+    font-family: "Newsletter Sans", Arial, sans-serif;
+  }
+  .newsletter-report .admin-nav { border-bottom: 1px solid #d9d5ce; }
+  .newsletter-report .admin-content { padding: 0; }
 </style>

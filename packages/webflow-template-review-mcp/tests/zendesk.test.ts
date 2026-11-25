@@ -423,6 +423,6 @@ test('getTicketSummary returns routing, external_id, and requester email', async
     fetchFn: async () => jsonResponse({ ticket: { id: 1200001, status: 'open', group_id: 1500002744702, brand_id: 35121420416531, tags: ['template_review_mcp_outbound'], external_id: 'template-review-mcp:recAssetZD:abc', requester_id: 555 }, users: [{ id: 555, email: 'creator@example.com' }, { id: 22, email: 'agent@webflow.com' }] }),
   });
   const summary = await client.getTicketSummary('1200001');
-  assert.deepEqual(summary, { ticketId: '1200001', status: 'open', groupId: 1500002744702, brandId: 35121420416531, tags: ['template_review_mcp_outbound'], externalId: 'template-review-mcp:recAssetZD:abc', requesterId: 555, requesterEmail: 'creator@example.com' });
+  assert.deepEqual(summary, { ticketId: '1200001', status: 'open', groupId: 1500002744702, brandId: 35121420416531, tags: ['template_review_mcp_outbound'], externalId: 'template-review-mcp:recAssetZD:abc', requesterId: 555, requesterEmail: 'creator@example.com', emailCcEmails: [] });
   await assert.rejects(client.getTicketSummary('abc'), (e: unknown) => (e as ZendeskClientError).code === 'INVALID_TICKET_ID');
 });

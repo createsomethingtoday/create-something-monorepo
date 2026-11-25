@@ -102,4 +102,27 @@
     color: var(--muted);
     font-size: 14px;
   }
+
+  .learning-overview {
+    background: var(--enlightr-muted);
+    padding: 24px;
+    border: 0;
+  }
+  .heading h2 {
+    font-family: var(--font-serif);
+    font-size: 32px;
+    font-weight: 400;
+  }
+  .resumes {
+    gap: 0;
+  }
+  .resumes a {
+    border: 0;
+    border-top: 1px solid #111;
+    background: transparent;
+    padding: 20px 0;
+  }
+  .resumes a:hover {
+    background: var(--enlightr-ai);
+  }
 </style>

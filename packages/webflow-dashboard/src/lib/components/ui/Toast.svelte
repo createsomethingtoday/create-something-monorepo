@@ -1,6 +1,7 @@
 <script lang="ts">
   import { toast } from '$lib/stores/toast';
   import { CheckCircle2, AlertCircle, AlertTriangle, Info, X } from 'lucide-svelte';
+  import { popIn, popOut } from '$lib/motion/actions';
 
   const iconComponents = {
     success: CheckCircle2,
@@ -16,6 +17,8 @@
       {@const IconComponent = iconComponents[item.type as keyof typeof iconComponents] || Info}
       <div
         class="toast {item.type}"
+        in:popIn={{ y: 16, scale: 0.96, origin: 'bottom right' }}
+        out:popOut={{ y: 8 }}
         role={item.type === 'error' ? 'alert' : 'status'}
         aria-live={item.type === 'error' ? 'assertive' : 'polite'}
         aria-atomic="true"
@@ -48,19 +51,7 @@
     gap: var(--space-sm);
     padding: var(--space-sm) var(--space-md);
     border-radius: var(--radius-lg);
-    animation: slideIn var(--duration-standard) var(--ease-standard);
     box-shadow: var(--shadow-lg);
-  }
-
-  @keyframes slideIn {
-    from {
-      opacity: 0;
-      transform: translateX(100%);
-    }
-    to {
-      opacity: 1;
-      transform: translateX(0);
-    }
   }
 
   .toast.success {

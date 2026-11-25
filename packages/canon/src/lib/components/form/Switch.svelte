@@ -42,7 +42,7 @@
 	}: Props = $props();
 
 	// Generate unique ID if not provided
-	const fallbackFieldId = `switch-${crypto.randomUUID().slice(0, 8)}`;
+	const fallbackFieldId = $props.id();
 	const fieldId = $derived(id || fallbackFieldId);
 	const descriptionId = $derived(`${fieldId}-description`);
 
@@ -127,9 +127,9 @@
 	.switch-track {
 		position: relative;
 		width: 44px;
-		height: 24px;
-		background: var(--color-performance-bg-subtle);
-		border: 2px solid var(--color-performance-border-default);
+		height: 44px;
+		background: transparent;
+		border: 0;
 		border-radius: var(--radius-performance-scale-full);
 		cursor: pointer;
 		flex-shrink: 0;
@@ -146,9 +146,13 @@
 		outline-offset: 2px;
 	}
 
-	.switch-track.checked {
-		background: var(--color-performance-fg-primary);
-		border-color: var(--color-performance-fg-primary);
+	.switch-track::before {
+        content:'';position:absolute;left:0;right:0;top:10px;height:24px;box-sizing:border-box;
+        background:var(--color-performance-bg-subtle);border:2px solid var(--color-performance-border-emphasis);border-radius:9999px;
+    }
+    .switch-track.checked::before {
+        background: var(--color-performance-fg-primary);
+        border-color: var(--color-performance-fg-primary);
 	}
 
 	.switch-track:disabled {
@@ -159,8 +163,8 @@
 	/* Thumb */
 	.switch-thumb {
 		position: absolute;
-		top: 2px;
-		left: 2px;
+		top: 14px;
+		left: 4px;
 		width: 16px;
 		height: 16px;
 		background: var(--color-performance-fg-muted);
@@ -169,16 +173,17 @@
 	}
 
 	.switch-track.checked .switch-thumb {
-		left: calc(100% - 18px);
+		left: calc(100% - 20px);
 		background: var(--color-performance-bg-pure);
 	}
 
 	/* Content area */
 	.switch-content {
+		justify-content:center;min-height:44px;
 		display: flex;
 		flex-direction: column;
 		gap: 2px;
-		padding-top: 2px; /* Align with switch */
+		padding-top: 14px; /* Align with switch */
 	}
 
 	/* Label */
@@ -204,17 +209,18 @@
 
 	/* Size variants */
 	.switch-sm .switch-track {
-		width: 36px;
-		height: 20px;
+		width: 44px;
+		height: 44px;
 	}
 
 	.switch-sm .switch-thumb {
+		top:16px;
 		width: 12px;
 		height: 12px;
 	}
 
 	.switch-sm .switch-track.checked .switch-thumb {
-		left: calc(100% - 14px);
+		left: calc(100% - 18px);
 	}
 
 	.switch-sm .switch-label {
@@ -223,19 +229,43 @@
 
 	.switch-lg .switch-track {
 		width: 52px;
-		height: 28px;
+		height: 44px;
 	}
 
 	.switch-lg .switch-thumb {
+		top:12px;
 		width: 20px;
 		height: 20px;
 	}
 
 	.switch-lg .switch-track.checked .switch-thumb {
-		left: calc(100% - 22px);
+		left: calc(100% - 24px);
 	}
 
 	.switch-lg .switch-label {
 		font-size: var(--text-performance-body-lg);
+	}
+
+	/* Preserve the thumb's position and boundary in the user's contrast palette. */
+	@media (forced-colors: active) {
+		.switch-track::before,
+		.switch-track.checked::before {
+			background: Canvas;
+			border-color: ButtonText;
+		}
+		.switch-thumb,
+		.switch-track.checked .switch-thumb {
+			box-sizing: border-box;
+			background: Canvas;
+			border: 2px solid ButtonText;
+		}
+		.switch-track:focus-visible { outline-color: Highlight; }
+		.switch-track:disabled { opacity: 1; }
+		.switch-track:disabled::before,
+		.switch-track:disabled .switch-thumb { border-color: GrayText; }
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		.switch-track, .switch-thumb { transition:none; }
 	}
 </style>

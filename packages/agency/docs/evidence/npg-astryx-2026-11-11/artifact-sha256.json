@@ -1,0 +1,29 @@
+{
+  "ui_framework": "Astryx0.7.14 React19",
+  "source_head_before_parent_integration": "5c0798c3e78c735aa08c431774f3c1e09e399460",
+  "source_changes_uncommitted": true,
+  "assets": [
+    {
+      "url": "/npg-chat/assets/main-B2uKRhwl.js",
+      "bytes": 847059,
+      "sha256": "0ce3b0fce25541716ad2025818bf1d0a35647334dbc9aaa0f646f541cc007ee4"
+    },
+    {
+      "url": "/npg-chat/assets/main-B8wNAXfF.css",
+      "bytes": 301845,
+      "sha256": "623d33d4cc35b3f07827b74326238a9f66be186bcd24bdfdf91ee2ca0c688881"
+    },
+    {
+      "url": "/npg-chat/assets/figtree-latin-wght-normal-D_ZTVpCC.woff2",
+      "bytes": 20156,
+      "sha256": "4ba7d3d096695818fe0686be4f1e82c6b05134e18a22260336130335027462dd"
+    },
+    {
+      "url": "/npg-chat/LICENSES.txt",
+      "bytes": 12261,
+      "sha256": "e74e86b83ca42767b3178ddd1af57236451ce394207b54bdabd1b1ec6e11d454"
+    }
+  ],
+  "functional": "60focused and26built-client browser scenarios passed locally; no provider calls",
+  "release": "not deployed; parent owns promotion/live acceptance"
+}

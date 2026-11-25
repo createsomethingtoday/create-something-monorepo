@@ -13,6 +13,15 @@ describe('createPageMetadataDetailsHTML', () => {
     expect(html).not.toContain('<img src=x');
   });
 
+  it('shows the page and the finding for reviewer-standard checks', () => {
+    const html = createPageMetadataDetailsHTML({
+      pages: [{ url: 'https://x.webflow.io/404', detail: '"More templates" → store.example' }, { other: 1 }]
+    });
+
+    expect(html).toContain('View affected page (1)');
+    expect(html).toContain('https://x.webflow.io/404 — &quot;More templates&quot; → store.example');
+  });
+
   it('shows each duplicate metadata group together', () => {
     const html = createPageMetadataDetailsHTML({
       duplicates: [

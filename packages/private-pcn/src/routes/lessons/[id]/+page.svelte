@@ -32,7 +32,7 @@
   <a class="back-link" href={data.libraryPath}><Icon name="arrow-left" /> Back to sessions</a>
   {#if !content}
     <section class="empty-state">
-      <p class="eyebrow">PRIVATE / LESSON</p>
+      <p class="eyebrow">Private / Lesson</p>
       <h1>Lesson unavailable.</h1>
       <p>This session may require an invitation, or may no longer be published.</p>
       {#if !data.identity}<a class="button" href={signIn}>Sign in with your invited email</a
@@ -98,7 +98,7 @@
               practice={!!material?.practice}
             />{/key}{/if}
         {#if data.learningPath}<section>
-            <p class="eyebrow">LEARNING PATH</p>
+            <p class="eyebrow">Learning path</p>
             <h2>{data.learningPath.title}</h2>
             <a href={`${pathBase(slug)}/${data.learningPath.id}`}
               >View the sequence <Icon name="arrow-right" /></a
@@ -113,7 +113,7 @@
               </p>{/if}
           </section>{/if}
         {#if material?.outcome}<section class="material">
-            <p class="eyebrow">OUTCOME</p>
+            <p class="eyebrow">Outcome</p>
             <h2>What you’ll be able to do</h2>
             <p class="plain-text">{material.outcome}</p>
           </section>{/if}
@@ -122,7 +122,7 @@
             <div class="plain-text">{material.transcript}</div>
           </details>{/if}
         {#if material?.practice}<section class="material">
-            <p class="eyebrow">PUT IT INTO PRACTICE</p>
+            <p class="eyebrow">Put it into practice</p>
             <h2>Try it yourself</h2>
             <p class="plain-text">{material.practice}</p>
             <p class="muted">
@@ -132,13 +132,13 @@
       </div>
       <aside aria-label="Lesson context">
         <section>
-          <p class="eyebrow">YOUR NETWORK</p>
+          <p class="eyebrow">Your network</p>
           <h2>{data.network?.name || 'CREATE SOMETHING'}</h2>
           <p>Teaching and resources from this private network.</p>
           <a href={data.libraryPath}>Explore its sessions <Icon name="arrow-right" /></a>
         </section>
         {#if content.release}<section>
-            <p class="eyebrow">RELATED RELEASE</p>
+            <p class="eyebrow">Related release</p>
             <h2>{content.release.title}</h2>
             <p>Version {content.release.version}</p>
             <a
@@ -251,4 +251,13 @@
       padding: var(--space-performance-md) 0 0;
     }
   }
+
+  header { background: var(--enlightr-ai); padding: clamp(24px, 4vw, 48px); }
+  h1 { font-family: var(--font-serif); font-weight: 400; font-size: clamp(42px, 6vw, 76px); }
+  header .intro, .lesson-meta { color: #111; }
+  h2 { font-family: var(--font-serif); font-weight: 400; font-size: 32px; }
+  aside { border: 0; background: var(--enlightr-muted); padding: 24px; }
+  .material { padding: 24px; background: var(--enlightr-muted); border: 0; }
+  .transcript { border-bottom: 1px solid var(--line); padding-bottom: 16px; }
+
 </style>

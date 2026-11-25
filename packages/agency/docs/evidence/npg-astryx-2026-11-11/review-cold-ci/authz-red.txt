@@ -1,0 +1,46 @@
+Job 130784380101; https://github.com/createsomethingtoday/create-something-monorepo/actions/runs/43098998920/job/130784380101
+Historical c3fb751 CI failure excerpt; routine output omitted.
+2026-11-11T20:59:38.1804669Z  WARN  Failed to create bin at /home/runner/work/create-something-monorepo/create-something-monorepo/packages/agency/node_modules/.bin/playbook-mcp. ENOENT: no such file or directory, open '/home/runner/work/create-something-monorepo/create-something-monorepo/packages/agency/node_modules/@create-something/playbook-mcp/dist/index.js'
+2026-11-11T20:59:38.1833182Z packages/agency prepare$ pnpm npg:build && pnpm prepare:build-dir && pnpm prepare:local-deps && node ./scripts/run-pinned-bin.mjs @sveltejs/kit svelte-kit sync || echo ''
+2026-11-11T20:59:38.1833795Z packages/io prepare$ svelte-kit sync || echo ''
+2026-11-11T20:59:38.4862978Z packages/agency prepare: > @create-something/agency@1.0.0 npg:build /home/runner/work/create-something-monorepo/create-something-monorepo/packages/agency
+2026-11-11T20:59:38.4864169Z packages/agency prepare: > node scripts/build-npg-chat.mjs
+2026-11-11T20:59:38.6218072Z packages/agency prepare: ▲ [WARNING] Cannot find base config file "./.svelte-kit/tsconfig.json" [tsconfig.json]
+2026-11-11T20:59:38.6218690Z packages/agency prepare:     tsconfig.json:2:12:
+2026-11-11T20:59:38.6222865Z packages/agency prepare:       2 │   "extends": "./.svelte-kit/tsconfig.json",
+2026-11-11T20:59:38.6223532Z packages/agency prepare:         ╵              ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+2026-11-11T20:59:38.6604536Z packages/agency prepare: vite v7.3.6 building client environment for production...
+2026-11-11T20:59:38.6954782Z packages/agency prepare: ✓ 0 modules transformed.
+2026-11-11T20:59:38.6972826Z packages/agency prepare: ✗ Build failed in 12ms
+2026-11-11T20:59:38.6981274Z packages/agency prepare: node:internal/modules/run_main:123
+2026-11-11T20:59:38.6981738Z packages/agency prepare:     triggerUncaughtException(
+2026-11-11T20:59:38.7002378Z packages/agency prepare:     ^
+2026-11-11T20:59:38.7022261Z packages/agency prepare: [vite:esbuild] failed to resolve "extends":"./.svelte-kit/tsconfig.json" in /home/runner/work/create-something-monorepo/create-something-monorepo/packages/agency/tsconfig.json
+2026-11-11T20:59:38.7023790Z packages/agency prepare: file: /home/runner/work/create-something-monorepo/create-something-monorepo/packages/agency/src/lib/npg/astryx/main.tsx
+2026-11-11T20:59:38.7036183Z packages/agency prepare:     at resolveExtends (file:///home/runner/work/create-something-monorepo/create-something-monorepo/node_modules/.pnpm/vite@7.3.6_@types+node@24.10.9_jiti@2.7.0_terser@5.46.0_tsx@4.21.0_yaml@2.9.0/node_modules/vite/dist/node/chunks/config.js:5809:8)
+2026-11-11T20:59:38.7041483Z packages/agency prepare:   code: 'PLUGIN_ERROR',
+2026-11-11T20:59:38.7042081Z packages/agency prepare:   cause: Error: Cannot find module './.svelte-kit/tsconfig.json'
+2026-11-11T20:59:38.7042766Z packages/agency prepare:   Require stack:
+2026-11-11T20:59:38.7043529Z packages/agency prepare:   - /home/runner/work/create-something-monorepo/create-something-monorepo/packages/agency/tsconfig.json
+2026-11-11T20:59:38.7044409Z packages/agency prepare:       at Function._resolveFilename (node:internal/modules/cjs/loader:1430:15)
+2026-11-11T20:59:38.7045129Z packages/agency prepare:       at Function.resolve (node:internal/modules/helpers:157:19)
+2026-11-11T20:59:38.7061365Z packages/agency prepare:     requireStack: [
+2026-11-11T20:59:38.7062123Z packages/agency prepare:       '/home/runner/work/create-something-monorepo/create-something-monorepo/packages/agency/tsconfig.json'
+2026-11-11T20:59:38.7063546Z packages/agency prepare:     ]
+2026-11-11T20:59:38.7063911Z packages/agency prepare:   },
+2026-11-11T20:59:38.7064676Z packages/agency prepare:   tsconfigFile: '/home/runner/work/create-something-monorepo/create-something-monorepo/packages/agency/tsconfig.json',
+2026-11-11T20:59:38.7065420Z packages/agency prepare:   name: 'TSConfckParseError',
+2026-11-11T20:59:38.7065926Z packages/agency prepare:   pluginCode: 'EXTENDS_RESOLVE',
+2026-11-11T20:59:38.7070682Z packages/agency prepare: Node.js v22.23.4
+2026-11-11T20:59:38.7107900Z packages/agency prepare:  ELIFECYCLE  Command failed with exit code 1.
+2026-11-11T20:59:38.7455809Z packages/agency prepare: Done
+2026-11-11T20:59:39.7092868Z packages/io prepare: Done
+2026-11-11T20:59:39.7140797Z Done in 1m 29.5s
+2026-11-11T20:59:58.3687458Z
+2026-11-11T21:00:02.1794879Z ✘ [ERROR] Could not resolve "@create-something/canon/styles/tokens.css"
+2026-11-11T21:00:02.1795455Z
+2026-11-11T21:00:02.1795817Z     src/studio/client/styles.css:1:8:
+2026-11-11T21:00:02.3040780Z Error: Build failed with 1 error:
+2026-11-11T21:00:02.3041125Z src/studio/client/styles.css:1:8: ERROR: Could not resolve "@create-something/canon/styles/tokens.css"
+2026-11-11T21:00:02.3041717Z     at failureErrorWithLog (/home/runner/work/create-something-monorepo/create-something-monorepo/node_modules/.pnpm/esbuild@0.28.1/node_modules/esbuild/lib/main.js:1748:15)
+2026-11-11T21:00:02.3042361Z     at /home/runner/work/create-something-monorepo/create-something-monorepo/node_modules/.pnpm/esbuild@0.28.1/node_modules/esbuild/lib/main.js:1207:25

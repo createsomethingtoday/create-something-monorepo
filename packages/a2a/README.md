@@ -1,9 +1,23 @@
-# A2A inbox — invited pilot
+# Relay
+
+The shared-inbox product (CRE-2448) adds many-to-many agent membership, owner
+enrollment, immutable connection approval, invitations, shared context, and
+assigned work at `/inboxes`. Its rollout flags default off. See the
+[shared-inbox guide and rollout gates](docs/shared-inboxes.md),
+[policy](docs/shared-inbox-policy.md), and
+[validation receipt](docs/shared-inbox-validation.md).
+
+The existing `/app`, v1 API and bilateral grants remain the invited pilot
+described below. Existing conversations are not automatically shared with groups.
 
 An owner-authorized correspondence service at `https://a2a.createsomething.agency`.
 It stores text handoffs, publishes `inbox.message.created` after committing them,
 and records delivery separately from processing. It does not execute agents.
-The name describes the product: native A2A protocol compatibility is outside this pilot.
+Relay is the product name; native A2A protocol compatibility is outside this pilot.
+
+The package, endpoint, OAuth scopes, tool names, resource URIs and existing connector
+IDs retain their `a2a` identifiers for compatibility. Existing installations may
+still appear as **A2A Inbox** or **A2A Inbox Connection** until their metadata is refreshed.
 
 Tracked implementation: [CRE-2380](https://linear.app/createsomething/issue/CRE-2380/deploy-event-driven-agent-inbox-and-a2a-product-site).
 Research: CRE-2378. Public onboarding remains invitation-only.
@@ -38,11 +52,13 @@ bash scripts/ona-bootstrap-local.sh node scripts/run-wrangler.mjs --cwd packages
 Tests use real local SQLite and signed fixture identities. Transport tests use
 real local TLS with a test-only address adapter. These establish neither live
 Identity login nor OpenAI subscription activation. The production environment
-ignores the fixture JWKS. Do not deploy a test environment or fixture credentials.
+ignores the fixture JWKS. Never deploy the production entrypoint with test
+credentials. The separately reviewed disposable acceptance bundle below is the
+only isolated cloud test path; it has separate resources and no real owners.
 
 The landing page works without JavaScript. The owner console requires it.
 Concurrent CLI credential changes use a private session lock. If a command is
-interrupted, confirm no A2A command is running before removing `session.json.lock`
+interrupted, confirm no Relay command is running before removing `session.json.lock`
 beside the saved session, then run `login` again. An uncertain refresh response
 also requires a fresh login; the CLI never replays its one-use credential.
 
@@ -85,3 +101,8 @@ and [design research](docs/design-research.md). The parent owns exact-artifact
 integration, independent Sol 6.1 re-test, PR promotion, and live readback.
 Do not describe fixtures, an HTTP 2xx, or a deployment receipt as a live two-owner
 dot exchange or human acceptance.
+
+Connection identity, safe status, receipts and recovery policy are documented in
+[connection contracts](docs/connection-contracts.md). The separate
+[disposable cloud acceptance harness](acceptance/README.md) never uses production
+owners or resources; local tests do not establish deployed or host acceptance.

@@ -1,0 +1,18 @@
+
+> @create-something/agency@1.0.0 build /Users/createsomething/.t3/worktrees/create-something-monorepo/t3-7fb0f744-b3a59e76dfb75144/packages/agency
+> pnpm npg:typecheck && pnpm npg:build && pnpm test:support-brief && pnpm test:gigi-beta && pnpm prepare:build-dir && pnpm prepare:local-deps && node ./scripts/run-pinned-bin.mjs @sveltejs/kit svelte-kit sync && node ./scripts/run-pinned-bin.mjs vite vite build
+
+
+> @create-something/agency@1.0.0 npg:typecheck /Users/createsomething/.t3/worktrees/create-something-monorepo/t3-7fb0f744-b3a59e76dfb75144/packages/agency
+> tsc --project tsconfig.npg.json
+
+
+.svelte-kit/output/server/chunks/mcp-tools.js                                                                                                            519.17 kB
+.svelte-kit/output/server/chunks/oso-primary.js                                                                                                          532.76 kB
+.svelte-kit/output/server/chunks/partner-auth.js                                                                                                         585.66 kB
+✓ built in 20.88s
+
+Run npm run preview to preview your production build locally.
+
+> Using @sveltejs/adapter-cloudflare
+  ✔ done

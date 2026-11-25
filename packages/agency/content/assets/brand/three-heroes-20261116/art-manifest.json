@@ -1,0 +1,33 @@
+{
+  "issue": "CRE-2485",
+  "authorization": "Same for three linked pages, following approved deployment workflow",
+  "status": "independently reviewed, ready for responsive integration",
+  "assets": [
+    {
+      "page": "stack",
+      "file": "stack-hero.png",
+      "width": 1672,
+      "height": 941,
+      "bytes": 798216,
+      "sha256": "7a923ca2cb2642eb7c02af3cd7e47f7facb85a274d3924ebf52b9f11031a55dc"
+    },
+    {
+      "page": "practice",
+      "file": "practice-hero.png",
+      "width": 1671,
+      "height": 941,
+      "bytes": 766115,
+      "sha256": "a1e2734a250c8a18f3cbbe58f80141efd9b3cfab3d34d57cab9965e4511df4e6"
+    },
+    {
+      "page": "field-reports",
+      "file": "field-reports-hero.png",
+      "width": 1672,
+      "height": 941,
+      "bytes": 714856,
+      "sha256": "3cb549e86d2b5c59985798c9ca84fcd1c89e71ef6832ff2be6f1508932fdbf12"
+    }
+  ],
+  "review": "Sol6.1; all3images score9/10 each of six dimensions; subjective visual judgment",
+  "artCompletedUTC": "2026-11-16T23:46:22.723118+00:00"
+}

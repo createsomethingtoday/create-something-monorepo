@@ -2,7 +2,9 @@ import { describe, expect, it } from 'vitest';
 import {
 	airtableFormulaValue,
 	buildAssetListFormula,
+	ASSET_VERSION_WRITE_FIELDS,
 	buildAssetVersionCreateFields,
+	mapAssetVersionRecord,
 	buildRequiredFixExceptionsFormula,
 	gateRequiredFixesByVersion,
 	mapRequiredFixExceptionRecord,
@@ -296,7 +298,12 @@ describe('buildAssetVersionCreateFields', () => {
 		appScopes: ['sites', 'cms']
 	};
 
-	it('stores structured changes in v1-compatible format and persists the snapshot field', () => {
+	// These five ids were checked against the live "🖌️Asset Versions" table,
+	// and they are the same five the legacy template editor writes. A sixth
+	// field named "Snapshot" was written here from June 27, 2026. The table has
+	// no such field, so Airtable rejected every version record and no listing
+	// edit recorded a version. Pin the exact set.
+	it('writes exactly the fields the versions table has, and nothing else', () => {
 		const fields = buildAssetVersionCreateFields(
 			'recAsset',
 			3,
@@ -305,16 +312,15 @@ describe('buildAssetVersionCreateFields', () => {
 			'creator@example.com'
 		);
 
-		expect(fields).toMatchObject({
+		expect(fields).toEqual({
 			fldemWilqCQcOCh5s: ['recAsset'],
 			fldn2ImbgwKfCdWWA: 3,
 			fldjYFJMGTerFYlol: 'Meta Update',
-			fldLEIZMEjZvH5n23: ['zendesk'],
-			Snapshot: JSON.stringify(snapshot)
+			fldc999gbJ8LWWoTC: JSON.stringify({ fldShortDescription: { from: 'Old short', to: 'New short' } }),
+			fldLEIZMEjZvH5n23: ['zendesk']
 		});
-		expect(JSON.parse(fields.fldc999gbJ8LWWoTC as string)).toEqual({
-			fldShortDescription: { from: 'Old short', to: 'New short' }
-		});
+		expect(Object.keys(fields).sort()).toEqual(Object.values(ASSET_VERSION_WRITE_FIELDS).sort());
+		expect(Object.keys(fields).every((key) => /^fld[A-Za-z0-9]{14}$/.test(key))).toBe(true);
 	});
 
 	it('keeps the legacy wrapper for string changes', () => {
@@ -331,7 +337,57 @@ describe('buildAssetVersionCreateFields', () => {
 			snapshot,
 			createdBy: 'creator@example.com'
 		});
-		expect(fields.Snapshot).toBe(JSON.stringify(snapshot));
+		expect(fields).not.toHaveProperty('Snapshot');
+	});
+});
+
+describe('mapAssetVersionRecord', () => {
+	const record = (fields: Record<string, unknown>) => ({
+		id: 'recVersion',
+		fields: fields as never,
+		_rawJson: { createdTime: '2026-11-13T10:00:00.000Z' }
+	});
+
+	it('reads a listing-edit version by field id, with no snapshot', () => {
+		const changes = JSON.stringify({ 'ℹ️Description (Short)': { from: 'Old', to: 'New' } });
+		expect(
+			mapAssetVersionRecord(record({ fldn2ImbgwKfCdWWA: 4, fldknoYakli2sqznT: 'recAsset', fldc999gbJ8LWWoTC: changes }))
+		).toEqual({
+			id: 'recVersion',
+			assetId: 'recAsset',
+			versionNumber: 4,
+			createdAt: '2026-11-13T10:00:00.000Z',
+			createdBy: '',
+			changes,
+			snapshot: null
+		});
+	});
+
+	it('reads the snapshot and author of a manual version note', () => {
+		const snapshot = { name: 'Template', descriptionShort: 'Short' };
+		const changes = JSON.stringify({ changes: 'Manual version capture', snapshot, createdBy: 'creator@example.com' });
+		const version = mapAssetVersionRecord(
+			// A rollup can arrive as an array.
+			record({ fldn2ImbgwKfCdWWA: 2, fldknoYakli2sqznT: ['recAsset'], fldc999gbJ8LWWoTC: changes })
+		);
+		expect(version).toMatchObject({ assetId: 'recAsset', versionNumber: 2, createdBy: 'creator@example.com', snapshot });
+	});
+
+	it('lists a version that has no change record, and skips a record that is not a version of an asset', () => {
+		expect(mapAssetVersionRecord(record({ fldn2ImbgwKfCdWWA: 1, fldknoYakli2sqznT: 'recAsset' }))).toMatchObject({
+			changes: '',
+			snapshot: null
+		});
+		expect(mapAssetVersionRecord(record({ fldn2ImbgwKfCdWWA: 1 }))).toBeNull();
+		expect(mapAssetVersionRecord(record({ fldknoYakli2sqznT: 'recAsset' }))).toBeNull();
+	});
+
+	it('does not read the plain field names the table never had', () => {
+		expect(
+			mapAssetVersionRecord(
+				record({ 'Asset ID': 'recAsset', 'Version Number': 3, Changes: '{}', Snapshot: '{"name":"x"}' })
+			)
+		).toBeNull();
 	});
 });
 

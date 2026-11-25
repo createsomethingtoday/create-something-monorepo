@@ -1,3 +1,36 @@
+@import './alfred-fonts.css';
 @import '@create-something/canon/styles/tokens.css';
 @import '@create-something/canon/styles/workspace.css';
-:root { color-scheme: dark; }
+
+/* Alfred uses the same typography and neutral roles as the Draw landing page.
+   Drawing color tokens remain separate: saved artwork is never recolored. */
+
+:root {
+  --alfred-ink: oklch(0.23 0.002 90);
+  --alfred-gray: oklch(0.49 0.006 80);
+  --alfred-tile: oklch(0.964 0.003 80);
+  --alfred-rule: oklch(0.91 0.005 80);
+  --alfred-white: #fff;
+  --alfred-sans: Switzer, 'Helvetica Neue', Arial, sans-serif;
+  --alfred-serif: 'IBM Plex Serif', Georgia, serif;
+  color-scheme: light;
+}
+.cs-workspace {
+  --workspace-bg: var(--alfred-white);
+  --workspace-panel: var(--alfred-tile);
+  --workspace-raised: var(--alfred-white);
+  --workspace-hover: var(--alfred-rule);
+  --workspace-line: var(--alfred-rule);
+  --workspace-strong-line: #c8c6c0;
+  --workspace-fg: var(--alfred-ink);
+  --workspace-muted: var(--alfred-gray);
+  --workspace-quiet: var(--alfred-gray);
+  --workspace-focus: var(--alfred-ink);
+  --workspace-radius: 3px;
+  --workspace-text: 13px;
+  --workspace-meta: 11px;
+  color-scheme: light;
+  font-family: var(--alfred-sans);
+}
+.cs-workspace .cs-label { font-family: var(--alfred-sans); font-weight: 500; }
+.cs-workspace .cs-product-name { font-family: var(--alfred-serif); font-weight: 400; }

@@ -4,12 +4,12 @@
 
   const homeChapters = [
     { id: 'opening', label: 'The idea', short: 'Idea', note: 'Your tools, working together' },
-    { id: 'example', label: 'The connection', short: 'Connect', note: 'Where the handoff gets better' },
+    { id: 'example', label: 'The connection', short: 'Connect', note: 'A form connected to your team' },
     { id: 'work', label: 'The evidence', short: 'Evidence', note: 'Actual work, with its limits' },
     { id: 'together', label: 'What you keep', short: 'Keep', note: 'Code, checks and guidance' },
     { id: 'next', label: 'Start here', short: 'Start', note: 'Bring one thing to work on' }
   ];
-  let { chapters = homeChapters, context = '.AGENCY', purpose = 'A little guidance. A working connection.', scope = 'home' }: {
+  let { chapters = homeChapters, context = '.AGENCY', purpose = 'Tools, software and AI agents.', scope = 'home' }: {
     chapters?: Array<{id:string;label:string;short:string;note:string}>;
     context?: string; purpose?: string; scope?: 'home'|'page';
   } = $props();
@@ -73,5 +73,5 @@
       {/each}
     </ol>
   </nav>
-  <div class="instrument-reading" aria-hidden="true"><span>0{indicated + 1} / {chapters[indicated].note}</span><span>Small team. Thoughtful systems.</span></div>
+  <div class="instrument-reading" aria-hidden="true"><span>0{indicated + 1} / {chapters[indicated].note}</span><span>Small team. Agreed scope.</span></div>
 </div>

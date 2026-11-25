@@ -1,0 +1,72 @@
+{
+  "issue": "CRE-2485",
+  "date": "2026-11-16",
+  "status": "Independently reviewed concept illustrations; publication requested through same workflow, no individual human artwork acceptance claimed.",
+  "proofBoundary": "Concept illustrations, not screenshots or recorded client evidence. PNG masters unchanged.",
+  "command": "cwebp -q 90 -m 6 <source> -o <export>",
+  "mobileFraming": "Same master, right aligned, essential scene within right half; stacked below copy at <=1024px.",
+  "rollback": "Revert CRE-2485 three route integrations, new wrapper and HTML cache revision together; remove new master/provenance folder and WebP exports.",
+  "assets": [
+    {
+      "route": "/stack",
+      "source": "stack-hero.png",
+      "sourceSha256": "7a923ca2cb2642eb7c02af3cd7e47f7facb85a274d3924ebf52b9f11031a55dc",
+      "width": 1672,
+      "height": 941,
+      "export": "static/images/canon-agency-v1/stack-hero-20261116.webp",
+      "exportSha256": "e7fc39fea7b34149dd3acb4f7362a41eb8f8c3320c880a75fc1b6e8ece0856d7",
+      "exportBytes": 61792,
+      "description": "Concept illustration: Canon presents a portable connected toolkit and its matching guide."
+    },
+    {
+      "route": "/practice",
+      "source": "practice-hero.png",
+      "sourceSha256": "a1e2734a250c8a18f3cbbe58f80141efd9b3cfab3d34d57cab9965e4511df4e6",
+      "width": 1671,
+      "height": 941,
+      "export": "static/images/canon-agency-v1/practice-hero-20261116.webp",
+      "exportSha256": "3b6294b4455657e53608ce181bd9b3a39494da1b3079b026aedbe7500aa6f95b",
+      "exportBytes": 52456,
+      "description": "Concept illustration: Canon rehearses a task in a bounded tray with a stop gate and an unplugged connector."
+    },
+    {
+      "route": "/field-reports",
+      "source": "field-reports-hero.png",
+      "sourceSha256": "3cb549e86d2b5c59985798c9ca84fcd1c89e71ef6832ff2be6f1508932fdbf12",
+      "width": 1672,
+      "height": 941,
+      "export": "static/images/canon-agency-v1/field-reports-hero-20261116.webp",
+      "exportSha256": "cbfd67bd2e71d6f7d585fcc915ee3047928457d27f17c92f36303485d4266aef",
+      "exportBytes": 50548,
+      "description": "Concept illustration: Canon inspects a notebook with two recorded symbols and an empty evidence square."
+    }
+  ],
+  "artReview": "docs/evidence/cre2485-three-heroes/art-review.md",
+  "references": [
+    {
+      "file": "04-hero.png",
+      "width": 1671,
+      "height": 941,
+      "bytes": 952470,
+      "sha256": "8a258b932879378ad9242e3364e6e40c4d011d5787634df62d8a38a01dc4f9f4",
+      "decodePassed": true
+    },
+    {
+      "file": "06-delivered-system.png",
+      "width": 1672,
+      "height": 941,
+      "bytes": 2232158,
+      "sha256": "d7d4a054b06c418649defc3b87fc425d19f8913160c59abe2689106ff079a040",
+      "decodePassed": true
+    },
+    {
+      "file": "03-operator-guidance.png",
+      "width": 1671,
+      "height": 941,
+      "bytes": 1664330,
+      "sha256": "c1f9ffc5a1459d7387b5177105fd58f9dbb611cfd042749bbeb73ef7b96167ab",
+      "decodePassed": true
+    }
+  ],
+  "referenceUse": "04 and06 for all scenes;03 additionally supplied for Field Reports diagram/material reference."
+}

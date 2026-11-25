@@ -45,11 +45,12 @@ const statusThemes: Record<string, StatusColorTheme> = {
     border: 'var(--color-error-border)',
     accent: 'var(--color-error)'
   },
+  // Neutral: a draft has not entered review, so it carries no review color.
   Draft: {
-    bg: 'var(--color-info-muted)',
-    text: 'var(--color-info-ink)',
-    border: 'var(--color-info-border)',
-    accent: 'var(--color-info)'
+    bg: 'var(--color-bg-subtle)',
+    text: 'var(--color-fg-secondary)',
+    border: 'var(--color-border-emphasis)',
+    accent: 'var(--color-fg-muted)'
   }
 };
 

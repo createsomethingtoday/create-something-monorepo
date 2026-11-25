@@ -1,6 +1,6 @@
 {
   "id": "substrate:create-something:operating-slice-review:internal",
-  "generatedAt": "2026-11-10T15:39:05.088Z",
+  "generatedAt": "2026-11-22T16:47:41.660Z",
   "topologyId": "substrate:create-something:topology:internal",
   "atlasCanvasId": "create-something-internal-operating-topology",
   "sourceCoverageId": "substrate:create-something:atlas-coverage:internal",
@@ -77,6 +77,7 @@
         "substrate:create-something:worker:packages-halfdozen-notion-mcp-worker-wrangler-toml",
         "substrate:create-something:worker:packages-halfdozen-operator-notion-mcp-worker-wrangler-toml",
         "substrate:create-something:worker:packages-halfdozen-telemetry-mcp-worker-wrangler-toml",
+        "substrate:create-something:worker:packages-halfdozen-transcript-monitor-wrangler-jsonc",
         "substrate:create-something:package:halfdozen-zoom-sync-worker-packages-halfdozen-zoom-sync-worker",
         "substrate:create-something:worker:packages-halfdozen-zoom-sync-worker-wrangler-toml",
         "substrate:create-something:worker:packages-halfdozen-zoom-transcript-sync-wrangler-toml",
@@ -99,6 +100,8 @@
         "substrate:create-something:worker:packages-mapping-canvas-wrangler-jsonc",
         "substrate:create-something:package:create-something-marketplace-featured-notifier-packages-marketplace-featured-notifier",
         "substrate:create-something:worker:packages-marketplace-featured-notifier-wrangler-jsonc",
+        "substrate:create-something:package:create-something-marketplace-insights-cron-packages-marketplace-insights-cron",
+        "substrate:create-something:worker:packages-marketplace-insights-cron-wrangler-jsonc",
         "substrate:create-something:package:create-something-maverick-admin-packages-maverick-admin",
         "substrate:create-something:worker:packages-maverick-admin-wrangler-toml",
         "substrate:create-something:worker:packages-maverick-wrangler-toml",
@@ -138,10 +141,14 @@
         "substrate:create-something:package:create-something-walkthrough-system-packages-walkthrough-system",
         "substrate:create-something:worker:packages-walkthrough-system-wrangler-jsonc",
         "substrate:create-something:worker:packages-webflow-app-review-mcp-worker-wrangler-toml",
+        "substrate:create-something:package:create-something-webflow-app-review-portal-packages-webflow-app-review-portal",
+        "substrate:create-something:worker:packages-webflow-app-review-portal-wrangler-json",
         "substrate:create-something:worker:packages-webflow-apps-admin-dashboard-wrangler-toml",
         "substrate:create-something:worker:packages-webflow-apps-admin-workers-audit-agent-wrangler-toml",
         "substrate:create-something:package:webflow-onboarding-sync-worker-packages-webflow-automation-worker",
         "substrate:create-something:worker:packages-webflow-automation-worker-wrangler-toml",
+        "substrate:create-something:package:create-something-webflow-sla-notifications-packages-webflow-dashboard-workers-sla-notifications",
+        "substrate:create-something:worker:packages-webflow-dashboard-workers-sla-notifications-wrangler-toml",
         "substrate:create-something:worker:packages-webflow-dashboard-wrangler-jsonc",
         "substrate:create-something:package:create-something-webflow-marketplace-sync-packages-webflow-marketplace-sync",
         "substrate:create-something:worker:packages-webflow-marketplace-sync-wrangler-toml",
@@ -167,7 +174,7 @@
       "owner": "CREATE SOMETHING",
       "tier": "Automation",
       "surface": "worker",
-      "nodeCount": 150,
+      "nodeCount": 157,
       "evidence": [
         "apps/agency-meta-maintenance/wrangler.jsonc",
         "apps/bettermode-marketplace-creator-agent/wrangler.jsonc",
@@ -207,12 +214,14 @@
         "substrate:create-something:guide:docs-guides-agency-service-tier-migration-runbook-2026-03-09-md",
         "substrate:create-something:guide:docs-guides-agency-workflow-intent-article-workflow-md",
         "substrate:create-something:guide:docs-guides-agent-legibility-contract-md",
+        "substrate:create-something:guide:docs-guides-ai-native-sdlc-md",
         "substrate:create-something:guide:docs-guides-antigravity-mcp-enablement-md",
         "substrate:create-something:guide:docs-guides-arena-taste-integration-md",
         "substrate:create-something:guide:docs-guides-atlas-linear-integration-md",
         "substrate:create-something:guide:docs-guides-atlas-substrate-agent-context-md",
         "substrate:create-something:guide:docs-guides-bounded-research-interrupt-runbook-md",
         "substrate:create-something:guide:docs-guides-browser-proof-and-closeout-runbook-md",
+        "substrate:create-something:guide:docs-guides-canon-character-migration-md",
         "substrate:create-something:guide:docs-guides-chatgpt-mcp-oauth-managed-bearer-md",
         "substrate:create-something:guide:docs-guides-client-agent-codex-pilot-md",
         "substrate:create-something:guide:docs-guides-cloudflare-bot-access-hardening-md",
@@ -288,7 +297,7 @@
       "owner": "CREATE SOMETHING",
       "tier": "Mixed",
       "surface": "guide",
-      "nodeCount": 86,
+      "nodeCount": 88,
       "evidence": [
         "docs/guides/AGENCY_ARTICLE_IMAGE_WORKFLOW.md",
         "docs/guides/AGENCY_GOVERNANCE_PRODUCTS_OPERATIONS_RUNBOOK.md",
@@ -299,9 +308,9 @@
         "docs/guides/AGENCY_SERVICE_TIER_MIGRATION_RUNBOOK_2026-03-09.md",
         "docs/guides/AGENCY_WORKFLOW_INTENT_ARTICLE_WORKFLOW.md",
         "docs/guides/AGENT_LEGIBILITY_CONTRACT.md",
+        "docs/guides/AI_NATIVE_SDLC.md",
         "docs/guides/ANTIGRAVITY_MCP_ENABLEMENT.md",
-        "docs/guides/ARENA_TASTE_INTEGRATION.md",
-        "docs/guides/ATLAS_LINEAR_INTEGRATION.md"
+        "docs/guides/ARENA_TASTE_INTEGRATION.md"
       ],
       "validationCommands": [
         "pnpm --filter @create-something/database-layer atlas-coverage:generate",
@@ -510,6 +519,7 @@
         "substrate:create-something:atlas-coverage-group:automation-surface-automation-agent"
       ],
       "recordIds": [
+        "substrate:create-something:package:window-take-scripts-agents-skills-window-take-scripts",
         "substrate:create-something:agent-config:config-dify-agents-aaron-hub-json",
         "substrate:create-something:agent-config:config-dify-agents-abundance-hub-json",
         "substrate:create-something:agent-config:config-dify-agents-bettermode-marketplace-creator-agent-json",
@@ -545,8 +555,9 @@
       "owner": "CREATE SOMETHING",
       "tier": "Automation",
       "surface": "agent",
-      "nodeCount": 31,
+      "nodeCount": 32,
       "evidence": [
+        ".agents/skills/window-take/scripts",
         "config/dify-agents/aaron-hub.json",
         "config/dify-agents/abundance-hub.json",
         "config/dify-agents/bettermode-marketplace-creator-agent.json",
@@ -557,8 +568,7 @@
         "config/dify-agents/mariana-hub.json",
         "config/dify-agents/morgan-hub.json",
         "config/dify-agents/natalia-hub.json",
-        "config/dify-agents/pablo-hub.json",
-        "config/dify-agents/shea-hub.json"
+        "config/dify-agents/pablo-hub.json"
       ],
       "validationCommands": [
         "pnpm --filter @create-something/database-layer agent-configs:generate",
@@ -1017,6 +1027,7 @@
       "recordIds": [
         "substrate:create-something:package:create-something-a2a-packages-a2a",
         "substrate:create-something:package:create-something-calm-operator-ink-bridge-packages-calm-operator-ink-bridge",
+        "substrate:create-something:package:create-something-halfdozen-transcript-monitor-packages-halfdozen-transcript-monitor",
         "substrate:create-something:package:create-something-landing-page-filter-packages-landing-page-filter",
         "substrate:create-something:package:pcn-workshop-starter-packages-lms-starter-pcn-workshop",
         "substrate:create-something:package:create-something-meetings-packages-meetings",
@@ -1027,10 +1038,11 @@
       "owner": "CREATE SOMETHING",
       "tier": "Mixed",
       "surface": "worker",
-      "nodeCount": 8,
+      "nodeCount": 9,
       "evidence": [
         "packages/a2a",
         "packages/calm-operator-ink-bridge",
+        "packages/halfdozen-transcript-monitor",
         "packages/landing-page-filter",
         "packages/lms/starter/pcn-workshop",
         "packages/meetings",
@@ -1056,6 +1068,7 @@
       "recordIds": [
         "substrate:create-something:app:create-something-atlas-studio-desktop-apps-atlas-studio-desktop",
         "substrate:create-something:app:create-something-client-workspace-desktop-apps-client-workspace-desktop",
+        "substrate:create-something:app:create-something-draw-landing-webflow-apps-draw-landing-webflow",
         "substrate:create-something:app:create-something-draw-native-apps-draw-native",
         "substrate:create-something:app:create-something-gigi-desktop-apps-gigi-desktop",
         "substrate:create-something:app:princess-pet-palace-apps-princess-pet-palace",
@@ -1065,10 +1078,11 @@
       "owner": "CREATE SOMETHING",
       "tier": "Mixed",
       "surface": "app",
-      "nodeCount": 7,
+      "nodeCount": 8,
       "evidence": [
         "apps/atlas-studio-desktop",
         "apps/client-workspace-desktop",
+        "apps/draw-landing-webflow",
         "apps/draw-native",
         "apps/gigi-desktop",
         "apps/princess-pet-palace",

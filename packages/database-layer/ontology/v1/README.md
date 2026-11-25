@@ -127,3 +127,51 @@ when evaluating its CLI, use one isolated batch process with `--no-connect` and
 an explicit temporary `--data-dir`. Inspect structured validation and plan results;
 upstream `plan` can exit 0 while reporting risk. Do not represent local structural
 checks or a digest as formally certified inference.
+
+## Learned entity vocabulary
+
+The ontology CLI maintains a separate local domain vocabulary for a directory of JSON,
+Markdown and text documents. From the package directory:
+
+```sh
+node scripts/ontology.mjs vocabulary sync ./sources ./vocabulary.json
+node scripts/ontology.mjs vocabulary edit ./vocabulary.json 'Rename supplier to Delivery Partner'
+node scripts/ontology.mjs vocabulary edit ./vocabulary.json 'Describe Delivery Partner as An organization that delivers client work.'
+node scripts/ontology.mjs vocabulary watch ./sources ./vocabulary.json
+```
+
+Create the sources directory and put the state file outside it. Watch scans once per
+second and re-extracts changed documents by content hash. Ctrl-C stops it.
+It retains the last complete snapshot during invalid writes and retries. The state
+stores source paths, hashes and excerpts locally. Use a private directory.
+Writers serialize through a sibling lock directory and atomically replace the
+snapshot. If a process is killed during a write, remove the leftover lock directory
+after confirming that no writer is active.
+
+Discovery uses named JSON object collections, explicit type fields and short English
+definitions such as “Acme is a delivery partner.” Names, definitions and stable IDs
+survive subsequent extraction. Types without remaining evidence disappear unless
+curated, in which case an empty evidence list records their status. Use the ID to
+disambiguate names. Learned terms are descriptive candidates separate from the
+versioned topology contract. Promotion into that contract uses its existing review process.
+
+### Review potential duplicate types
+
+From this monorepo checkout, select one discovered type and the IDs of up to eight
+plausible matches. Preview the evidence locally first:
+
+```sh
+node scripts/ontology.mjs vocabulary review ./vocabulary.json type:implementation-partner type:delivery-partner type:software-vendor
+```
+
+Jev is the selected provider for duplicate review. Append `--provider jev` to send the displayed packet (IDs, names, descriptions
+and short source excerpts) to Jev using `TYPESAFE_API_KEY`. OpenAI Decisions is
+available with `--provider openai` and `OPENAI_API_KEY`. Use data permitted
+for the selected provider. The command returns a candidate ID or `no_match`.
+The hash binds the selection to the displayed evidence. Concurrent edits to
+the selected evidence invalidate the response. No vocabulary edits are made.
+Watch and sync keep their local behavior.
+
+Run `node scripts/evaluate-vocabulary-shadow.mjs` for the synthetic exact-name
+baseline. Append `--live jev` or `--live openai` to evaluate identical cases
+against one provider. Review time requires a separate operator study.

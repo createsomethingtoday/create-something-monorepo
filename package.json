@@ -383,8 +383,6 @@
     "airtable:primary-tags:dry-run": "node --import tsx scripts/airtable-tag-agent.ts --dry-run",
     "airtable:primary-tags:run": "node --import tsx scripts/airtable-tag-agent.ts --live",
     "template-review:agent-feedback": "node --import tsx scripts/template-review-agent-feedback.ts",
-    "template-review:hub-agent-feedback": "node --import tsx scripts/template-review-hub-agent-feedback.ts",
-    "template-review:hub-agent-feedback:test": "node --import tsx --test scripts/test/template-review-hub-agent-feedback.test.ts",
     "specialist:template-review:dataset": "tsx scripts/template-review-specialist-dataset.ts",
     "specialist:template-review:corrections": "tsx scripts/template-review-specialist-corrections.ts",
     "specialist:template-review:telemetry": "tsx scripts/template-review-specialist-telemetry.ts",
@@ -441,7 +439,10 @@
     "workflow:discover:test": "pnpm --filter @createsomething/workflow-compiler build && node --test scripts/workflow-discovery/*.test.mjs",
     "graph:evidence": "node scripts/graph-engineering/cli.mjs",
     "graph:evidence:build": "pnpm --filter @createsomething/workflow-compiler build && pnpm --filter @createsomething/workflow-runtime build",
-    "graph:evidence:test": "pnpm graph:evidence:build && node --test scripts/graph-engineering/*.test.mjs"
+    "graph:evidence:test": "pnpm graph:evidence:build && node --test scripts/graph-engineering/*.test.mjs",
+    "canon:character:check": "node scripts/check-canon-character-retirement.mjs",
+    "change:evidence": "node scripts/change-evidence/cli.mjs",
+    "change:evidence:test": "node --test scripts/change-evidence/cli.test.mjs"
   },
   "devDependencies": {
     "@create-something/observability": "workspace:*",

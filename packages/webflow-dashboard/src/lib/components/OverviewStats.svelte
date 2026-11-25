@@ -5,12 +5,16 @@
   import type { Asset } from '$lib/server/airtable';
   import { VIEWER_DATA_AVAILABLE, VIEWER_DATA_EPOCH_LABEL } from '$lib/config/viewer-data';
   import { sortAssetTypes } from '$lib/utils/asset-actions';
+  import { grow, reveal } from '$lib/motion/actions';
+  import { DUR, gsap, motionOK } from '$lib/motion/core';
 
   interface Props {
     assets: Asset[];
+    /** Render one panel only, so a page can place the two in different columns. */
+    panel?: 'both' | 'performance' | 'distribution';
   }
 
-  let { assets }: Props = $props();
+  let { assets, panel = 'both' }: Props = $props();
 
   // Calculate totals
   const totals = $derived.by(() => {
@@ -32,10 +36,10 @@
     return { viewers, purchases, revenue, fulfillment };
   });
 
+  // Categories get distinct hues from the data palette, as before: a
+  // breakdown by type is categorical, so a single-hue ramp would imply an order.
   function getAssetTypeTheme(type: string): { accent: string } {
-    const normalizedType = type.trim().toLowerCase();
-
-    switch (normalizedType) {
+    switch (type.trim().toLowerCase()) {
       case 'app':
         return { accent: 'var(--color-data-1)' };
       case 'library':
@@ -84,13 +88,44 @@
   function getAssetCountLabel(count: number): string {
     return count === 1 ? '1 asset' : `${count} assets`;
   }
+
+  const hasPerformance = $derived(
+    (VIEWER_DATA_AVAILABLE && totals.viewers > 0) ||
+      totals.purchases > 0 ||
+      totals.revenue > 0 ||
+      totals.fulfillment > 0
+  );
+
+  // Hover: a bar segment and its legend row are one thing, so they light up together.
+  let distributionEl = $state<HTMLElement | null>(null);
+
+  function focusType(type: string | null) {
+    if (!distributionEl) return;
+    const parts = distributionEl.querySelectorAll<HTMLElement>('[data-type]');
+    const duration = motionOK() ? DUR.fast : 0;
+    parts.forEach((part) => {
+      const dimmed = type !== null && part.dataset.type !== type;
+      const isSegment = part.classList.contains('distribution-segment');
+      gsap.to(part, {
+        opacity: dimmed ? (isSegment ? 0.3 : 0.55) : 1,
+        // The matching bar segment swells, so the eye lands on it.
+        scaleY: isSegment && type !== null && !dimmed ? 1.25 : 1,
+        duration,
+        ease: 'power2.out',
+        overwrite: 'auto'
+      });
+    });
+  }
 </script>
 
-<div class="overview-stats">
+<div
+  class="overview-stats"
+  class:overview-stats--split={panel === 'both' && hasPerformance && typeBreakdown.length > 0}
+>
   <!-- Performance Summary -->
-  {#if (VIEWER_DATA_AVAILABLE && totals.viewers > 0) || totals.purchases > 0 || totals.revenue > 0 || totals.fulfillment > 0}
-    <section class="overview-panel overview-panel--performance">
-      <Card>
+  {#if hasPerformance && panel !== 'distribution'}
+    <section class="overview-panel overview-panel--performance" data-reveal use:reveal>
+      <Card interactive>
         <CardHeader>
           <div class="header-with-indicator">
             <CardTitle>Portfolio Performance</CardTitle>
@@ -101,32 +136,26 @@
           <div class="performance-grid">
             {#if VIEWER_DATA_AVAILABLE}
               <div class="performance-item">
-                <div class="performance-content">
-                  <span class="performance-value"><KineticNumber value={totals.viewers} /></span>
-                  <span class="performance-label">Viewers {VIEWER_DATA_EPOCH_LABEL}</span>
-                </div>
+                <span class="performance-value"><KineticNumber value={totals.viewers} /></span>
+                <span class="performance-label">Viewers {VIEWER_DATA_EPOCH_LABEL}</span>
               </div>
             {/if}
 
             <div class="performance-item">
-              <div class="performance-content">
-                <span class="performance-value"><KineticNumber value={totals.purchases} /></span>
-                <span class="performance-label">Total Purchases</span>
-                {#if totals.fulfillment > 0}
-                  <span class="performance-support"
-                    >+{totals.fulfillment.toLocaleString()} through fulfillment links</span
-                  >
-                {/if}
-              </div>
+              <span class="performance-value"><KineticNumber value={totals.purchases} /></span>
+              <span class="performance-label">Total purchases</span>
+              {#if totals.fulfillment > 0}
+                <span class="performance-support"
+                  >+{totals.fulfillment.toLocaleString()} through fulfillment links</span
+                >
+              {/if}
             </div>
 
             <div class="performance-item">
-              <div class="performance-content">
-                <span class="performance-value"
-                  ><KineticNumber value={totals.revenue} prefix="$" /></span
-                >
-                <span class="performance-label">Total Revenue</span>
-              </div>
+              <span class="performance-value"
+                ><KineticNumber value={totals.revenue} prefix="$" /></span
+              >
+              <span class="performance-label">Total revenue</span>
             </div>
           </div>
         </CardContent>
@@ -135,9 +164,9 @@
   {/if}
 
   <!-- Asset Distribution -->
-  {#if typeBreakdown.length > 0}
-    <section class="overview-panel overview-panel--distribution">
-      <Card>
+  {#if typeBreakdown.length > 0 && panel !== 'performance'}
+    <section class="overview-panel overview-panel--distribution" data-reveal use:reveal>
+      <Card interactive>
         <CardHeader>
           <div class="distribution-heading">
             <CardTitle>Portfolio Distribution</CardTitle>
@@ -145,32 +174,45 @@
           </div>
         </CardHeader>
         <CardContent>
-          <div class="distribution-stack">
-            <div class="distribution-bar distribution-bar--stacked" role="img" aria-label={distributionAriaLabel}>
+          <div
+            class="distribution-stack"
+            role="group"
+            aria-label="Portfolio distribution by asset type"
+            bind:this={distributionEl}
+            onpointerover={(event) =>
+              focusType(
+                (event.target as HTMLElement).closest<HTMLElement>('[data-type]')?.dataset.type ?? null
+              )}
+            onpointerleave={() => focusType(null)}
+          >
+            <div
+              class="distribution-bar distribution-bar--stacked"
+              role="img"
+              aria-label={distributionAriaLabel}
+              use:grow={{ children: '.distribution-segment' }}
+            >
               {#each typeBreakdown as entry}
                 <div
                   class="distribution-segment"
+                  data-type={entry.type}
                   style="width: {entry.share}%; background-color: {entry.theme.accent}"
                   title={`${entry.type}: ${entry.count} ${entry.count === 1 ? 'asset' : 'assets'} (${entry.percentage}%)`}
                 ></div>
               {/each}
             </div>
 
-            <div class="distribution-list">
+            <ul class="distribution-list">
               {#each typeBreakdown as entry}
-                <div class="distribution-item">
-                  <div class="distribution-legend-row">
-                    <div class="distribution-meta">
-                      <span class="distribution-label" style="--distribution-color: {entry.theme.accent}"
-                        >{entry.type}</span
-                      >
-                      <span class="distribution-count">{getAssetCountLabel(entry.count)}</span>
-                    </div>
-                    <span class="distribution-percentage">{entry.percentage}%</span>
-                  </div>
-                </div>
+                <li class="distribution-item" data-type={entry.type}>
+                  <span class="distribution-label" style="--distribution-color: {entry.theme.accent}"
+                    >{entry.type}</span
+                  >
+                  <span class="distribution-count"
+                    >{entry.count} · <strong>{entry.percentage}%</strong></span
+                  >
+                </li>
               {/each}
-            </div>
+            </ul>
           </div>
         </CardContent>
       </Card>
@@ -180,16 +222,46 @@
 
 <style>
   .overview-stats {
-    display: flex;
-    flex-direction: column;
+    display: grid;
+    flex: 1;
+    grid-template-columns: minmax(0, 1fr);
     gap: var(--space-md);
   }
 
+  .overview-stats:empty {
+    display: none;
+  }
+
+  /* Both panels present: share one row so the asset list starts sooner. */
+  .overview-stats--split {
+    grid-template-columns: minmax(0, 1.75fr) minmax(19rem, 1fr);
+  }
+
   .overview-panel {
+    display: flex;
+    min-width: 0;
+  }
+
+  .overview-panel :global(.card) {
+    display: flex;
+    flex-direction: column;
     width: 100%;
   }
 
-  .header-with-indicator {
+  /* The figures sit in the middle of whatever height the row gives the card. */
+  .overview-panel--performance :global(.card-content) {
+    display: flex;
+    flex: 1;
+    align-items: center;
+  }
+
+  .overview-panel--performance .performance-grid {
+    flex: 1;
+    padding-top: 0;
+  }
+
+  .header-with-indicator,
+  .distribution-heading {
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -199,46 +271,38 @@
 
   .performance-grid {
     display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 0.75rem 1.5rem;
+    grid-template-columns: repeat(auto-fit, minmax(9.5rem, 1fr));
+    gap: 1rem 0;
+    padding-top: 0.35rem;
   }
 
   .performance-item {
     display: flex;
-    align-items: center;
-    gap: var(--space-sm);
-    min-height: 4.5rem;
-    padding: 0.25rem 0;
-    background: transparent;
-    border: none;
-    border-radius: 0;
-    transition:
-      border-color var(--duration-micro) var(--ease-standard),
-      background-color var(--duration-micro) var(--ease-standard);
-  }
-
-  .performance-item:not(:first-child) {
-    padding-left: 1.5rem;
+    flex-direction: column;
+    gap: 0.4rem;
+    padding-inline: 1.5rem;
     border-left: 1px solid var(--color-shell-border-default);
   }
 
-  .performance-item:hover {
-    background: transparent;
+  .performance-item:first-child {
+    padding-left: 0;
+    border-left: 0;
   }
 
-  .performance-content {
-    display: flex;
-    flex-direction: column;
-    gap: 0.15rem;
-  }
-
+  /* The headline figures of the page: larger than any other number on it. */
   .performance-value {
     font-family: var(--font-heading);
-    font-size: clamp(1.15rem, 1vw + 0.75rem, 1.5rem);
+    font-size: clamp(1.75rem, 1.3vw + 1.1rem, 2.4rem);
     font-weight: var(--font-semibold);
     color: var(--color-fg-primary);
-    letter-spacing: 0.02em;
+    letter-spacing: 0.005em;
+    line-height: 1;
     font-variant-numeric: tabular-nums;
+  }
+
+  .performance-label {
+    font-size: var(--text-body-sm);
+    color: var(--color-fg-muted);
   }
 
   .performance-support {
@@ -247,62 +311,63 @@
     font-variant-numeric: tabular-nums;
   }
 
-  .performance-label {
+  .distribution-total-inline {
     font-size: var(--text-caption);
     color: var(--color-fg-muted);
-    letter-spacing: 0.03em;
-    text-transform: uppercase;
-  }
-
-  .distribution-list {
-    display: flex;
-    flex-direction: column;
-    gap: 0.85rem;
+    font-variant-numeric: tabular-nums;
   }
 
   .distribution-stack {
     display: flex;
     flex-direction: column;
-    gap: 1rem;
+    gap: 0.9rem;
+    padding-top: 0.35rem;
+  }
+
+  .distribution-bar {
+    width: 100%;
+  }
+
+  .distribution-bar--stacked {
+    display: flex;
+    gap: 3px;
+    height: 0.7rem;
+  }
+
+  .distribution-segment {
+    height: 100%;
+    min-width: 0.35rem;
+    border-radius: 2px;
+  }
+
+  .distribution-segment:first-child {
+    border-radius: 999px 2px 2px 999px;
+  }
+
+  .distribution-segment:last-child {
+    border-radius: 2px 999px 999px 2px;
+  }
+
+  /* Legend on one line: each type with its count and share. */
+  .distribution-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem 1.6rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
   }
 
   .distribution-item {
-    display: block;
-  }
-
-  .distribution-heading {
     display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: var(--space-sm);
-  }
-
-  .distribution-total-inline {
-    font-size: var(--text-caption);
-    color: var(--color-fg-muted);
-    font-variant-numeric: tabular-nums;
-    letter-spacing: 0.03em;
-  }
-
-  .distribution-legend-row {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) auto;
-    align-items: center;
-    gap: 0.9rem;
-  }
-
-  .distribution-meta {
-    display: flex;
-    align-items: center;
-    justify-content: flex-start;
-    flex-wrap: wrap;
-    gap: var(--space-md);
+    align-items: baseline;
+    gap: 0.5rem;
   }
 
   .distribution-label {
     position: relative;
-    padding-left: 0.75rem;
-    font-size: 0.98rem;
+    padding-left: 0.85rem;
+    font-size: var(--text-body-sm);
     color: var(--color-fg-primary);
     font-weight: var(--font-medium);
   }
@@ -312,77 +377,46 @@
     position: absolute;
     top: 50%;
     left: 0;
-    width: 0.4rem;
-    height: 0.4rem;
+    width: 0.5rem;
+    height: 0.5rem;
     border-radius: 999px;
     background: var(--distribution-color, var(--color-fg-muted));
     transform: translateY(-50%);
   }
 
   .distribution-count {
-    font-size: var(--text-caption);
+    font-size: var(--text-body-sm);
     color: var(--color-fg-muted);
     font-variant-numeric: tabular-nums;
-    letter-spacing: 0.02em;
   }
 
-  .distribution-percentage {
-    min-width: 2.7rem;
-    text-align: right;
-    font-size: 1rem;
+  .distribution-count strong {
+    color: var(--color-fg-secondary);
     font-weight: var(--font-semibold);
-    color: var(--color-fg-primary);
-    font-variant-numeric: tabular-nums;
   }
 
-  .distribution-bar {
-    width: 100%;
-    background: var(--color-bg-subtle);
-    border-radius: var(--radius-full);
-    overflow: hidden;
+  @media (max-width: 1100px) {
+    .overview-stats--split {
+      grid-template-columns: minmax(0, 1fr);
+    }
   }
 
-  .distribution-bar--stacked {
-    display: flex;
-    height: 0.75rem;
-  }
-
-  .distribution-segment {
-    height: 100%;
-    transition: width var(--duration-standard) var(--ease-standard);
-  }
-
-  @media (max-width: 900px) {
+  @media (max-width: 640px) {
     .performance-grid {
       grid-template-columns: 1fr;
+      gap: 0;
     }
 
-    .performance-item:not(:first-child) {
-      padding-left: 0;
-      padding-top: 1rem;
-      border-left: none;
+    .performance-item,
+    .performance-item:first-child {
+      padding: 0.9rem 0;
+      border-left: 0;
       border-top: 1px solid var(--color-shell-border-default);
     }
 
-    .distribution-legend-row {
-      grid-template-columns: 1fr;
-      gap: 0.35rem;
-    }
-
-    .distribution-meta {
-      gap: 0.35rem 0.75rem;
-    }
-
-    .distribution-percentage {
-      min-width: 0;
-      text-align: left;
-    }
-  }
-
-  @media (prefers-reduced-motion: reduce) {
-    .performance-item,
-    .distribution-segment {
-      transition: none;
+    .performance-item:first-child {
+      padding-top: 0;
+      border-top: 0;
     }
   }
 </style>

@@ -4,6 +4,8 @@ This directory is the repository-local knowledge base for CREATE SOMETHING.
 
 Use it as the system of record for strategy, architecture, policy, runbooks, and historical decisions. `AGENTS.md` should route here; the deeper truth should live here.
 
+Use [How CREATE SOMETHING works](COMPANY_OPERATING_WIKI.md) to route marketing, development, socials, and future casting questions to their owning sources.
+
 ## Start here
 
 Read in this order when you need broad repo context:
@@ -308,3 +310,5 @@ docs/
 - **Understanding why a decision exists**:
   first the canonical doc in `docs/`,
   then the related memo in `docs/internal/`
+
+AI-native delivery evidence: [operating guide](guides/AI_NATIVE_SDLC.md).

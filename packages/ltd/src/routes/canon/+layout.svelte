@@ -65,14 +65,6 @@
 	});
 </script>
 
-<svelte:head>
-	<title>Canon Design System — CREATE SOMETHING</title>
-	<meta
-		name="description"
-		content="The Canon Design System. A comprehensive, philosophically-grounded design system embodying 'weniger, aber besser' (less, but better)."
-	/>
-</svelte:head>
-
 <svelte:window onkeydown={closeSiteMenu} />
 
 <div class="doc-layout">

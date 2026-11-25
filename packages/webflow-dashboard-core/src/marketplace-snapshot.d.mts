@@ -11,6 +11,12 @@ export interface SnapshotLeaderboardRow {
   revenueRank: number;
   /** Sales through creator fulfillment links (paid off-platform). Absent in older snapshots. */
   fulfillmentSales30d?: number;
+  /**
+   * The part of totalRevenue30d from Marketplace checkout. Link sales are left
+   * out, because their list price is an upper limit of what the buyer paid.
+   * When present, revenueRank uses it. Absent in older snapshots.
+   */
+  checkoutRevenue30d?: number;
 }
 export interface SnapshotCategoryRow {
   category: string;
@@ -20,6 +26,16 @@ export interface SnapshotCategoryRow {
   totalRevenue30d: number;
   avgRevenuePerTemplate: number;
   revenueRank: number;
+  /** Part of totalSales30d through fulfillment links; its revenue is assumed at list price. */
+  fulfillmentSales30d?: number;
+  /** Templates listed now or sold in a window of this snapshot. Present only when the source has supply. */
+  listedTemplates?: number;
+  /** 90-day window ending at snapshotAt. Present only when the source has it. */
+  templatesWithSales90d?: number;
+  totalSales90d?: number;
+  totalRevenue90d?: number;
+  /** Part of totalSales90d through fulfillment links. Present only when the 90-day source has the split. */
+  fulfillmentSales90d?: number;
 }
 export interface MarketplaceSnapshot {
   schemaVersion: 1;
@@ -30,6 +46,13 @@ export interface MarketplaceSnapshot {
     sellingTemplates: number;
     /** Part of totalSales made through fulfillment links. Absent in older snapshots. */
     fulfillmentSales?: number;
+    /** Part of totalRevenue from Marketplace checkout (link sales left out). Absent in older snapshots. */
+    checkoutRevenue?: number;
+    /** Unique templates listed now or sold in a window of this snapshot. */
+    listedTemplates?: number;
+    totalSales90d?: number;
+    totalRevenue90d?: number;
+    sellingTemplates90d?: number;
   };
   leaderboard: SnapshotLeaderboardRow[];
   categories: SnapshotCategoryRow[];
@@ -44,10 +67,13 @@ export function buildMarketplaceSnapshot(input: {
     sales: number;
     revenue: number;
     fulfillmentSales?: number;
+    /** Part of revenue from fulfillment-link sales, at list price. Needs fulfillmentSales. */
+    fulfillmentRevenue?: number;
   }>;
-  assets: Array<{ templateId: string; creatorEmail: string; categories: string[] }>;
+  assets: Array<{ templateId: string; creatorEmail?: string; categories: string[]; listed?: boolean }>;
   categories: Array<{ name: string; group: string }>;
   snapshotAt: string;
+  sellers90?: Array<{ templateId: string; sales: number; revenue: number; fulfillmentSales?: number }>;
 }): MarketplaceSnapshot;
 export function validateMarketplaceSnapshot(snapshot: unknown): MarketplaceSnapshot;
 export function snapshotToFields(snapshot: MarketplaceSnapshot): Record<string, string>;

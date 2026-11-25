@@ -1,7 +1,8 @@
 <script lang="ts">
-  import { onMount, type Snippet } from 'svelte';
+  import type { Snippet } from 'svelte';
   import { RingMark } from '../brand/marks/index.js';
   import { getAnalytics } from '../analytics/client.js';
+  import TurnstileChallenge from '../newsletter/TurnstileChallenge.svelte';
   import { newsletterSignupContext } from '../newsletter/client.js';
   import MeridianOfferPanel from './meridian/MeridianOfferPanel.svelte';
 
@@ -24,6 +25,8 @@
     media?: {
       src: string;
       alt: string;
+      width?: number;
+      height?: number;
     };
   }
 
@@ -99,58 +102,7 @@
   let isSubmitting = $state(false);
   let message = $state<{ type: 'success' | 'error'; text: string } | null>(null);
   let turnstileToken = $state('');
-  let turnstileWidgetId: string | null = null;
-  let turnstileContainer = $state<HTMLDivElement>();
-
-  // Load Turnstile script and render widget
-  onMount(() => {
-    if (!showNewsletter || !turnstileSiteKey) return;
-
-    // Check if script already loaded
-    if ((window as any).turnstile) {
-      renderTurnstile();
-      return;
-    }
-
-    // Load Turnstile script
-    const script = document.createElement('script');
-    script.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js?onload=onTurnstileLoad';
-    script.async = true;
-    script.defer = true;
-
-    // Set up callback
-    (window as any).onTurnstileLoad = () => {
-      renderTurnstile();
-    };
-
-    document.head.appendChild(script);
-
-    return () => {
-      // Cleanup
-      if (turnstileWidgetId && (window as any).turnstile) {
-        (window as any).turnstile.remove(turnstileWidgetId);
-      }
-    };
-  });
-
-  function renderTurnstile() {
-    if (!turnstileContainer || !(window as any).turnstile || !turnstileSiteKey) return;
-
-    turnstileWidgetId = (window as any).turnstile.render(turnstileContainer, {
-      sitekey: turnstileSiteKey,
-      callback: (token: string) => {
-        turnstileToken = token;
-      },
-      'expired-callback': () => {
-        turnstileToken = '';
-      },
-      'error-callback': () => {
-        turnstileToken = '';
-      },
-      theme: 'dark',
-      size: 'flexible'
-    });
-  }
+  let verificationVersion = $state(0);
 
   async function handleNewsletterSubmit(e: Event) {
     e.preventDefault();
@@ -197,11 +149,6 @@
           surface: 'footer_newsletter'
         });
         email = '';
-        // Reset Turnstile for next submission
-        if ((window as any).turnstile && turnstileWidgetId) {
-          (window as any).turnstile.reset(turnstileWidgetId);
-          turnstileToken = '';
-        }
       } else {
         message = { type: 'error', text: data.message };
       }
@@ -211,6 +158,8 @@
         text: 'Something went wrong. Please try again.'
       };
     } finally {
+      turnstileToken = '';
+      verificationVersion += 1;
       isSubmitting = false;
     }
   }
@@ -300,9 +249,9 @@
             />
 
             <div class="flex flex-col sm:flex-row gap-3">
-              <label for="newsletter-email" class="sr-only">Email address</label>
+              <label for="footer-newsletter-email" class="sr-only">Email address</label>
               <input
-                id="newsletter-email"
+                id="footer-newsletter-email"
                 type="email"
                 bind:value={email}
                 placeholder="Enter your email address"
@@ -339,7 +288,7 @@
 
             <!-- Turnstile widget container -->
             {#if turnstileSiteKey}
-              <div bind:this={turnstileContainer} class="turnstile-container mt-4"></div>
+              <TurnstileChallenge siteKey={turnstileSiteKey} onToken={(token) => turnstileToken = token} resetVersion={verificationVersion} />
             {/if}
 
             {#if message}
@@ -712,7 +661,7 @@
 
   .footer-link-groups {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 10rem), 1fr));
     gap: 2rem 2.5rem;
   }
 
@@ -759,7 +708,7 @@
     font-weight: var(--font-performance-bold);
     color: var(--color-performance-fg-primary);
     letter-spacing: 0.06em;
-    text-transform: uppercase;
+    text-transform:none;
   }
 
   .section-description {
@@ -889,12 +838,6 @@
     border: 0;
   }
 
-  /* Turnstile container */
-  .turnstile-container {
-    display: flex;
-    justify-content: center;
-  }
-
   @media (min-width: 768px) {
     .footer-links-grid {
       grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr);
@@ -1004,11 +947,11 @@
 
   .footer-clear .brand-title {
     color: var(--color-performance-ink, #090909);
-    font-family: var(--font-performance-mono);
+    font-family:var(--font-performance-interface);
     font-size: 0.86rem;
     font-weight: var(--font-performance-medium);
     letter-spacing: 0;
-    text-transform: uppercase;
+    text-transform:none;
   }
 
   .footer-clear .brand-description {
@@ -1039,11 +982,11 @@
 
   .footer-clear .section-title {
     color: var(--color-performance-muted, #5e6268);
-    font-family: var(--font-performance-mono);
+    font-family:var(--font-performance-interface);
     font-size: 0.74rem;
     font-weight: var(--font-performance-medium);
     letter-spacing: 0;
-    text-transform: uppercase;
+    text-transform:none;
   }
 
   .footer-clear .section-description {
@@ -1258,12 +1201,12 @@
     max-width: 15rem;
     margin: 0 0 0.25rem;
     color: color-mix(in srgb, var(--color-performance-editorial-light) 62%, transparent);
-    font-family: var(--font-performance-mono);
+    font-family:var(--font-performance-interface);
     font-size: 0.68rem;
     font-weight: var(--font-performance-semibold);
     letter-spacing: 0.065em;
     line-height: 1.45;
-    text-transform: uppercase;
+    text-transform:none;
   }
 
   .footer-editorial .footer-links {
@@ -1366,4 +1309,33 @@
       border-color: color-mix(in srgb, var(--color-performance-editorial-light) 18%, transparent);
     }
   }
+
+  /* All historical visualStyle values consume the owning canonical palette. */
+  .footer,.footer-clear,.footer-editorial {background:var(--color-performance-paper);color:var(--color-performance-ink);font-family:var(--font-performance-interface);}
+  .footer-editorial #newsletter {background:var(--color-performance-panel);color:var(--color-performance-ink);border-color:var(--color-performance-line);}
+  .footer-editorial .newsletter-title,.footer-editorial .footer-editorial-identity {font-family:var(--font-performance-heading);font-weight:500;line-height:1.1;}
+  .footer-editorial .newsletter-input {background:var(--color-performance-panel);color:var(--color-performance-ink);border-color:var(--color-performance-border-emphasis);border-radius:12px;}
+  .footer-editorial .newsletter-button {background:var(--color-performance-ink);color:var(--color-performance-panel);border-color:var(--color-performance-ink);border-radius:12px;}
+  .footer-editorial .newsletter-description,.footer-editorial .about-text,.footer-editorial .copyright-text,.footer-editorial .legal-link,.footer-editorial .link-label {color:var(--color-performance-muted);}
+  .footer-editorial .footer-links,.footer-editorial .footer-copyright,.footer-editorial .footer-quote {background:var(--color-performance-paper);color:var(--color-performance-ink);}
+
+  .footer-editorial .footer-editorial-identity,.footer-editorial .brand-title,.footer-editorial .footer-brand-content,.footer-editorial .section-title,.footer-editorial .footer-link,.footer-editorial .footer-link:hover,.footer-editorial .footer-link.active,.footer-editorial .social-link {color:var(--color-performance-ink);}
+  .footer-editorial .footer-links-grid {background:var(--color-performance-panel);border-color:var(--color-performance-line);border-radius:20px;}
+  .footer-editorial .brand-description,.footer-editorial-identity p,.footer-editorial .link-description {color:var(--color-performance-muted);}
+  .footer-editorial-identity div {font-family:var(--font-performance-heading);font-size:clamp(2.5rem,8vw,7rem);font-weight:500;line-height:1.05;letter-spacing:-.04em;}
+  .footer .section-title,.footer-editorial-identity p {font-family:var(--font-performance-interface);font-size:14px;letter-spacing:0;text-transform:none;}
+  .footer .footer-link,.footer .legal-link {display:inline-flex;min-height:44px;align-items:center;}
+  .footer-editorial .footer-cta {background:var(--color-performance-ink);color:var(--color-performance-panel);border-color:var(--color-performance-ink);}
+  .footer-editorial .footer-cta-description {color:var(--color-performance-panel);}
+
+  .footer ul {list-style:none;margin:0;padding:0;}
+  .footer .footer-link {display:flex;flex-direction:column;align-items:flex-start;justify-content:center;gap:4px;padding-block:8px;}
+  .footer .footer-link:hover {opacity:1;}
+  .footer .link-description,.footer .link-label,.footer .legal-link {font-size:14px;line-height:1.5;}
+  .footer .footer-copyright {padding:24px;}
+
+  .footer .footer-links-grid > * {min-width:0;}
+  .footer .footer-link {width:100%;box-sizing:border-box;overflow-wrap:anywhere;}
+  .footer .legal-link {min-width:44px;}
+  @media(min-width:1024px){.footer .footer-links-grid {grid-template-columns:repeat(3,minmax(0,1fr));}}
 </style>

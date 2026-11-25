@@ -434,22 +434,16 @@
 		selectedIndex = 0;
 	});
 
-	// Lock body scroll when open
+	// Own only this open interval, restoring the surrounding overlay policy.
 	$effect(() => {
-		if (typeof document !== 'undefined') {
-			if (open) {
-				document.body.style.overflow = 'hidden';
-			} else {
-				document.body.style.overflow = '';
-			}
-		}
+		if (!open || typeof document === 'undefined') return;
+		const previousOverflow=document.body.style.overflow;
+		document.body.style.overflow='hidden';
+		return ()=>{document.body.style.overflow=previousOverflow;};
 	});
 
 	onMount(() => {
 		return () => {
-			if (typeof document !== 'undefined') {
-				document.body.style.overflow = '';
-			}
 			if (debounceTimer) {
 				clearTimeout(debounceTimer);
 			}
@@ -636,8 +630,10 @@
 		z-index: 51;
 		width: min(720px, 92vw);
 		max-height: 78vh;
-		background: color-mix(in srgb, var(--color-performance-shell-surface-tertiary) 92%, transparent);
-		backdrop-filter: blur(14px);
+		background:var(--color-performance-panel);
+		color:var(--color-performance-ink);
+		border:1px solid var(--color-performance-line);
+		backdrop-filter:none;
 		border-radius: var(--radius-performance-scale-xl, 16px);
 		box-shadow: var(--color-performance-shell-shadow-strong);
 		display: flex;
@@ -716,7 +712,7 @@
 		padding: var(--space-performance-xs, 0.5rem) var(--space-performance-sm, 0.75rem);
 		font-size: var(--text-performance-caption, 0.75rem);
 		color: var(--color-performance-fg-muted, rgba(255, 255, 255, 0.46));
-		text-transform: uppercase;
+		text-transform:none;
 		letter-spacing: 0.08em;
 	}
 

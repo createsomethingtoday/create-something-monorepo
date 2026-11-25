@@ -216,7 +216,8 @@ describe('GoogleCalendarPort', () => {
       status: 'available',
       selectedCalendarIds: [
         'micah@createsomething.io',
-        'selected-readonly-calendar'
+        'selected-readonly-calendar',
+        'mj@halfdozen.co'
       ],
       eventCalendarId: 'micah@createsomething.io'
     });

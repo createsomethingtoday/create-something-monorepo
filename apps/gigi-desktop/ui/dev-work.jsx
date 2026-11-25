@@ -21,7 +21,7 @@ import { shiftDay, mondayOf } from '../web/today-view.mjs';
 import { finishedTask, taskDateLabel } from '../web/calm-work.mjs';
 import { statusLabel } from '../web/desktop-polish.mjs';
 import { scheduleEntry } from '../web/schedule.mjs';
-import { eventLabel } from '../web/event-identity.mjs';
+import { eventLabel, eventKind } from '../web/event-identity.mjs';
 import { formatMoney, supportedCurrencies } from '../web/model.mjs';
 import { DevQuestResume } from './dev-quest.jsx';
 
@@ -157,12 +157,100 @@ function CalendarSource({ record, day }) {
   );
 }
 export function WeekCalendar({ data, today, busy }) {
+  const compact = useMediaQuery('(max-width: 64rem)');
   const calendar = data.calendar,
     start = calendar?.weekStart || mondayOf(today),
     end = shiftDay(start, 6),
     items = calendar?.items || [];
   const known = count(calendar?.count),
     range = `${dateText(start)} – ${dateText(end)}`;
+  const days = Array.from({ length: 7 }, (_, index) => {
+              const day = shiftDay(start, index);
+              const entries = items.filter((record) => {
+                const entry = scheduleEntry(record);
+                return (
+                  (record.date || entry.key) <= day &&
+                  (record.endDate || record.date || entry.endKey) >= day
+                );
+              }).sort((a,b)=>Number(eventKind(b,b.entity)==='performance')-Number(eventKind(a,a.entity)==='performance'));
+              return (
+                <Section
+                  key={day}
+                  variant="transparent"
+                  padding={0}
+                  dividers={index < 6 ? ['end'] : undefined}
+                  className={`dev-calendar-day${day === today ? ' is-today' : ''}${!entries.length ? ' is-empty' : ''}`}
+                  aria-labelledby={`calendar-day-${day}`}
+                >
+                  <HStack
+                    padding={compact ? 2 : 3}
+                    hAlign="between"
+                    vAlign="center"
+                    gap={2}
+                    className="dev-calendar-day-heading"
+                  >
+                    <Heading level={6} accessibilityLevel={3} id={`calendar-day-${day}`}>
+                      {dateText(day, { weekday: 'short' })}
+                    </Heading>
+                    <HStack
+                      as="time"
+                      width="2rem"
+                      minHeight="2rem"
+                      hAlign="center"
+                      vAlign="center"
+                      dateTime={day}
+                      aria-current={day === today ? 'date' : undefined}
+                    >
+                      <Text type="label">{Number(day.slice(-2))}</Text>
+                    </HStack>
+                    {compact && !entries.length && <Text type="supporting" color="secondary">No commitments</Text>}
+                  </HStack>
+                  {(!compact || entries.length>0) && <VStack gap={2} padding={2} minHeight={compact ? undefined : "9rem"} className="dev-calendar-day-events">
+                    {!entries.length && <Text type="supporting" color="secondary">No commitments</Text>}
+                    {entries.map((record) => {
+                      const entry = scheduleEntry(record);
+                      return (
+                        <Section
+                          key={`${record.entity}:${record.id}`}
+                          padding={0}
+                          variant="transparent"
+                          className="dev-calendar-entry"
+                        >
+                          <B
+                            variant="ghost"
+                            size="sm"
+                            width="100%"
+                            style={{ justifyContent: 'start', textAlign: 'start' }}
+                            className="dev-calendar-event"
+                            data-open={record.id}
+                            data-entity={record.entity || 'gigs'}
+                            label={record.title || 'Untitled'}
+                          >
+                            <VStack gap={1} hAlign="start" width="100%">
+                              <Text textWrap="wrap" weight="semibold">
+                                {record.title || 'Untitled'}
+                              </Text>
+                              {compact ? <Text type="supporting" color="secondary">{[entry.time, eventLabel(record, record.entity || 'gigs'), record.status && statusLabel(record.status)].filter(Boolean).join(' · ')}</Text> : <>
+                              <Text type="supporting">{entry.time}</Text>
+                              <Text type="supporting" color="secondary">
+                                {eventLabel(record, record.entity || 'gigs')}
+                              </Text>
+                              {record.status && (
+                                <Text type="supporting" color="secondary">
+                                  {statusLabel(record.status)}
+                                </Text>
+                              )}
+                              </>}
+                            </VStack>
+                          </B>
+                          <CalendarSource record={record} day={day} />
+                        </Section>
+                      );
+                    })}
+                  </VStack>}
+                </Section>
+              );
+            });
   return (
     <WorkSection
       className="dev-today-section dev-today-calendar"
@@ -208,105 +296,37 @@ export function WeekCalendar({ data, today, busy }) {
           label={`Gig calendar · ${range}`}
         >
           <Grid
-            columns={7}
-            width="max(100%, 61.25rem)"
-            minHeight="17.5rem"
+            columns={compact ? 1 : 7}
+            width={compact ? "100%" : "max(100%, 61.25rem)"}
+            minHeight={compact ? undefined : "17.5rem"}
             className="dev-week-calendar"
           >
-            {Array.from({ length: 7 }, (_, index) => {
-              const day = shiftDay(start, index);
-              const entries = items.filter((record) => {
-                const entry = scheduleEntry(record);
-                return (
-                  (record.date || entry.key) <= day &&
-                  (record.endDate || record.date || entry.endKey) >= day
-                );
-              });
-              return (
-                <Section
-                  key={day}
-                  variant="transparent"
-                  padding={0}
-                  dividers={index < 6 ? ['end'] : undefined}
-                  className={`dev-calendar-day${day === today ? ' is-today' : ''}`}
-                  aria-labelledby={`calendar-day-${day}`}
-                >
-                  <HStack
-                    padding={3}
-                    hAlign="between"
-                    vAlign="center"
-                    gap={2}
-                    className="dev-calendar-day-heading"
-                  >
-                    <Heading level={6} accessibilityLevel={3} id={`calendar-day-${day}`}>
-                      {dateText(day, { weekday: 'short' })}
-                    </Heading>
-                    <HStack
-                      as="time"
-                      width="2rem"
-                      minHeight="2rem"
-                      hAlign="center"
-                      vAlign="center"
-                      dateTime={day}
-                      aria-current={day === today ? 'date' : undefined}
-                    >
-                      <Text type="label">{Number(day.slice(-2))}</Text>
-                    </HStack>
-                  </HStack>
-                  <VStack gap={2} padding={2} minHeight="9rem" className="dev-calendar-day-events">
-                    {entries.map((record) => {
-                      const entry = scheduleEntry(record);
-                      return (
-                        <Section
-                          key={`${record.entity}:${record.id}`}
-                          padding={0}
-                          variant="transparent"
-                          className="dev-calendar-entry"
-                        >
-                          <B
-                            variant="ghost"
-                            size="sm"
-                            width="100%"
-                            style={{ justifyContent: 'start', textAlign: 'start' }}
-                            className="dev-calendar-event"
-                            data-open={record.id}
-                            data-entity={record.entity || 'gigs'}
-                            label={record.title || 'Untitled'}
-                          >
-                            <VStack gap={1} hAlign="start" width="100%">
-                              <Text textWrap="wrap" weight="semibold">
-                                {record.title || 'Untitled'}
-                              </Text>
-                              <Text type="supporting">{entry.time}</Text>
-                              <Text type="supporting" color="secondary">
-                                {eventLabel(record, record.entity || 'gigs')}
-                              </Text>
-                              {record.status && (
-                                <Text type="supporting" color="secondary">
-                                  {statusLabel(record.status)}
-                                </Text>
-                              )}
-                            </VStack>
-                          </B>
-                          <CalendarSource record={record} day={day} />
-                        </Section>
-                      );
-                    })}
-                  </VStack>
-                </Section>
-              );
-            })}
+            {compact ? <>
+              {days.filter((node) => !node.props.className.includes('is-empty') || node.props.className.includes('is-today'))}
+              <details className="dev-empty-days">
+                <summary>Days without commitments ({days.filter((node) => node.props.className.includes('is-empty') && !node.props.className.includes('is-today')).length})</summary>
+                {days.filter((node) => node.props.className.includes('is-empty') && !node.props.className.includes('is-today'))}
+              </details>
+            </> : days}
           </Grid>
         </ScrollableArea>
       )}
+      {(!compact || (known !== null && known > items.length)) && <>
       <Text type="supporting" color="secondary">
-        Gigs and saved calendar entries · Monday–Sunday
+        Performances and other saved commitments · Monday–Sunday
         {known !== null && known > items.length
           ? ` · Showing ${items.length} of ${known}; open Schedule for all records.`
           : ''}
       </Text>
+      </>}
     </WorkSection>
   );
+}
+function TodayTaskContext({data}) {
+ return <WorkSection title={<Heading level={2}>Your working week</Heading>} actions={<B variant="ghost" data-page="tasks">View all tasks</B>}><Grid columns={{minWidth:240,max:2}} gap={5}>{[['weeklyTasks','This week'],['undatedTasks','Without a date'],['waitingTasks','Waiting on someone'],['pinnedNotes','Pinned professional notes']].map(([key,title])=>{
+ const value=data[key],entity=key==='pinnedNotes'?'notes':'tasks',items=value?.items||[];
+ return <VStack key={key} gap={2} className="working-week-group"><HStack hAlign="between" gap={2}><Heading level={3}>{title}</Heading><Text type="supporting" color="secondary">{value ? `${items.length} shown / ${value.count} saved` : 'Unread'}</Text></HStack>{items.map(record=><B key={record.id} variant="ghost" width="100%" style={{justifyContent:'start',textAlign:'start',height:'auto'}} data-entity={record.entity||entity} data-open={record.id}>{record.title}{record.date ? ` · ${dateText(record.date)}` : ''}</B>)}{!items.length&&<Text type="supporting" color="secondary">{value?'Nothing saved here yet.':'Not included in this local read.'}</Text>}{value?.count>items.length&&<Text type="supporting">Open the collection for all records.</Text>}<B variant="ghost" size="sm" style={{justifyContent:'start'}} data-page={entity}>{entity==='notes'?'Open notes':'Open tasks'} →</B></VStack>;
+ })}</Grid></WorkSection>;
 }
 function TodayTasks({ data, today }) {
   const value = data.tasks,
@@ -497,6 +517,7 @@ export function DevToday({ ctx, attention }) {
       <DevQuestResume ctx={ctx} />
       <WeekCalendar data={data} today={today} busy={s.busy} />
       <TodayTasks data={data} today={today} />
+      <TodayTaskContext data={data} />
       <WorkSection
         className="dev-today-section"
         title={<Heading level={2}>Financials</Heading>}

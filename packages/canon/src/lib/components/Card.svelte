@@ -41,25 +41,27 @@
     xl: 'p-12'
   };
 
+  const paddingValues = {none:'0',sm:'1rem',md:'1.5rem',lg:'2rem',xl:'3rem'};
+
   const baseClasses = $derived(
     `card card-${variant} card-radius-${radius} ${hover ? 'card-hover' : ''} ${paddingMap[padding]} ${className}`
   );
 </script>
 
 {#if href}
-  <a {href} class={baseClasses} {onclick}>
+  <a {href} class={baseClasses} style:padding={paddingValues[padding]} {onclick}>
     {#if children}
       {@render children()}
     {/if}
   </a>
 {:else if onclick}
-  <button type="button" class={baseClasses} {onclick}>
+  <button type="button" class={baseClasses} style:padding={paddingValues[padding]} {onclick}>
     {#if children}
       {@render children()}
     {/if}
   </button>
 {:else}
-  <div class={baseClasses}>
+  <div class={baseClasses} style:padding={paddingValues[padding]}>
     {#if children}
       {@render children()}
     {/if}
@@ -76,6 +78,8 @@
       border-color var(--duration-performance-standard) var(--ease-performance-standard),
       background var(--duration-performance-standard) var(--ease-performance-standard);
   }
+
+  a.card, a.card:hover { text-decoration:none; }
 
   /* Variants */
   .card-elevated {
@@ -146,4 +150,8 @@
     cursor: pointer;
     width: 100%;
   }
+
+	@media (prefers-reduced-motion: reduce) {
+		.card { transition:none; }
+	}
 </style>

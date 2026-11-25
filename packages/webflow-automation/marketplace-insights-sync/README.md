@@ -30,6 +30,21 @@ creator on another platform; Webflow only delivered the template), counted at
 list price. Rows and the summary carry that part separately
 (`fulfillmentSales30d`, `summary.fulfillmentSales`); older snapshots have no split.
 
+Webflow does not see the price a fulfillment-link buyer paid, and creators more
+often sell below list price than above it. So list price is an upper limit:
+
+- Totals and subcategory rows keep link sales at list price. The dashboard marks
+  a subcategory `est.` when 25% or more of its sales used links, and says that
+  the revenue is an upper limit.
+- The leaderboard does not use it. The source carries the link part of revenue
+  (`FULFILLMENT_REVENUE_30D`), each leaderboard row carries
+  `checkoutRevenue30d` (revenue from Marketplace checkout only), and
+  `revenueRank` and the tie-break between templates with equal sales use that
+  number. `summary.checkoutRevenue` is the same split for the whole Marketplace.
+  Sales counts and `salesRank` still include link sales.
+- A snapshot from a source without `FULFILLMENT_REVENUE_30D` has none of these
+  fields and ranks list-price revenue, as before.
+
 Both sources refuse a window that the daily `MARKETPLACE_ORDERS` load (about
 05:30 UTC) does not cover yet. A Monday 16:05 UTC run missed the window's final
 hours of orders, so snapshots publish on Tuesday.
@@ -57,7 +72,30 @@ and it fails unless their count, summed sales and summed revenue equal
 `WINDOW_SELLERS`, `WINDOW_SALES` and `WINDOW_REVENUE`, which the query writes on
 every row. A run that starts before
 the activation finishes therefore fails instead of publishing a partial week.
-`FULFILLMENT_SALES_30D` must be on every row of the window or on none.
+`FULFILLMENT_SALES_30D` must be on every row of the window or on none, and the
+same holds for `FULFILLMENT_REVENUE_30D`.
+
+## 90-day window (optional)
+
+A second Fivetran activation, "Marketplace Insights sellers (90d) → Airtable"
+(sync 3694252, dataset 151728), runs `fivetran-sellers-90d.sql` on Tuesdays at
+07:10 UTC and upserts on `TEMPLATE_ID` into **Marketplace Insights Sellers
+(90d)** (`tblAlUQbYfyQZ81hK`). It holds one row per template with a delivered
+sale in the 90 days to the same window end.
+
+The publish step reads it after the 30-day window, with the same checks: only
+rows of the requested window, and their count, sales and revenue must equal the
+`WINDOW_*_90D` totals on every row. The snapshot then carries 90-day numbers
+(`summary.totalSales90d`, `templatesWithSales90d` on each subcategory, and so
+on) and the dashboard shows a 30/90-day switch.
+
+The 90-day window never stops the weekly snapshot. When its rows are missing,
+incomplete or unreadable, or when they do not contain every 30-day seller, the
+snapshot is published with 30-day numbers only, the dashboard hides the switch,
+and the receipt names the cause in `windowNotes` (the cron endpoint returns the
+reasons, so they are in the Worker logs). The 14:15 UTC retry publishes the
+window again and picks the 90-day rows up if they arrived late. Only `--source
+airtable` reads this table; `--source snowflake` builds a 30-day snapshot.
 
 ## Weekly schedule (no local machine)
 
@@ -65,7 +103,7 @@ The read/build/publish steps live in
 `webflow-dashboard-core/src/marketplace-insights-publish.mjs`. Production runs
 them in the dashboard's `POST /api/cron/insights` endpoint (Airtable source,
 `Authorization: Bearer $SCHEDULER_CRON_SECRET`). The `marketplace-insights-cron` Worker
-calls it Tuesdays at 08:15 UTC, after the Fivetran activation (07:05 UTC), and
+calls it Tuesdays at 08:15 UTC, after the Fivetran activations (07:05 and 07:10 UTC), and
 again at 14:15 UTC as a retry; publishing a window again replaces its record.
 To republish one window by hand, POST with `?asOf=<window end ISO>`.
 

@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en">
+  <meta charset="utf-8" /><meta
+    name="viewport"
+    content="width=device-width,initial-scale=1"
+  /><title>Canon Meeting Notes</title
+  ><link rel="stylesheet" href="style.css" />
+  <body>
+    <main>
+      <small>CANON</small>
+      <h1>Canon Meeting Notes</h1>
+      <p>Private local capture · 60 minute limit</p>
+      <label
+        >Exact authorized meeting URL
+        <input id="meeting" type="url" placeholder="https://zoom.us/j/12345678901"
+      /></label>
+      <button id="configure">Save meeting reference</button>
+      <p id="selection"></p>
+      <button id="open-tile">Open visual-only Canon tile</button>
+      <p>Select this separate tile window as the OBS window source. Keep these capture controls open.</p>
+      <label
+        ><input id="consent" type="checkbox" /> The host and every guest know this participant is
+        recording and have explicitly agreed.</label
+      >
+      <p>
+        Use the dedicated Canon participant profile, visibly named “Canon Meeting Notes”. For Zoom,
+        choose Join from your browser and connect computer audio first. All speakers must join from
+        other identities; a host-only meeting is supported. Captures tab audio only; no microphone.
+      </p>
+      <button id="start">Start consented recording</button
+      ><button id="stop" disabled>Stop and save WAV</button>
+      <p id="status" role="status">Stopped. No audio captured.</p>
+      <p>
+        This control tab must remain open. Closing it ends capture and discards unsaved audio. Stop
+        before leaving or changing rooms. Zoom does not announce this local recorder. No background
+        recording. Select the local WAV destination before starting.
+      </p>
+      <small>CREATE SOMETHING · private local recording</small>
+    </main>
+    <script type="module" src="control.js"></script>
+  </body>
+</html>

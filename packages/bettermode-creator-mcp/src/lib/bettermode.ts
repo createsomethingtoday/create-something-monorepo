@@ -21,8 +21,12 @@ export type BettermodePost = {
   id: string;
   slug?: string | null;
   title?: string | null;
+  // description and shortContent are truncated previews (~240 chars).
   description?: string | null;
   shortContent?: string | null;
+  // Full body as plain text.
+  textContent?: string | null;
+  status?: string | null;
   url?: string | null;
   publishedAt?: string | null;
   createdAt?: string | null;
@@ -31,6 +35,9 @@ export type BettermodePost = {
   parentId?: string | null;
   owner?: BettermodeMember | null;
   createdBy?: BettermodeMember | null;
+  // Count of direct replies to this post.
+  repliesCount?: number | null;
+  // Direct replies; each one carries its nested replies.
   replies?: { nodes?: BettermodePost[] } | null;
 };
 
@@ -82,6 +89,33 @@ export async function appAccessToken(networkId: string, auth: BettermodeAuth): P
   return data.limitedToken.accessToken;
 }
 
+// Bettermode limits query cost to 20,000 per 10 seconds, and nested
+// connections multiply: two levels of replies(limit: 50) cost about 20,500 in
+// one query. Field aliases are not allowed either. So the thread is read as
+// one post with its direct replies, then one small query for each direct
+// reply that has replies of its own. `reverse: true` returns the newest
+// replies first, so a very long thread loses its oldest messages, not its latest.
+const REPLY_FIELDS = `
+  fragment ReplyFields on Post {
+    id
+    status
+    shortContent
+    textContent
+    url
+    publishedAt
+    createdAt
+    repliedToId
+    repliesCount
+    createdBy { member { ...MemberFields } }
+  }
+  fragment MemberFields on Member {
+    id
+    name
+    username
+    email
+    role { id name type }
+  }`;
+
 export async function fetchPostThread(
   postId: string,
   appToken: string,
@@ -92,41 +126,40 @@ export async function fetchPostThread(
     bearer(appToken),
     `query Post($id: ID!) {
       post(id: $id) {
-        id
         slug
         title
-        description
-        shortContent
-        url
-        publishedAt
-        createdAt
         spaceId
         space { id name slug }
         owner { member { ...MemberFields } }
-        createdBy { member { ...MemberFields } }
-        repliedToId
-        replies(limit: 50) {
-          nodes {
-            id
-            shortContent
-            description
-            url
-            publishedAt
-            createdBy { member { ...MemberFields } }
-          }
+        ...ReplyFields
+        replies(limit: 50, reverse: true) {
+          nodes { ...ReplyFields }
         }
       }
     }
-    fragment MemberFields on Member {
-      id
-      name
-      username
-      email
-      role { id name type }
-    }`,
+    ${REPLY_FIELDS}`,
     { id: postId },
   );
-  return data.post ? normalizePost(data.post) : null;
+  if (!data.post) return null;
+
+  const post = normalizePost(data.post);
+  for (const reply of post.replies?.nodes ?? []) {
+    if ((reply.repliesCount ?? 0) > 0) {
+      const nested = await graphQl<{ replies: { nodes?: RawBettermodePost[] } }>(
+        auth.endpoint,
+        bearer(appToken),
+        `query Replies($postId: ID!) {
+          replies(postId: $postId, limit: 30, reverse: true) {
+            nodes { ...ReplyFields }
+          }
+        }
+        ${REPLY_FIELDS}`,
+        { postId: reply.id },
+      );
+      reply.replies = { nodes: (nested.replies.nodes ?? []).map(normalizePost) };
+    }
+  }
+  return post;
 }
 
 async function graphQl<T>(

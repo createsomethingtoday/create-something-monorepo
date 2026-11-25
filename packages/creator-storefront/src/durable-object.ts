@@ -1,6 +1,6 @@
 import { DurableObject } from 'cloudflare:workers';
 import { AirtableAuthoringStore } from './airtable';
-import { requireAuthoringConfig } from './config';
+import { inventoryFetch, requireAuthoringConfig } from './config';
 import type { Env } from './config';
 import { dispatch } from './dispatch';
 import type { WriterEnvelope, WriterOp } from './dispatch';
@@ -38,7 +38,7 @@ export class CreatorStorefrontWriter extends DurableObject<Env> {
 		const storage = this.ctx.storage;
 		this.writer = new StorefrontWriter({
 			store: new AirtableAuthoringStore({ apiKey: config.airtableApiKey, apiBaseUrl: config.airtableApiBaseUrl }),
-			inventory: new TemplateSearchInventory(config.templateSearchUrl),
+			inventory: new TemplateSearchInventory(config.templateSearchUrl, inventoryFetch(this.env)),
 			readModel: new D1ReadModel(config.readModel),
 			storage: durableStorage(storage),
 			allowedCoverOrigins: config.allowedCoverOrigins,

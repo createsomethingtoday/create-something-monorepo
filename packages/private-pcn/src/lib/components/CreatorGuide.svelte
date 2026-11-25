@@ -8,18 +8,13 @@
   <ol>
     <li>
       <strong>Prepare a private draft.</strong>
-      <a href="#upload-walkthrough">Upload a walkthrough</a> with a clear title and outcome. Keep this
-      page open until the upload finishes.
+      <a href="#upload-walkthrough">Upload a walkthrough</a> with a title and learning outcome. Keep this page open until the upload finishes.
     </li>
     <li>
-      <strong>Check and review.</strong> At the <a href="#publishing-desk">publishing desk</a>,
-      check processing, then open the lesson page to review playback and add prerequisites, a
-      transcript or practice. Confirm that captions appear in the player and review their timing and
-      accuracy; video processing alone does not confirm caption readiness.
+      <strong>Check and review.</strong> Check processing at the <a href="#publishing-desk">publishing desk</a>. Open the lesson to review playback and caption timing and accuracy. Add prerequisites, a transcript or a practice task there.
     </li>
     <li>
-      <strong>Choose your audience.</strong> Publish only after review. Members need current network
-      access; a public preview is visible publicly. Then
+      <strong>Choose your audience.</strong> Publish only after review. Members need current network access. Anyone can view a public preview. Then
       <a href={pathBase(slug)}>arrange published lessons into a learning path</a>.
     </li>
   </ol>
@@ -60,12 +55,26 @@
     font-weight: 600;
   }
   ol {
-    padding-left: var(--space-performance-lg);
+    padding: 0;
+    margin-block: 8px 20px;
+    list-style: none;
+    counter-reset: step;
   }
   li {
-    padding-block: var(--space-performance-sm);
+    position: relative;
+    counter-increment: step;
+    padding: 12px 0 12px 2.6rem;
+    border-top: 1px solid var(--line);
     max-width: 75ch;
+    line-height: 1.45;
   }
+  li::before {
+    content: counter(step, decimal-leading-zero);
+    position: absolute;
+    left: 0;
+    font: 400 24px/1.05 var(--font-serif);
+  }
+  li strong { display: block; }
   p,
   blockquote {
     color: var(--muted);

@@ -19,6 +19,10 @@ declare namespace Cloudflare {
     // replies for (typically Webflow staff announcements). Defaults to
     // `webflow.com` when unset.
     BETTERMODE_STAFF_AUTHOR_DOMAINS?: string;
+    // Post type ID for replies in the space. Required by CreatePostInput.
+    // Set as a Worker secret so the ID stays out of the public repo. Send
+    // fails closed without it.
+    BETTERMODE_REPLY_POST_TYPE_ID?: string;
   }
 }
 

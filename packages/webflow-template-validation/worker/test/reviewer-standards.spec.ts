@@ -162,6 +162,11 @@ describe('Reviewer standards', () => {
 			'"More templates" → webflow.com'
 		);
 		expect(audit('/', NAV + '<a href="https://studio.example.com">Designed by Studio</a>' + FOOTER).findings['self-promotion']).toBeUndefined();
+		// A store link on the Licenses page is a premium asset or the creator's own product; reviewers request changes for both.
+		expect(audit('/licenses', NAV + '<a href="https://ui8.net/pack/icons">Source</a>' + FOOTER).findings['self-promotion']).toBe('"Source" → ui8.net');
+		expect(audit('/licenses', NAV + '<a href="https://ui8.net/studio">More templates</a>' + FOOTER).findings['self-promotion']).toBe(
+			'"More templates" → ui8.net'
+		);
 	});
 
 	it('requires the exact Licenses opening text on /licenses only, ignoring case, spacing and quote style', () => {

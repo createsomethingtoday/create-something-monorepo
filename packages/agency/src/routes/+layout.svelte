@@ -3,11 +3,13 @@
   import '../app.css';
   import { publicPageEntrances } from '$lib/motion/publicPageEntrances';
   import { IO_EXPERIMENTS_URL, IO_PAPERS_URL } from '$lib/data/ioResearchLinks';
-  import AgencyPageTreatment from '$lib/components/AgencyPageTreatment.svelte';
+  import AgencyHeroBackground from '$lib/components/AgencyHeroBackground.svelte';
   import CanonBrandSignature from '$lib/components/CanonBrandSignature.svelte';
   import '$lib/styles/operator-palette.css';
   import '$lib/styles/measured-public.css';
   import '$lib/styles/measured-pages.css';
+  import '$lib/styles/editorial-runtime.css';
+  import { agencyEditorialPageKind, agencyNeedsDocumentNavigation } from '$lib/data/agencyEditorialPresentation';
   import AgencyPageWayfinding from '$lib/components/AgencyPageWayfinding.svelte';
   import { getAgencyPageFoundation } from '$lib/data/agencyPageFoundations';
   import { initializeFilmMotion, filmNavigationOpen, reducedFilmMotion, filmOverlayOpen } from '$lib/motion/filmPlayback';
@@ -25,6 +27,7 @@
   import { getAgencyContentAssetAnalyticsMetadata } from '$lib/analytics/content-assets';
   import { getAgencyMarketingExperimentMetadata } from '$lib/analytics/marketing-experiment';
   import { agencyCoreMessaging } from '$lib/data/marketingCopy';
+  import { agencyInvitationScene } from '$lib/data/canonAgencyScenes';
   import { PUBLIC_PRODUCT_SEQUENCE, getPublicProduct } from '$lib/data/productFamily';
   import { page } from '$app/stores';
   import { onMount } from 'svelte';
@@ -36,7 +39,7 @@
   } from '$lib/atlas/surface-policy';
   import { marketingPagePortfolio } from '$lib/data/marketingPages';
 
-  import { usesAgencyMeasuredPublicSurface, usesAgencyOperatorPalette } from '$lib/data/publicSurfacePolicy';
+  import { usesAgencyMeasuredAccountSurface, usesAgencyMeasuredPublicSurface, usesAgencyOperatorPalette } from '$lib/data/publicSurfacePolicy';
 
   let { children, data } = $props();
   const usesOperatorPalette = $derived(
@@ -45,6 +48,14 @@
   const usesMeasuredPublicSurface = $derived(
     usesAgencyMeasuredPublicSurface($page.url.pathname)
   );
+  const usesMeasuredAccountSurface = $derived(usesAgencyMeasuredAccountSurface($page.url.pathname));
+  function markEdgeOwnedLink(event: MouseEvent) {
+    const target = event.target instanceof Element ? event.target.closest('a[href]') : null;
+    if (!(target instanceof HTMLAnchorElement)) return;
+    if (agencyNeedsDocumentNavigation(new URL(target.href), $page.url)) {
+      target.setAttribute('data-sveltekit-reload', '');
+    }
+  }
   let mobileNavigationOpen = $state(false);
   const pageFoundation = $derived($page.status < 400 ? getAgencyPageFoundation($page.url.pathname, $page.url.pathname === '/book' ? $page.url.searchParams.get('intent') : null) : null);
 
@@ -99,6 +110,7 @@
         }
       ]
     },
+    { label: 'Dispatch', href: '/dispatch/' },
     { label: 'What You Keep', href: '/stack' },
     { label: 'Services & Tools', href: '/products' },
     { label: 'Proof', href: '/field-reports' }
@@ -108,24 +120,26 @@
     const product = getPublicProduct(id);
     return { label: product.shortName, href: product.route };
   });
-  // Public pages share one navigation; workspace and identity routes retain their existing shell.
-  const usesPublicNavigation = $derived(!/^\/(account|admin|dashboard|login|logout|auth|mcp-access|delivery)(?:\/|$)/.test($page.url.pathname) && !/^\/map\/(workspace|subscribe|share)(?:\/|$)/.test($page.url.pathname));
+  // Public pages and approved account entries share Agency navigation; other workspaces retain their shell.
+  const usesPublicNavigation = $derived(usesMeasuredAccountSurface || (!/^\/(account|admin|dashboard|login|logout|auth|mcp-access|delivery)(?:\/|$)/.test($page.url.pathname) && !/^\/map\/(workspace|subscribe|share)(?:\/|$)/.test($page.url.pathname)));
   const filmNavLinks = [
-    { label: 'The work', href: '/#built-work' },
-    { label: 'Technical support', href: '/services' },
-    { label: 'From $900/mo', href: agencyCoreMessaging.membershipHref },
-    { label: 'Explore', href: '/products', children: [
-      { label: 'Services & tools', href: '/products', description: 'Explore the full catalog.' },
-      { label: 'Proof', href: '/field-reports', description: 'Inspect results and their limits.' },
-      { label: 'Try a workflow', href: '/practice', description: 'Try the method yourself.' },
-      { label: 'What you keep', href: '/stack', description: 'Code, instructions and ownership.' },
-      { label: 'Research on .io', href: IO_EXPERIMENTS_URL, description: 'Experiments, evidence and limits.' }
-    ] }
+    { label: 'Our approach', href: '/#approach' },
+    { label: 'Field reports', href: '/field-reports/' },
+    { label: 'Dispatch', href: '/dispatch/' },
+    { label: 'Sign in', href: 'https://createsomething.agency/sign-in/' }
   ];
   const primaryCtaHref = agencyCoreMessaging.membershipHref;
   const agencyFooterMacroMedia = {
     src: '/images/performance-lab/playbook-footer-decision-gate-macro.webp',
+    width: 1024,
+    height: 1536,
     alt: 'Macro-real Playbook decision gate: an ivory AI-agent marker held inside a black steel ring as amber and proof-green routes cross a physical court surface.'
+  };
+  const agencyFooterSceneMedia = {
+    src: agencyInvitationScene.src,
+    width: 1672,
+    height: 941,
+    alt: agencyInvitationScene.description
   };
   const globalAnalyticsMetadata = $derived(getAgencyGlobalAnalyticsMetadata($page.url.pathname));
   const isDifyArticleRoute = $derived(isAgencyDifyArticlePath($page.url.pathname));
@@ -325,20 +339,21 @@
 
 {#snippet canonFooterBrand()}<CanonBrandSignature />{/snippet}
 {#snippet agencyFooter()}
+  <div data-theme="dark" class="agency-footer-scope">
   <Footer
     mode="agency"
     brandContent={usesPublicNavigation ? canonFooterBrand : undefined}
     showNewsletter={false}
     aboutText="AI-native technical support for your tools and workflows. We diagnose problems, engineer improvements, and help your team use what we deliver."
     quickLinkGroups={usesPublicNavigation ? filmFooterGroups : footerQuickLinkGroups}
-    footerCta={routeOwnsPerformanceEnding
+    footerCta={routeOwnsPerformanceEnding || usesMeasuredAccountSurface
       ? undefined
       : {
           title: 'Ready to put AI to work on a useful task?',
           label: agencyCoreMessaging.membershipLabel,
           href: primaryCtaHref,
           description: 'Bring an idea or a project and one task you want help with.',
-          media: agencyFooterMacroMedia
+          media: usesMeasuredPublicSurface ? agencyFooterSceneMedia : agencyFooterMacroMedia
         }}
     showSocial={true}
     isAuthenticated={!!data.user}
@@ -348,12 +363,15 @@
       label: 'CREATE SOMETHING .agency'
     }}
   />
+  </div>
 {/snippet}
 
+<svelte:head><link rel="stylesheet" href="/agency/fonts/fonts.css" /></svelte:head>
 <LayoutSEO property="agency" />
+<AgencyHeroBackground />
 <PageAnnotations pathname={$page.url.pathname} />
 
-<div class="agency-surface" data-canon-palette={usesOperatorPalette ? "operator" : undefined} data-agency-brand={usesMeasuredPublicSurface ? "measured" : undefined}>
+<div class="agency-surface" onclickcapture={markEdgeOwnedLink} data-agency-design="editorial" data-agency-page-kind={agencyEditorialPageKind($page.url.pathname, $page.status)} data-theme="light" data-agency-account={usesMeasuredAccountSurface ? "true" : undefined}>
 <PrivacyAnalytics
   property="agency"
   userId={data.user?.id}
@@ -365,6 +383,9 @@
   mobilePlacement={pageFoundation || ["/", "/services", "/contact", "/book"].includes($page.url.pathname) ? "safe-corner" : "header-edge"}
 />
 
+{#if $page.route.id === "/login"}
+  <main id="main-content">{@render children()}</main>
+{:else}
 <!-- Unified Search - Cmd/Ctrl+K to open -->
 {#if isPublicSearchPage($page.url.pathname)}
   <AgencySearch showMobileButton={$page.url.pathname !== '/'} />
@@ -378,11 +399,10 @@
     logoSuffix=".agency"
     logoAsset={{
       src: '/brand/create-something-horizontal-black.svg',
-      mobileSrc: '/brand/create-something-mark-black.svg',
       label: 'CREATE SOMETHING .agency'
     }}
     enableRouteLogoMotion={true}
-    links={usesPublicNavigation ? filmNavLinks : navLinks}
+    links={filmNavLinks}
     currentPath={$page.url.pathname}
     fixed={true}
     ctaLabel={usesPublicNavigation ? agencyCoreMessaging.bookMappingSessionLabel : agencyCoreMessaging.membershipLabel}
@@ -395,11 +415,8 @@
   />
 
   <main id="main-content" class="pt-[72px]" use:publicPageEntrances={$page.url.pathname}>
-    {#if pageFoundation}
+    {#if pageFoundation && $page.url.pathname !== "/privacy"}
       {#key $page.url.pathname}<AgencyPageWayfinding foundation={pageFoundation} />{/key}
-    {/if}
-    {#if usesPublicNavigation && $page.url.pathname !== '/' && $page.url.pathname !== '/openai-dots' && $page.url.pathname !== '/dental-ai-agents' && !isAgencyWebflowPortfolioPath($page.url.pathname)}
-      <AgencyPageTreatment />
     {/if}
     {@render children()}
   </main>
@@ -414,10 +431,11 @@
     {@render agencyFooter()}
   {/if}
 
-  {#if !routeOwnsPerformanceEnding && $page.url.pathname !== '/basketball-systems-lab' && !isDifyArticleRoute}
+  {#if !usesMeasuredAccountSurface && !routeOwnsPerformanceEnding && $page.url.pathname !== '/basketball-systems-lab' && !isDifyArticleRoute}
     <ModeIndicator current="agency" />
   {/if}
 </div>
+{/if}
 
 </div>
 
@@ -426,7 +444,8 @@
   .film-shell.webflow-portfolio-shell :global(main#main-content) { padding-top:0; }
   .film-shell.webflow-portfolio-shell :global(.nav-editorial.nav-fixed) { top:0; left:0; right:0; border:0; border-radius:0; background:var(--color-performance-mode-campaign-surface); }
   .webflow-portfolio-shell :global(.nav-editorial :is(a,button)) { color:var(--color-performance-mode-campaign-ink); }
-  .webflow-portfolio-shell :global(.nav-editorial .nav-logo-asset) { filter:invert(1); }
+  .webflow-portfolio-shell :global(.nav-editorial .nav-logo-asset) { filter:none; }
+  .webflow-portfolio-shell :global(.nav-editorial .nav-menu-button) { background:transparent; color:var(--color-performance-mode-campaign-ink); border-color:currentColor; }
   .webflow-portfolio-shell :global(.nav-editorial .nav-cta) { background:var(--color-performance-fg-primary); color:var(--color-performance-bg-pure); }
   .webflow-portfolio-shell :global(.nav-editorial :is(.nav-mobile-menu,.nav-dropdown__menu)) { background:var(--color-performance-bg-elevated); color:var(--color-performance-fg-primary); }
 
@@ -455,8 +474,7 @@
   }
 
   /* Homepage campaign preview: preserve the shared navigation behavior and logo. */
-  .film-home { --agency-nav-surface-rgb: 8,8,8; }
-  .film-home :global(.nav-editorial.nav-fixed) { top: 0; left: 0; right: 0; border: 0; border-radius: 0; background: rgba(var(--agency-nav-surface-rgb),.88); backdrop-filter: blur(16px); }
+  .film-home :global(.nav-editorial.nav-fixed) { top: 0; left: 0; right: 0; border: 0; border-radius: 0; background: var(--color-performance-paper); backdrop-filter: none; }
   .film-home :global(.nav-editorial .nav-inner) { padding-inline: 3vw; }
   .film-home :global(main#main-content) { padding-top: 0; }
   .film-home :global(.nav-editorial .nav-link-list) { font-size: 12px; }

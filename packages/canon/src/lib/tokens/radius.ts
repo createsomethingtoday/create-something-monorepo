@@ -7,10 +7,10 @@
  */
 
 export const radius = {
-	sm: '6px', // Subtle rounding
-	md: '8px', // Standard cards
-	lg: '12px', // Prominent cards
-	xl: '16px', // Large elements
+	sm: '8px', // Subtle rounding
+	md: '12px', // Standard cards
+	lg: '20px', // Prominent cards
+	xl: '24px', // Large elements
 	full: '9999px' // Pills, badges, circular buttons
 } as const;
 

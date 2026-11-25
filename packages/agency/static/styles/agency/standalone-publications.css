@@ -1,0 +1,35 @@
+@import url('/agency/fonts/fonts.css');
+
+:root {
+  --font-sans: "Agency Editorial Sans", Arial, sans-serif;
+  --color-bg: #faf8f5;
+  --color-fg: #262626;
+  --color-fg-primary: var(--color-fg);
+  --color-fg-secondary: #48453f;
+  --color-fg-tertiary: #605d57;
+  --color-fg-muted: #605d57;
+  --color-border: #d9d5ce;
+  background: var(--color-bg);
+  color-scheme: light;
+}
+
+body {
+  width: 100%;
+  max-width: 52rem;
+  margin-inline: auto;
+  padding: clamp(1.25rem, 5vw, 3.5rem);
+  font: 400 1rem/1.6 var(--font-sans);
+  color: var(--color-fg);
+  background: var(--color-bg);
+  overflow-wrap: anywhere;
+}
+
+h1 {
+  font: 400 clamp(2.75rem, 6vw, 4.5rem)/1.04 "Agency Editorial Serif", Georgia, serif;
+  letter-spacing: -.04em;
+}
+
+header { border-color: var(--color-border); }
+.contact { flex-wrap: wrap; }
+a { text-underline-offset: .2em; }
+a:focus-visible { outline: 2px solid currentColor; outline-offset: 3px; }

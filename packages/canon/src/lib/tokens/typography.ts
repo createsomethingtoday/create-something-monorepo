@@ -13,7 +13,7 @@ export const typography = {
 	// Font families
 	family: {
 		sans:
-			'Arial, "Helvetica Neue", Helvetica, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
+			"'Geist Variable', Arial, 'Helvetica Neue', Helvetica, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
 		display: 'var(--font-performance-sans)',
 		mono:
 			'"IBM Plex Mono", "SFMono-Regular", "SF Mono", Menlo, Monaco, Consolas, monospace',
@@ -38,7 +38,7 @@ export const typography = {
 		tight: '1.25',
 		snug: '1.375',
 		normal: '1.5',
-		relaxed: '1.625',
+		relaxed: '1.618',
 		loose: '1.75'
 	},
 
@@ -74,8 +74,8 @@ export const typography = {
 		'body-sm': '0.913rem', // 1/√1.2
 
 		// Utility sizes
-		caption: '0.833rem', // 1/1.2
-		overline: '0.618rem', // 1/φ
+		caption: '0.875rem', // 14px supporting-label floor
+		overline: '0.875rem', // 14px supporting-label floor
 
 		// Role sizes
 		record: 'var(--text-performance-body-sm)',

@@ -32,6 +32,8 @@ export interface MarketplaceLeaderboardRecord {
 	revenueRank: number;
 	/** Part of totalSales30d through fulfillment links; absent in older snapshots. */
 	fulfillmentSales30d?: number;
+	/** Part of totalRevenue30d from Marketplace checkout; revenueRank uses it. Absent in older snapshots. */
+	checkoutRevenue30d?: number;
 }
 
 export interface MarketplaceCategoryRecord {
@@ -42,6 +44,15 @@ export interface MarketplaceCategoryRecord {
 	totalRevenue30d: number;
 	avgRevenuePerTemplate: number;
 	revenueRank: number;
+	/** Part of totalSales30d through fulfillment links; its revenue is counted at list price, an upper limit. */
+	fulfillmentSales30d?: number;
+	/** Templates listed now or sold in a window of the snapshot. Absent when the source has no supply. */
+	listedTemplates?: number;
+	/** 90-day window ending at the snapshot time. Absent when the source has no 90-day data. */
+	templatesWithSales90d?: number;
+	totalSales90d?: number;
+	totalRevenue90d?: number;
+	fulfillmentSales90d?: number;
 }
 
 export interface MarketplaceLeaderboardTrendRecord extends MarketplaceLeaderboardRecord {

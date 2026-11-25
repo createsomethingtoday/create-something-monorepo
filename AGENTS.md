@@ -1,10 +1,12 @@
 # Agent Principles & Workflow
 
+For marketing, development, socials, and future casting, start with [How CREATE SOMETHING works](docs/COMPANY_OPERATING_WIKI.md).
+
 ## Atlas/Substrate agent context
 
 For Atlas/Substrate orientation, use the shared repository skill at
 `.agents/skills/atlas-substrate/SKILL.md` (also exposed under `.claude/skills`).
-Start with `node packages/database-layer/scripts/atlas-context.mjs search "your question"`.
+For committed-main context on a Mac with the scheduled reader installed, start with `~/.local/bin/atlas-context search "your question"`. Resolve its relative citations under the checkout printed by `~/.local/bin/atlas-context --root`. For checkout-specific work, or on machines without that reader, start with `node packages/database-layer/scripts/atlas-context.mjs search "your question"`.
 Load the cited domain module, then inspect its canonical source. Search is local and bounded. Changed local artifacts automatically refresh only
 the ignored wiki/index cache; no model evaluation or external refresh runs.
 Context is descriptive evidence, not action permission. See
@@ -78,6 +80,10 @@ Debug in this order:
 3. **Judgment**: was the right policy applied?
 
 When coordinating agents, pass **policy artifacts** alongside task artifacts.
+
+For repository implementation and review in T3, use `.agents/skills/canon-work/SKILL.md` as the local
+entry point. It routes to the existing cs-context, cs-build, cs-design and
+cs-release specialists as needed; it does not expand task permissions.
 
 ## Default repo workflow
 

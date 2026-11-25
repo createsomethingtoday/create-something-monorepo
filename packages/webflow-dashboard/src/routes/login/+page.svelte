@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { reveal } from '$lib/motion/actions';
   import { page } from '$app/stores';
   import { goto } from '$app/navigation';
   import WebflowLogo from '$lib/components/WebflowLogo.svelte';
@@ -65,7 +66,7 @@
 
 <main class="container">
   <AuthThemeToggle />
-  <div class="login-card">
+  <div class="login-card" data-reveal use:reveal>
     <div class="logo">
       <WebflowLogo />
     </div>

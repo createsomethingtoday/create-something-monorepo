@@ -1,6 +1,7 @@
 <script lang="ts">
 	import type { Snippet } from 'svelte';
 	import type { HTMLAttributes } from 'svelte/elements';
+	import { swapIn } from '$lib/motion/actions';
 
 	interface Props extends HTMLAttributes<HTMLDivElement> {
 		value: string;
@@ -20,6 +21,7 @@
 {#if active}
 	<div
 		class="tabs-content {className}"
+		in:swapIn
 		role="tabpanel"
 		data-value={value}
 		{...restProps}

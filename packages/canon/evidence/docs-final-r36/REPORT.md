@@ -1,0 +1,27 @@
+# Independent final documentation retest R36
+
+Exact worktree: /Users/createsomething/.t3/worktrees/create-something-monorepo/t3-a01044d6-2f560e0ec9e58190. Branch t3/canon-design-system-redesign, HEAD 5f9bfab3f6a9069332d650f42a09f5bd18d806a7. Read-only application review; only evidence in this folder written.
+
+Acceptance: current five LTD documentation pages agree with actual Canon CSS/components; portable README values/default/theme/contrast limits agree; fresh LTD check/build; actual 320/1440 rendering of each changed section, readable complete prose and native links without horizontal overflow. No publication qualification.
+
+Functional correctness: PASSED for scoped local documentation. Sequential npx --yes pnpm@9.15.4 --filter @create-something/ltd check and build both exit0; full logs retained. Check includes svelte-check and package validation. Independently compared Card.svelte: standard solid panel, elevated no shadow, outlined transparent strong border, glass solid compatibility alias, hover background/border feedback and native href/button/static rendering all agree with revised card.md. Philosophy solid scoped hierarchy and Motion 150ms match tokens; elevation lead correctly describes solid grouping with optional overlay shadows. Components Card tile now describes grouping rather than promised depth levels. All29 portable README token rows exactly match canonical CSS, portable CSS byte-identical; README correctly limits contrast claims and describes black default and explicit light/nested dark scopes. source-audit.json records comparisons.
+
+Compared fresh source manifest with R34: exactly the five intended LTD Markdown files differ. Runtime/CSS/images remain unchanged. Before, after-commands and after-browser snapshots all1991 files digest7501a87268b57c0735e766db923fdd7321282b1dac0acd55aef2bd108d765a85. Portable README independently hashed before/after: aca84e4502a8cb1220e5c9d0efa5cf44be42e0bd53bde38fd312da5d845b9633. end-verification.json confirms stability.
+
+Browser DOM: five compiled local LTD routes at320 and1440 loaded current titles and complete DOM text, native anchors and zero root horizontal overflow (browser.json). Existing parent-owned5194 server used, not restarted. No consumer or Canon tests repeated.
+
+Perceptual/product quality: UNTESTED / incomplete for required changed-section matrix. Directly viewed all10 first-batch screenshots. Desktop Card current variant guidance is readable and accurate. However initial CDP resize plus smooth scroll yielded blank phone philosophy/Card frames and wrong section positions in other captures. These screenshots are retained as harness evidence, not acceptance proof. During bounded corrected capture (await fonts + animation frames + instant scrolling), Ego connection closed before completion; retry against same taskspace67 returned task space not found. No replacement space was created. Thus all five relevant section screenshots cannot be qualified; parent needs final rendered recapture. This is a browser evidence blocker, not a confirmed application defect.
+
+Release readiness: UNTESTED / publication unapproved. Local LTD build passed, but no shipping destination, production runtime, human artwork approval, final export or publication was qualified. No source edits, commit, push, merge, deploy, Linear write, server stop or restart. Parent retains these boundaries and time floor.
+
+SOURCE RELEASED. BROWSER RELEASED by Ego disconnect/removal: own taskspace67 no longer exists, so required separate finish({keep:[]}) cannot execute. Parent-owned spaces/servers untouched. Ego had reported an update available; no upgrade performed.
+
+Worktree disposition: preserved at stated path/branch. Evidence only; no source findings remain in bounded audit, visual acceptance outstanding.
+
+## Exact browser interruption
+
+First batch completed ten screenshots and browser.json. After directly viewing them, corrected capture script reused taskspace67/pagep1, navigated the same five routes, applied320/1440 CDP device metrics, awaited document.fonts.ready and two requestAnimationFrames, forced documentElement scroll-behavior:auto!important, found the relevant heading, window.scrollTo({top:headingTop+scrollY-145,behavior:'instant'}), awaited two more animation frames, then screenshot. It intended to write visual-geometry.json after all ten cases. That file was not produced; no corrected screenshot is accepted. Existing screenshots are first-batch captures unless timestamps show a partial overwrite; neither is visual acceptance evidence without direct reinspection.
+
+Corrected script session5909 ended exit9 with exact output: `ego lite closed the connection before the command finished. It may have quit or restarted; run the command again.` Next bounded same-space query `taskSpace(67)` failed exit1: `Error: task space not found: 67` at resolveTaskSpace, then taskSpace. Output did not explicitly indicate user control, inactive or unassigned state; it indicated only transport closure and subsequently absent space. No user takeover is inferred. No further recovery attempted.
+
+Corrected script preserved in corrected-capture.mjs. File timestamps/sizes show philosophy320 and1440 were partially overwritten before disconnect; they have not been directly re-viewed, so remain unqualified. Other eight screenshots retain first-batch status. No visual-geometry.json or completed corrected pass exists.

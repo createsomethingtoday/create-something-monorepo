@@ -1,0 +1,11 @@
+
+ RUN  v4.1.8 /Users/createsomething/.t3/worktrees/create-something-monorepo/t3-a3187418-307ce015c26a4c51/apps/create-something-scheduler
+
+Sourcemap for "/Users/createsomething/.t3/worktrees/create-something-monorepo/t3-a3187418-307ce015c26a4c51/node_modules/.pnpm/@modelcontextprotocol+sdk@1.32.0_patch_hash=eqmfpdz7mb5ppaupnqa3b426ga_@cfworker+json-schema@4.1.1_zod@3.25.76/node_modules/@modelcontextprotocol/sdk/dist/cjs/server/webStandardStreamableHttp.js" points to missing source files
+Sourcemap for "/Users/createsomething/.t3/worktrees/create-something-monorepo/t3-a3187418-307ce015c26a4c51/node_modules/.pnpm/@modelcontextprotocol+sdk@1.32.0_patch_hash=eqmfpdz7mb5ppaupnqa3b426ga_@cfworker+json-schema@4.1.1_zod@3.25.76/node_modules/@modelcontextprotocol/sdk/dist/cjs/server/mcp.js" points to missing source files
+
+ Test Files  1 passed (1)
+      Tests  8 passed (8)
+   Start at  17:09:14
+   Duration  664ms (transform 165ms, setup 0ms, import 429ms, tests 44ms, environment 0ms)
+

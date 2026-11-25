@@ -68,6 +68,10 @@
 			"types": "./dist/isometric/index.d.ts",
 			"svelte": "./dist/isometric/index.js"
 		},
+		"./character": {
+			"types": "./dist/character/index.d.ts",
+			"svelte": "./dist/character/index.js"
+		},
 		"./styles/tokens.css": "./dist/styles/tokens.css",
 		"./styles/workspace.css": "./dist/styles/workspace.css",
 		"./styles/operator.css": "./dist/styles/operator.css",

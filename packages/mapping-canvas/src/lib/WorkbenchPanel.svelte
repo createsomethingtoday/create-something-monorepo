@@ -211,14 +211,14 @@
     width: 248px;
     min-height: 0;
     overflow: auto;
-    border-left: 1px solid var(--line);
-    background: var(--color-performance-shell-surface, #0d0d0d);
-    color: var(--color-performance-fg-primary, #fff);
-    font: var(--text-performance-caption) var(--font-performance-interface);
+    border-left: 1px solid var(--alfred-rule);
+    background: var(--alfred-tile);
+    color: var(--alfred-ink);
+    font: var(--text-performance-caption) var(--alfred-sans);
   }
   section {
     padding: 14px;
-    border-bottom: 1px solid var(--line);
+    border-bottom: 1px solid var(--alfred-rule);
   }
   header {
     display: flex;
@@ -233,7 +233,7 @@
   header span,
   small,
   p {
-    color: var(--color-performance-fg-tertiary);
+    color: var(--alfred-gray);
   }
   header span {
     font-size: var(--text-performance-operator-label);
@@ -256,10 +256,10 @@
     min-width: 0;
     width: 100%;
     height: 32px;
-    border: 1px solid var(--line);
+    border: 1px solid var(--alfred-rule);
     border-radius: 3px;
     padding: 4px 6px;
-    background: var(--color-performance-shell-surface, #111);
+    background: var(--alfred-white);
     color: inherit;
     font: inherit;
   }
@@ -285,7 +285,7 @@
   }
   button {
     min-height: 32px;
-    border: 1px solid var(--line);
+    border: 1px solid var(--alfred-rule);
     border-radius: 3px;
     background: transparent;
     color: inherit;
@@ -293,14 +293,14 @@
     cursor: pointer;
   }
   button:hover {
-    border-color: var(--amber);
+    border-color: var(--alfred-ink);
   }
   button:disabled {
     opacity: 0.4;
     cursor: not-allowed;
   }
   :focus-visible {
-    outline: 2px solid var(--amber);
+    outline: 2px solid var(--alfred-ink);
     outline-offset: 2px;
   }
   .align-actions button {
@@ -318,8 +318,8 @@
     margin-bottom: 3px;
   }
   .layer.active {
-    border-color: var(--amber);
-    background: color-mix(in srgb, var(--amber) 8%, transparent);
+    border-color: var(--alfred-ink);
+    background: color-mix(in srgb, var(--alfred-ink) 8%, transparent);
   }
   .layer-select {
     display: flex;
@@ -350,7 +350,7 @@
     .workbench-panel {
       width: min(280px, calc(100vw - 24px));
       max-height: calc(100dvh - 260px);
-      border: 1px solid var(--line);
+      border: 1px solid var(--alfred-rule);
       box-shadow: none;
     }
     input,

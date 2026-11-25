@@ -468,6 +468,31 @@ describe('registerTools', () => {
     });
   });
 
+  it('reject_version sends its feedback as rejection feedback so the rejection email carries the findings', async () => {
+    const { server, handlers } = createServerHarness();
+    const client = {
+      getVersionById: vi.fn().mockResolvedValue({ versionId: 'recVersion', assetId: 'recAsset' }),
+      getAssetById: vi.fn().mockResolvedValue({ assetId: 'recAsset', appName: 'Example App' }),
+      updateVersionReview: vi.fn().mockResolvedValue({ versionId: 'recVersion', reviewStatus: '❌Rejected' }),
+    } as unknown as AirtableClient;
+
+    registerTools(server, () => client);
+
+    const result = await handlers.get('app_review_reject_version')?.({
+      version_id: 'recVersion',
+      rejection_reason: 'Guideline Infringement',
+      review_feedback: 'Consolidate the overlapping Apps.',
+    });
+
+    expect(client.updateVersionReview).toHaveBeenCalledExactlyOnceWith('recVersion', {
+      review_status: '❌Rejected',
+      review_type: undefined,
+      rejection_reason: 'Guideline Infringement',
+      rejection_feedback: 'Consolidate the overlapping Apps.',
+    });
+    expect(parsePayload(result!).ok).toBe(true);
+  });
+
   it('rejects request_changes status overrides outside the changes-requested allowlist', async () => {
     const { server, handlers } = createServerHarness();
     const client = {
@@ -1107,6 +1132,20 @@ describe('review preparation mutation boundary', () => {
     expect(client.updateVersionReview).not.toHaveBeenCalled();
     await handlers.get('app_review_save_draft_feedback')!({ version_id: 'recVersion', review_feedback: 'Draft review' });
     expect(client.updateVersionReview).toHaveBeenCalledExactlyOnceWith('recVersion', { review_feedback: 'Draft review' });
+  });
+
+  it('passes an appended exception note and its author to the client', async () => {
+    const { handlers, client } = setup();
+    client.updateExceptionItem = vi.fn().mockResolvedValue({ exceptionItemId: 'recItem1' });
+    await handlers.get('app_review_update_exception_item')!({
+      exception_item_id: 'recItem1',
+      append_decision_note: 'New build checked.',
+      noted_by: 'Shea Sisco',
+    });
+    expect(client.updateExceptionItem).toHaveBeenCalledExactlyOnceWith('recItem1', {
+      append_decision_note: 'New build checked.',
+      noted_by: 'Shea Sisco',
+    });
   });
 
   it('rejects a legacy reassignment at the real Airtable boundary and preserves fields in a draft PATCH', async () => {

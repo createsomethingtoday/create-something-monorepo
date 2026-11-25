@@ -5,6 +5,7 @@ import { marketplaceAnalyticsCacheHeaders } from '$lib/server/marketplace-cache'
 import { enrichCategoriesWithHistory } from '$lib/server/marketplace-history';
 import { requireTemplateAssetAccess } from '$lib/server/template-access';
 import { getSyncMetadata } from '$lib/utils/sync-schedule';
+import { getCategoryCompetition } from '$lib/utils/marketplace-insights-filters';
 
 /**
  * API endpoint to fetch category performance data
@@ -47,26 +48,31 @@ export const GET: RequestHandler = async ({ locals, platform }) => {
 				? categories.reduce((sum, c) => sum + c.avgRevenuePerTemplate, 0) / categories.length
 				: 0;
 
-		// Find lowest competition categories with good revenue
+		// Lowest competition with revenue. With listed supply this counts the
+		// templates a new one sits beside; older snapshots only know the
+		// templates that sold.
+		const hasSupply = categories.some((c) => c.listedTemplates !== undefined);
+		const competitors = (c: (typeof categories)[number]) => c.listedTemplates ?? c.templatesInSubcategory;
 		const lowestCompetition = categories
-			.filter((c) => c.templatesInSubcategory < 10 && c.avgRevenuePerTemplate > 0)
-			.sort((a, b) => a.templatesInSubcategory - b.templatesInSubcategory)
+			.filter((c) => getCategoryCompetition(c).key === 'low' && c.avgRevenuePerTemplate > 0)
+			.sort((a, b) => competitors(a) - competitors(b))
 			.slice(0, 3)
 			.map((c) => ({
 				category: c.category,
 				subcategory: c.subcategory,
-				templateCount: c.templatesInSubcategory,
+				templateCount: competitors(c),
 				avgRevenue: c.avgRevenuePerTemplate,
-				competitionLevel: getCompetitionLevel(c.templatesInSubcategory)
+				competitionLevel: getCategoryCompetition(c).level
 			}));
 
 		// Generate insights
 		const insights: Array<{ type: 'opportunity' | 'trend' | 'warning'; message: string }> = [];
 
 		if (lowestCompetition.length > 0) {
+			const lowest = lowestCompetition[0];
 			insights.push({
 				type: 'opportunity',
-				message: `"${lowestCompetition[0].subcategory}" has low competition with ${lowestCompetition[0].templateCount} templates and $${Math.round(lowestCompetition[0].avgRevenue)} avg revenue.`
+				message: `"${lowest.subcategory}" has low competition with ${lowest.templateCount} ${hasSupply ? 'listed templates' : 'templates'} and $${Math.round(lowest.avgRevenue)} avg revenue.`
 			});
 		}
 
@@ -86,6 +92,17 @@ export const GET: RequestHandler = async ({ locals, platform }) => {
 
 		const totalRevenue = categoryResult.marketplaceSummary?.totalRevenue ?? null;
 		const totalTemplates = categoryResult.marketplaceSummary?.sellingTemplates ?? null;
+		const snapshotSummary = categoryResult.marketplaceSummary;
+		const segments = {
+			listedTemplates: snapshotSummary?.listedTemplates ?? null,
+			sellingTemplates: snapshotSummary?.sellingTemplates ?? null,
+			fulfillmentSales: snapshotSummary?.fulfillmentSales ?? null,
+			totalSales: snapshotSummary?.totalSales ?? null,
+			totalRevenue: snapshotSummary?.totalRevenue ?? null,
+			totalSales90d: snapshotSummary?.totalSales90d ?? null,
+			totalRevenue90d: snapshotSummary?.totalRevenue90d ?? null,
+			sellingTemplates90d: snapshotSummary?.sellingTemplates90d ?? null
+		};
 
 			return json(
 				{
@@ -110,7 +127,8 @@ export const GET: RequestHandler = async ({ locals, platform }) => {
 						freshnessSource: syncMetadata.freshnessSource,
 						isFreshnessEstimated: syncMetadata.isEstimated,
 						isStale: syncMetadata.isStale,
-						staleSinceHours: syncMetadata.staleSinceHours
+						staleSinceHours: syncMetadata.staleSinceHours,
+						segments
 					}
 				},
 				{ headers: marketplaceAnalyticsCacheHeaders }
@@ -126,10 +144,3 @@ export const GET: RequestHandler = async ({ locals, platform }) => {
 		throw error(500, 'Failed to fetch category data');
 	}
 };
-
-function getCompetitionLevel(templateCount: number): string {
-	if (templateCount < 10) return 'Low';
-	if (templateCount < 30) return 'Medium';
-	if (templateCount < 70) return 'High';
-	return 'Very High';
-}

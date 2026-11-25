@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { McpClient } from '../src/mcp/client.ts';
 import { collectDesignerData } from '../../spike/headless-collector/collect.ts';
+import { mapPages } from '../../spike/headless-collector/map.ts';
 
 const PAGES = [
 	{ id: 'page-about', title: 'About', slug: 'about', publishedPath: '/about' },
@@ -78,5 +79,23 @@ describe('collectDesignerData canvas page', () => {
 		expect(collected.designerData.siteInfo).toMatchObject({ id: 'site-1' });
 		expect(collected.designerData.pages).toHaveLength(3);
 		expect(collected.counts).toMatchObject({ pages: 3, styles: 0, components: 0 });
+	});
+});
+
+describe('mapPages Open Graph image', () => {
+	const og = (openGraph: Record<string, unknown>) =>
+		mapPages([{ id: 'page-home', title: 'Home', publishedPath: '/', openGraph }])[0].seo?.openGraphImage;
+
+	it('keeps an image URL', () => {
+		expect(og({ imageUrl: 'https://example.com/og.jpg' })).toBe('https://example.com/og.jpg');
+	});
+
+	it('counts an image picked from the Assets panel (imageUrl null, asset id set)', () => {
+		expect(og({ imageUrl: null, imageAssetId: '0123456789abcdef01234567' })).toBe('webflow-asset:0123456789abcdef01234567');
+	});
+
+	it('reports no image when neither is set', () => {
+		expect(og({ imageUrl: null, imageAssetId: null })).toBeUndefined();
+		expect(og({})).toBeUndefined();
 	});
 });

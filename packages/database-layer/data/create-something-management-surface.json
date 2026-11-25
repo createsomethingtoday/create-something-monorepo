@@ -1,6 +1,6 @@
 {
   "id": "substrate:create-something:management-surface:internal",
-  "generatedAt": "2026-11-10T15:39:05.964Z",
+  "generatedAt": "2026-11-22T16:47:42.581Z",
   "topologyId": "substrate:create-something:topology:internal",
   "atlasCanvasId": "create-something-internal-operating-topology",
   "sourceReadinessId": "substrate:create-something:operating-slice-readiness:internal",
@@ -286,6 +286,20 @@
       "policy": "Read-only management resource; safe for API, MCP, and agent inspection."
     },
     {
+      "id": "substrate:create-something:management-resource:topology_record:substrate-create-something-package-window-take-scripts-agents-skills-window-take-scripts",
+      "kind": "topology_record",
+      "title": "window-take-scripts",
+      "recordId": "substrate:create-something:package:window-take-scripts-agents-skills-window-take-scripts",
+      "sourcePath": "packages/database-layer/data/create-something-internal-topology.json",
+      "apiPath": "/api/substrate/topology/internal/records/substrate-create-something-package-window-take-scripts-agents-skills-window-take-scripts",
+      "mcpUri": "substrate://topology/internal/records/substrate-create-something-package-window-take-scripts-agents-skills-window-take-scripts",
+      "agentCommand": "databaseLayer.topology.records.get",
+      "access": [
+        "read"
+      ],
+      "policy": "Read-only management resource; safe for API, MCP, and agent inspection."
+    },
+    {
       "id": "substrate:create-something:management-resource:topology_record:substrate-create-something-package-create-something-components-archive-components-deprecated",
       "kind": "topology_record",
       "title": "@create-something/components",
@@ -377,6 +391,20 @@
       "sourcePath": "packages/database-layer/data/create-something-internal-topology.json",
       "apiPath": "/api/substrate/topology/internal/records/substrate-create-something-app-create-something-create-something-scheduler-apps-create-something-scheduler",
       "mcpUri": "substrate://topology/internal/records/substrate-create-something-app-create-something-create-something-scheduler-apps-create-something-scheduler",
+      "agentCommand": "databaseLayer.topology.records.get",
+      "access": [
+        "read"
+      ],
+      "policy": "Read-only management resource; safe for API, MCP, and agent inspection."
+    },
+    {
+      "id": "substrate:create-something:management-resource:topology_record:substrate-create-something-app-create-something-draw-landing-webflow-apps-draw-landing-webflow",
+      "kind": "topology_record",
+      "title": "@create-something/draw-landing-webflow",
+      "recordId": "substrate:create-something:app:create-something-draw-landing-webflow-apps-draw-landing-webflow",
+      "sourcePath": "packages/database-layer/data/create-something-internal-topology.json",
+      "apiPath": "/api/substrate/topology/internal/records/substrate-create-something-app-create-something-draw-landing-webflow-apps-draw-landing-webflow",
+      "mcpUri": "substrate://topology/internal/records/substrate-create-something-app-create-something-draw-landing-webflow-apps-draw-landing-webflow",
       "agentCommand": "databaseLayer.topology.records.get",
       "access": [
         "read"
@@ -1910,6 +1938,20 @@
       "policy": "Read-only management resource; safe for API, MCP, and agent inspection."
     },
     {
+      "id": "substrate:create-something:management-resource:topology_record:substrate-create-something-package-create-something-halfdozen-transcript-monitor-packages-halfdozen-transcript-monitor",
+      "kind": "topology_record",
+      "title": "@create-something/halfdozen-transcript-monitor",
+      "recordId": "substrate:create-something:package:create-something-halfdozen-transcript-monitor-packages-halfdozen-transcript-monitor",
+      "sourcePath": "packages/database-layer/data/create-something-internal-topology.json",
+      "apiPath": "/api/substrate/topology/internal/records/substrate-create-something-package-create-something-halfdozen-transcript-monitor-packages-halfdozen-transcript-monitor",
+      "mcpUri": "substrate://topology/internal/records/substrate-create-something-package-create-something-halfdozen-transcript-monitor-packages-halfdozen-transcript-monitor",
+      "agentCommand": "databaseLayer.topology.records.get",
+      "access": [
+        "read"
+      ],
+      "policy": "Read-only management resource; safe for API, MCP, and agent inspection."
+    },
+    {
       "id": "substrate:create-something:management-resource:topology_record:substrate-create-something-package-create-something-halfdozen-zoom-sync-packages-halfdozen-zoom-sync",
       "kind": "topology_record",
       "title": "@create-something/halfdozen-zoom-sync",
@@ -2267,6 +2309,20 @@
       "sourcePath": "packages/database-layer/data/create-something-internal-topology.json",
       "apiPath": "/api/substrate/topology/internal/records/substrate-create-something-package-create-something-marketplace-featured-notifier-packages-marketplace-featured-notifier",
       "mcpUri": "substrate://topology/internal/records/substrate-create-something-package-create-something-marketplace-featured-notifier-packages-marketplace-featured-notifier",
+      "agentCommand": "databaseLayer.topology.records.get",
+      "access": [
+        "read"
+      ],
+      "policy": "Read-only management resource; safe for API, MCP, and agent inspection."
+    },
+    {
+      "id": "substrate:create-something:management-resource:topology_record:substrate-create-something-package-create-something-marketplace-insights-cron-packages-marketplace-insights-cron",
+      "kind": "topology_record",
+      "title": "@create-something/marketplace-insights-cron",
+      "recordId": "substrate:create-something:package:create-something-marketplace-insights-cron-packages-marketplace-insights-cron",
+      "sourcePath": "packages/database-layer/data/create-something-internal-topology.json",
+      "apiPath": "/api/substrate/topology/internal/records/substrate-create-something-package-create-something-marketplace-insights-cron-packages-marketplace-insights-cron",
+      "mcpUri": "substrate://topology/internal/records/substrate-create-something-package-create-something-marketplace-insights-cron-packages-marketplace-insights-cron",
       "agentCommand": "databaseLayer.topology.records.get",
       "access": [
         "read"
@@ -3170,6 +3226,20 @@
       "policy": "Read-only management resource; safe for API, MCP, and agent inspection."
     },
     {
+      "id": "substrate:create-something:management-resource:topology_record:substrate-create-something-package-create-something-webflow-app-review-portal-packages-webflow-app-review-portal",
+      "kind": "topology_record",
+      "title": "@create-something/webflow-app-review-portal",
+      "recordId": "substrate:create-something:package:create-something-webflow-app-review-portal-packages-webflow-app-review-portal",
+      "sourcePath": "packages/database-layer/data/create-something-internal-topology.json",
+      "apiPath": "/api/substrate/topology/internal/records/substrate-create-something-package-create-something-webflow-app-review-portal-packages-webflow-app-review-portal",
+      "mcpUri": "substrate://topology/internal/records/substrate-create-something-package-create-something-webflow-app-review-portal-packages-webflow-app-review-portal",
+      "agentCommand": "databaseLayer.topology.records.get",
+      "access": [
+        "read"
+      ],
+      "policy": "Read-only management resource; safe for API, MCP, and agent inspection."
+    },
+    {
       "id": "substrate:create-something:management-resource:topology_record:substrate-create-something-package-create-something-webflow-apps-audit-dashboard-packages-webflow-apps-admin-dashboard",
       "kind": "topology_record",
       "title": "@create-something/webflow-apps-audit-dashboard",
@@ -3275,6 +3345,20 @@
       "sourcePath": "packages/database-layer/data/create-something-internal-topology.json",
       "apiPath": "/api/substrate/topology/internal/records/substrate-create-something-package-create-something-webflow-dashboard-packages-webflow-dashboard",
       "mcpUri": "substrate://topology/internal/records/substrate-create-something-package-create-something-webflow-dashboard-packages-webflow-dashboard",
+      "agentCommand": "databaseLayer.topology.records.get",
+      "access": [
+        "read"
+      ],
+      "policy": "Read-only management resource; safe for API, MCP, and agent inspection."
+    },
+    {
+      "id": "substrate:create-something:management-resource:topology_record:substrate-create-something-package-create-something-webflow-sla-notifications-packages-webflow-dashboard-workers-sla-notifications",
+      "kind": "topology_record",
+      "title": "@create-something/webflow-sla-notifications",
+      "recordId": "substrate:create-something:package:create-something-webflow-sla-notifications-packages-webflow-dashboard-workers-sla-notifications",
+      "sourcePath": "packages/database-layer/data/create-something-internal-topology.json",
+      "apiPath": "/api/substrate/topology/internal/records/substrate-create-something-package-create-something-webflow-sla-notifications-packages-webflow-dashboard-workers-sla-notifications",
+      "mcpUri": "substrate://topology/internal/records/substrate-create-something-package-create-something-webflow-sla-notifications-packages-webflow-dashboard-workers-sla-notifications",
       "agentCommand": "databaseLayer.topology.records.get",
       "access": [
         "read"
@@ -4542,6 +4626,20 @@
       "policy": "Read-only management resource; safe for API, MCP, and agent inspection."
     },
     {
+      "id": "substrate:create-something:management-resource:topology_record:substrate-create-something-worker-packages-halfdozen-transcript-monitor-wrangler-jsonc",
+      "kind": "topology_record",
+      "title": "packages/halfdozen-transcript-monitor/wrangler.jsonc",
+      "recordId": "substrate:create-something:worker:packages-halfdozen-transcript-monitor-wrangler-jsonc",
+      "sourcePath": "packages/database-layer/data/create-something-internal-topology.json",
+      "apiPath": "/api/substrate/topology/internal/records/substrate-create-something-worker-packages-halfdozen-transcript-monitor-wrangler-jsonc",
+      "mcpUri": "substrate://topology/internal/records/substrate-create-something-worker-packages-halfdozen-transcript-monitor-wrangler-jsonc",
+      "agentCommand": "databaseLayer.topology.records.get",
+      "access": [
+        "read"
+      ],
+      "policy": "Read-only management resource; safe for API, MCP, and agent inspection."
+    },
+    {
       "id": "substrate:create-something:management-resource:topology_record:substrate-create-something-worker-packages-halfdozen-zoom-sync-worker-wrangler-toml",
       "kind": "topology_record",
       "title": "halfdozen-zoom-sync worker",
@@ -4773,6 +4871,20 @@
       "sourcePath": "packages/database-layer/data/create-something-internal-topology.json",
       "apiPath": "/api/substrate/topology/internal/records/substrate-create-something-worker-packages-marketplace-featured-notifier-wrangler-jsonc",
       "mcpUri": "substrate://topology/internal/records/substrate-create-something-worker-packages-marketplace-featured-notifier-wrangler-jsonc",
+      "agentCommand": "databaseLayer.topology.records.get",
+      "access": [
+        "read"
+      ],
+      "policy": "Read-only management resource; safe for API, MCP, and agent inspection."
+    },
+    {
+      "id": "substrate:create-something:management-resource:topology_record:substrate-create-something-worker-packages-marketplace-insights-cron-wrangler-jsonc",
+      "kind": "topology_record",
+      "title": "packages/marketplace-insights-cron/wrangler.jsonc",
+      "recordId": "substrate:create-something:worker:packages-marketplace-insights-cron-wrangler-jsonc",
+      "sourcePath": "packages/database-layer/data/create-something-internal-topology.json",
+      "apiPath": "/api/substrate/topology/internal/records/substrate-create-something-worker-packages-marketplace-insights-cron-wrangler-jsonc",
+      "mcpUri": "substrate://topology/internal/records/substrate-create-something-worker-packages-marketplace-insights-cron-wrangler-jsonc",
       "agentCommand": "databaseLayer.topology.records.get",
       "access": [
         "read"
@@ -5214,6 +5326,20 @@
       "policy": "Read-only management resource; safe for API, MCP, and agent inspection."
     },
     {
+      "id": "substrate:create-something:management-resource:topology_record:substrate-create-something-worker-packages-webflow-app-review-portal-wrangler-json",
+      "kind": "topology_record",
+      "title": "packages/webflow-app-review-portal/wrangler.json",
+      "recordId": "substrate:create-something:worker:packages-webflow-app-review-portal-wrangler-json",
+      "sourcePath": "packages/database-layer/data/create-something-internal-topology.json",
+      "apiPath": "/api/substrate/topology/internal/records/substrate-create-something-worker-packages-webflow-app-review-portal-wrangler-json",
+      "mcpUri": "substrate://topology/internal/records/substrate-create-something-worker-packages-webflow-app-review-portal-wrangler-json",
+      "agentCommand": "databaseLayer.topology.records.get",
+      "access": [
+        "read"
+      ],
+      "policy": "Read-only management resource; safe for API, MCP, and agent inspection."
+    },
+    {
       "id": "substrate:create-something:management-resource:topology_record:substrate-create-something-worker-packages-webflow-apps-admin-dashboard-wrangler-toml",
       "kind": "topology_record",
       "title": "packages/webflow-apps-admin/dashboard/wrangler.toml",
@@ -5249,6 +5375,20 @@
       "sourcePath": "packages/database-layer/data/create-something-internal-topology.json",
       "apiPath": "/api/substrate/topology/internal/records/substrate-create-something-worker-packages-webflow-automation-worker-wrangler-toml",
       "mcpUri": "substrate://topology/internal/records/substrate-create-something-worker-packages-webflow-automation-worker-wrangler-toml",
+      "agentCommand": "databaseLayer.topology.records.get",
+      "access": [
+        "read"
+      ],
+      "policy": "Read-only management resource; safe for API, MCP, and agent inspection."
+    },
+    {
+      "id": "substrate:create-something:management-resource:topology_record:substrate-create-something-worker-packages-webflow-dashboard-workers-sla-notifications-wrangler-toml",
+      "kind": "topology_record",
+      "title": "packages/webflow-dashboard/workers/sla-notifications/wrangler.toml",
+      "recordId": "substrate:create-something:worker:packages-webflow-dashboard-workers-sla-notifications-wrangler-toml",
+      "sourcePath": "packages/database-layer/data/create-something-internal-topology.json",
+      "apiPath": "/api/substrate/topology/internal/records/substrate-create-something-worker-packages-webflow-dashboard-workers-sla-notifications-wrangler-toml",
+      "mcpUri": "substrate://topology/internal/records/substrate-create-something-worker-packages-webflow-dashboard-workers-sla-notifications-wrangler-toml",
       "agentCommand": "databaseLayer.topology.records.get",
       "access": [
         "read"
@@ -6614,6 +6754,20 @@
       "policy": "Read-only management resource; safe for API, MCP, and agent inspection."
     },
     {
+      "id": "substrate:create-something:management-resource:topology_record:substrate-create-something-guide-docs-guides-ai-native-sdlc-md",
+      "kind": "topology_record",
+      "title": "AI_NATIVE_SDLC.md",
+      "recordId": "substrate:create-something:guide:docs-guides-ai-native-sdlc-md",
+      "sourcePath": "packages/database-layer/data/create-something-internal-topology.json",
+      "apiPath": "/api/substrate/topology/internal/records/substrate-create-something-guide-docs-guides-ai-native-sdlc-md",
+      "mcpUri": "substrate://topology/internal/records/substrate-create-something-guide-docs-guides-ai-native-sdlc-md",
+      "agentCommand": "databaseLayer.topology.records.get",
+      "access": [
+        "read"
+      ],
+      "policy": "Read-only management resource; safe for API, MCP, and agent inspection."
+    },
+    {
       "id": "substrate:create-something:management-resource:topology_record:substrate-create-something-guide-docs-guides-antigravity-mcp-enablement-md",
       "kind": "topology_record",
       "title": "ANTIGRAVITY_MCP_ENABLEMENT.md",
@@ -6691,6 +6845,20 @@
       "sourcePath": "packages/database-layer/data/create-something-internal-topology.json",
       "apiPath": "/api/substrate/topology/internal/records/substrate-create-something-guide-docs-guides-browser-proof-and-closeout-runbook-md",
       "mcpUri": "substrate://topology/internal/records/substrate-create-something-guide-docs-guides-browser-proof-and-closeout-runbook-md",
+      "agentCommand": "databaseLayer.topology.records.get",
+      "access": [
+        "read"
+      ],
+      "policy": "Read-only management resource; safe for API, MCP, and agent inspection."
+    },
+    {
+      "id": "substrate:create-something:management-resource:topology_record:substrate-create-something-guide-docs-guides-canon-character-migration-md",
+      "kind": "topology_record",
+      "title": "CANON_CHARACTER_MIGRATION.md",
+      "recordId": "substrate:create-something:guide:docs-guides-canon-character-migration-md",
+      "sourcePath": "packages/database-layer/data/create-something-internal-topology.json",
+      "apiPath": "/api/substrate/topology/internal/records/substrate-create-something-guide-docs-guides-canon-character-migration-md",
+      "mcpUri": "substrate://topology/internal/records/substrate-create-something-guide-docs-guides-canon-character-migration-md",
       "agentCommand": "databaseLayer.topology.records.get",
       "access": [
         "read"

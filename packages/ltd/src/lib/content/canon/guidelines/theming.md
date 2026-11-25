@@ -3,144 +3,31 @@ category: "Canon"
 section: "Guidelines"
 title: "Theming"
 description: "Create custom themes by extending Canon's design tokens. Dark mode, light mode, and brand customization patterns."
-lead: "Canon's token architecture enables systematic theming. Override tokens at the root level to create consistent custom themes."
+lead: "Keep the black foundation. Use an explicit light work surface and preserve semantic roles across every palette boundary."
 publishedAt: "2026-01-08"
 published: true
 ---
 
-## Philosophy
+## Use the owning palette
 
-Themes should extend, not replace. Canon provides a complete token system that establishes relationships between colors, spacing, and typography. Custom themes override specific tokens while maintaining these relationships.
-
-> "A system is not the sum of its parts but the product of their interactions."
-> — Russell Ackoff
-
-## Token Categories
-
-These tokens form the theming surface. Override them to create custom themes.
-
-### Background Tokens
-- `--color-performance-bg-pure`
-- `--color-bg-base`
-- `--color-performance-bg-surface`
-- `--color-performance-bg-elevated`
-
-### Foreground Tokens
-- `--color-performance-fg-primary`
-- `--color-performance-fg-secondary`
-- `--color-performance-fg-tertiary`
-- `--color-performance-fg-muted`
-
-### Border Tokens
-- `--color-performance-border-default`
-- `--color-performance-border-emphasis`
-- `--color-performance-border-strong`
-
-### Semantic Tokens
-- `--color-performance-success`
-- `--color-performance-error`
-- `--color-performance-warning`
-- `--color-performance-info`
-
-## Creating a Custom Theme
-
-Override Canon's tokens at the root level:
-
-```css
-:root {
-  /* Brand color as accent */
-  --color-accent: #6366f1;
-  --color-accent-muted: rgba(99, 102, 241, 0.1);
-  
-  /* Custom backgrounds */
-  --color-performance-bg-pure: #0f0f23;
-  --color-bg-base: #1a1a2e;
-  --color-performance-bg-surface: #252538;
-  --color-performance-bg-elevated: #2f2f45;
-}
-```
-
-## Dark & Light Modes
-
-Canon defaults to dark mode. Add light mode with a theme attribute:
-
-```css
-/* Dark mode (default) */
-:root {
-  --color-performance-bg-pure: #000000;
-  --color-bg-base: #0a0a0a;
-  --color-performance-fg-primary: rgba(255, 255, 255, 1);
-  --color-performance-fg-secondary: rgba(255, 255, 255, 0.8);
-}
-
-/* Light mode override */
-[data-theme="light"] {
-  --color-performance-bg-pure: #ffffff;
-  --color-bg-base: #fafafa;
-  --color-performance-fg-primary: rgba(0, 0, 0, 0.9);
-  --color-performance-fg-secondary: rgba(0, 0, 0, 0.7);
-}
-```
-
-### Theme Toggle
+Canon defaults to a black website foundation. Use the built-in theme boundary for an explicit light work surface; do not reconstruct it with a few local color overrides.
 
 ```html
-<button onclick="toggleTheme()">Toggle Theme</button>
-
-<script>
-function toggleTheme() {
-  const current = document.documentElement.dataset.theme;
-  document.documentElement.dataset.theme = 
-    current === 'light' ? 'dark' : 'light';
-}
-</script>
+<section data-theme="light">
+  <h2>Review the evidence</h2>
+  <p>This work surface uses the light semantic roles.</p>
+  <aside data-theme="dark">A nested dark surface restores the black palette.</aside>
+</section>
 ```
 
-## System Preference Detection
+The shared scopes rebind backgrounds, foregrounds, action/state pairs and compatibility aliases together. A paper illustration does not change the owning website palette. `.cs-workspace` retains dark chrome. System preference alone does not silently turn a black public website into a light one; any theme selector is an application decision with accessible labeling and persistence owned by that application.
 
-Respect user's system preference:
+## Extend through an overlay
 
-```css
-@media (prefers-color-scheme: light) {
-  :root:not([data-theme="dark"]) {
-    --color-performance-bg-pure: #ffffff;
-    --color-bg-base: #fafafa;
-    /* ... light mode tokens ... */
-  }
-}
-```
+Client and property differences belong in a reviewed Canon overlay with ownership, scope and surface policy. Preserve shared primitives and semantic meaning. Verify contrast in every state and nested palette, including focus, errors, selected items and disabled controls.
 
-## Theme Best Practices
+The specialist operator palette remains separate and opt-in. Import `@create-something/canon/styles/operator.css`, place `data-canon-palette="operator"` on the owning surface and explicitly bind the namespaced operator roles. The attribute alone does not retheme every component.
 
-1. **Override, don't replace** - Maintain token relationships
-2. **Test contrast** - Ensure AA compliance in all themes
-3. **Preserve semantics** - Success should still feel "green"
-4. **Respect preferences** - Honor `prefers-color-scheme`
-5. **Provide toggle** - Let users choose their preference
+Use the full `canon.css` import for shared base styles and local fonts. Token-only consumers own font loading and resets.
 
-## Complete Light Theme Example
-
-```css
-[data-theme="light"] {
-  /* Backgrounds - inverted */
-  --color-performance-bg-pure: #ffffff;
-  --color-bg-base: #fafafa;
-  --color-performance-bg-surface: #f5f5f5;
-  --color-performance-bg-elevated: #ffffff;
-  
-  /* Foregrounds - dark text */
-  --color-performance-fg-primary: rgba(0, 0, 0, 0.9);
-  --color-performance-fg-secondary: rgba(0, 0, 0, 0.7);
-  --color-performance-fg-tertiary: rgba(0, 0, 0, 0.5);
-  --color-performance-fg-muted: rgba(0, 0, 0, 0.4);
-  
-  /* Borders - adjusted for light bg */
-  --color-performance-border-default: rgba(0, 0, 0, 0.1);
-  --color-performance-border-emphasis: rgba(0, 0, 0, 0.2);
-  --color-performance-border-strong: rgba(0, 0, 0, 0.3);
-  
-  /* Interactive - adjusted */
-  --color-performance-hover: rgba(0, 0, 0, 0.05);
-  --color-performance-active: rgba(0, 0, 0, 0.1);
-}
-```
+See [Colors](/canon/foundations/colors), [Accessibility](/canon/guidelines/accessibility) and [Overlays](/canon/resources/overlays).

@@ -54,7 +54,8 @@ import {
 function fixture() {
   const sqlite = new DatabaseSync(':memory:');
   sqlite.exec(`CREATE TABLE abundance_healthcare_nationwide_runs(id TEXT, status TEXT, source_published_at TEXT, finished_at TEXT, taxonomy_scope TEXT DEFAULT 'primary_family_np');
- CREATE TABLE abundance_healthcare_nationwide_memberships(run_id TEXT,provider_npi TEXT,provider_snapshot_json TEXT,primary_taxonomy_code TEXT,practice_state TEXT,practice_city TEXT,name_search TEXT);`);
+ CREATE TABLE abundance_healthcare_nationwide_memberships(run_id TEXT,provider_npi TEXT,provider_snapshot_json TEXT,primary_taxonomy_code TEXT,practice_state TEXT,practice_city TEXT,name_search TEXT);
+ CREATE INDEX idx_abundance_healthcare_nationwide_market ON abundance_healthcare_nationwide_memberships(run_id,practice_state,practice_city);`);
   sqlite.exec(
     readFileSync(
       new URL('../migrations/0048_abundance_sourcing_geocodes.sql', import.meta.url),

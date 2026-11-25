@@ -268,14 +268,13 @@
 <div class="app">
   <header>
     <a bind:this={returnLink} href={canvasHref} onclick={requestReturn} data-sveltekit-reload aria-label="Draw canvas"
-      ><img src="/brand/draw-dark.svg" width="28" height="28" alt="" /><strong>Draw</strong></a
+      ><img src="/brand/draw-mono.svg" width="28" height="28" alt="" /><strong>Draw</strong></a
     ><span class="divider"></span><span>Compose</span><span class="local">DEVICE LOCAL</span>
   </header>
   <main>
     <section class="intro">
       <div>
-        <p class="kicker">CANON FORM TEMPLATE</p>
-        <h1>Compose a form.<br />Show how it works.</h1>
+        <h1>Compose a form.<br /><span>Show how it works.</span></h1>
       </div>
       <p>
         Edit this four-component form and its teaching sequences.<br />This composition saves
@@ -435,6 +434,21 @@
 </div>
 
 <style>
+  .app {
+    --color-performance-paper: var(--alfred-white);
+    --color-performance-panel: var(--alfred-tile);
+    --color-performance-ink: var(--alfred-ink);
+    --color-performance-muted: var(--alfred-gray);
+    --color-performance-line: var(--alfred-rule);
+    --color-performance-signal: var(--alfred-ink);
+    --font-performance-sans: var(--alfred-sans);
+    --font-performance-interface: var(--alfred-sans);
+    --font-performance-mono: var(--alfred-sans);
+    color: var(--alfred-ink);
+    background: var(--alfred-white);
+    font-family: var(--alfred-sans);
+  }
+
   dialog,.recovery{background:var(--color-performance-panel);color:var(--color-performance-ink);border:1px solid var(--color-performance-line);padding:24px;max-width:560px}dialog::backdrop{background:#0008}dialog button,.recovery button{font:inherit;padding:10px;margin:8px 8px 0 0}dialog p,.recovery p{line-height:1.6}.recovery{margin-bottom:24px}
 
   :global(body) {
@@ -460,8 +474,9 @@
     display: flex;
     align-items: center;
     gap: 18px;
-    background: var(--color-performance-ink);
-    color: var(--color-performance-paper);
+    background: var(--alfred-white);
+    color: var(--alfred-ink);
+    border-bottom: 1px solid var(--alfred-rule);
     padding: 0 32px;
     font-size: 14px;
   }
@@ -557,19 +572,16 @@
     overflow: hidden;
     clip-path: inset(50%);
   }
-  .kicker {
-    font: 10px var(--font-performance-mono);
-    letter-spacing: 0.12em;
-    color: var(--color-performance-muted);
-    margin: 0 0 16px;
-  }
   h1 {
+    font-family: var(--alfred-serif);
     font-size: clamp(28px, 3vw, 44px);
+    text-wrap: balance;
     letter-spacing: -0.04em;
-    font-weight: 500;
+    font-weight: 400;
     line-height: 1.08;
     margin: 0;
   }
+  h1 span { color: var(--alfred-gray); }
   .intro > p {
     font-size: 14px;
     line-height: 1.6;
@@ -599,7 +611,7 @@
   h2 {
     font-size: 13px;
     margin: 0;
-    font-weight: 600;
+    font-weight: 500;
   }
   .inspector form {
     display: flex;
@@ -652,7 +664,7 @@
     margin-bottom: 12px;
   }
   .structure p {
-    font-weight: 600;
+    font-weight: 500;
   }
   .structure ul {
     list-style: none;
@@ -789,9 +801,6 @@
     .intro {
       gap: 10px;
       margin-bottom: 18px;
-    }
-    .kicker {
-      margin-bottom: 8px;
     }
     .intro h1 {
       font-size: 28px;

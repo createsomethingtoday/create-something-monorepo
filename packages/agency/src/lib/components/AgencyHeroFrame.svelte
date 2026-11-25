@@ -1,22 +1,37 @@
 <script lang="ts">
   import type { Snippet } from 'svelte';
   import { page } from '$app/stores';
+  import { dev } from '$app/environment';
+  import { agencyEditorialAssetUrl } from '$lib/data/agencyEditorialPresentation';
   import { getAgencyPageFoundation } from '$lib/data/agencyPageFoundations';
-  import { getAgencyHeroTreatment } from '$lib/data/agencyHeroTreatment';
-  import AgencyHeroPlate from './AgencyHeroPlate.svelte';
-  let { children, after, compact = false, showPlate = true }: {children: Snippet; after?: Snippet; compact?: boolean; showPlate?: boolean} = $props();
-  const foundation = $derived(getAgencyPageFoundation($page.url.pathname, $page.url.pathname === '/book' ? $page.url.searchParams.get('intent') : null));
-  const treatment = $derived(getAgencyHeroTreatment($page.url.pathname) as {image?:string|null;caption?:string;focus?:string;width?:number;height?:number}|undefined);
+  type Scene = { src:string; mobileSrc?:string; aspectRatio?:number; mobileAspectRatio?:number; description?:string };
+  let { children, after, compact = false, showPlate = true, scene, sceneInChild = false }: {children:Snippet; after?:Snippet; compact?:boolean; showPlate?:boolean; scene?:Scene; sceneInChild?:boolean} = $props();
+  const foundation = $derived(getAgencyPageFoundation($page.url.pathname));
+  const hasSiblingVisual = $derived(showPlate && !sceneInChild);
+  const image = $derived(agencyEditorialAssetUrl('/agency/editorial/connected-tools-1280.webp', dev));
 </script>
-
 {#if foundation}
-  <div class="agency-hero-frame" class:agency-hero-frame--compact={compact} data-measured-opening data-scroll-entrance-skip>
-    <div class="agency-hero-frame__copy">{@render children()}</div>
-    {#if showPlate}
-      <AgencyHeroPlate {foundation} {compact} image={treatment?.image ?? 'macro'} caption={treatment?.caption ?? 'Concept illustration · make the work and its boundaries clear.'} focus={treatment?.focus} width={treatment?.width} height={treatment?.height} />
-    {/if}
-    {#if after}<div class="agency-hero-frame__artifact performance-campaign-opening__artifact">{@render after()}</div>{/if}
+  <div class="editorial-hero-frame" class:editorial-hero-frame--compact={compact} data-measured-opening data-editorial-frame>
+    <div class="editorial-frame-grid" class:editorial-frame-grid--single={!hasSiblingVisual}>
+      <div class="editorial-frame-copy">{@render children()}</div>
+      {#if hasSiblingVisual}
+        <figure><img src={image} srcset={agencyEditorialAssetUrl('/agency/editorial/connected-tools-640.webp', dev) + ' 640w, ' + image + ' 1280w'} sizes="(min-width: 1024px) 536px, calc(100vw - 32px)" alt="A ceramic paper reel connects two instruments with a shared paper path." width="1280" height="721" fetchpriority="high" /><figcaption>Pause, inspect, and learn. Conceptual illustration.</figcaption></figure>
+      {/if}
+    </div>
+    {#if after}<div class="editorial-frame-artifact">{@render after()}</div>{/if}
   </div>
 {:else}
   {@render children()}
 {/if}
+<style>
+  .editorial-hero-frame { box-sizing:border-box; max-width:1152px; margin:auto; padding:6rem 1rem; }
+  .editorial-frame-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:3rem; align-items:center; }
+  .editorial-frame-grid--single { grid-template-columns:minmax(0,1fr); }
+  .editorial-frame-copy { min-width:0; }
+  .editorial-frame-copy :global(section),.editorial-frame-copy :global(.clear-page-section__inner),.editorial-frame-copy :global(.clear-page-section__copy) { padding:0; margin:0; max-width:none; width:100%; min-height:0; }
+  .editorial-frame-copy :global(h1) { font-size:clamp(2.5rem,4.5vw,3.75rem); line-height:1.05; max-width:19ch; }
+  figure { margin:0; min-width:0; } img { display:block; width:100%; height:auto; border-radius:1rem; }
+  figcaption { margin-top:1rem; font-size:.75rem; color:var(--color-performance-muted); }
+  .editorial-frame-artifact { margin-top:3rem; }
+  @media(max-width:767px) { .editorial-frame-grid { grid-template-columns:1fr; } .editorial-hero-frame { padding-block:4rem; } }
+</style>

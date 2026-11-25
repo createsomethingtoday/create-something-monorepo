@@ -33,7 +33,7 @@ export function createBridge(invoke, onMutation = () => {}) {
     chatList: (workspaceId) => call('agent.chat.list', { workspaceId: owned(workspaceId) }),
     chatStart: (workspaceId, record) => call('agent.chat.start', { workspaceId: owned(workspaceId), ...(record ? { record } : {}) }),
     chatRead: (workspaceId, sessionId) => call('agent.chat.read', { workspaceId: owned(workspaceId), sessionId }),
-    chatSend: (workspaceId, sessionId, message) => call('agent.chat.send', { workspaceId: owned(workspaceId), sessionId, message }),
+    chatSend: (workspaceId, sessionId, message, requestId) => call('agent.chat.send', { workspaceId: owned(workspaceId), sessionId, message, ...(requestId ? { requestId } : {}) }),
     chatPoll: (workspaceId, sessionId) => call('agent.chat.poll', { workspaceId: owned(workspaceId), sessionId }),
     chatCancel: (workspaceId, sessionId) => call('agent.chat.cancel', { workspaceId: owned(workspaceId), sessionId }),
     chatApprove: (workspaceId, sessionId, approvalId, decision) => call('agent.chat.approve', { workspaceId: owned(workspaceId), sessionId, approvalId, decision }),

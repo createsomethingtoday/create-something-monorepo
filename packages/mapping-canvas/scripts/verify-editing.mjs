@@ -280,7 +280,8 @@ try {
     await page.locator('.file-menu summary').click();
     for (const format of ['JSON', 'SVG', 'PNG']) {
       const promise = page.waitForEvent('download');
-      await page.getByRole('button', { name: format, exact: true }).click();
+      const actionName = format === 'JSON' ? format : `Export viewport ${format}`;
+      await page.getByRole('button', { name: actionName, exact: true }).click();
       const download = await promise;
       const path = new URL(`${viewport.width}-${download.suggestedFilename()}`, out).pathname;
       await download.saveAs(path);

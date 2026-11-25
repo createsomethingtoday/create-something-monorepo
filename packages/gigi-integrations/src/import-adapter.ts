@@ -32,7 +32,7 @@ export function mapSourcePage(workspaceId: string, page: SourcePage): CanonicalI
       const source = {
         kind: 'import' as const, provider: page.provider, connectedAccountId: page.connectedAccountId,
         collectionId, externalId: record.externalId, observedAt,
-        preview: { from: bounded(record.data.from, 320), snippet: bounded(record.data.snippet, 500) },
+        preview: { from: bounded(record.data.from, 320), snippet: bounded(record.data.snippet, 500), mailState: ['Draft','Sent'].includes(String(record.data.mailState)) ? String(record.data.mailState) : 'Unknown', scheduledState: 'Unknown' },
       };
       trimPreview(source);
       const parsedDate = typeof record.data.date === 'string' ? Date.parse(record.data.date) : NaN;

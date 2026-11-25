@@ -1826,3 +1826,15 @@ test('curated memory tools reach embedded chat with citations and requests stay 
   const before=calls.length;await emit('gigi_memory_search',{workspaceId:'foreign',query:'rehearsal'});assert.equal(calls.length,before);assert.equal(replies.at(-1).success,false);
   await emit('gigi_memory_review',{workspaceId:'w',requestId:'proposal',decision:'approve'});assert.equal(calls.length,before);assert.equal(replies.at(-1).success,false);
 });
+
+test('accepted request receipt survives empty interrupted transcript and adapter restart',async()=>{
+ const {adapter,server,mcp,dataDir}=await setup();
+ const {sessionId}=await adapter.start({workspaceId:'w'});
+ const sent=await adapter.send({workspaceId:'w',sessionId,message:'Synthetic request',requestId:'synthetic-request-1'});
+ assert.deepEqual(sent.sendReceipt,{requestId:'synthetic-request-1',accepted:true,turnId:'turn-1'});
+ server.thread.turns=[{id:'turn-1',status:'interrupted',items:[]}];
+ const restarted=createCodexAdapter({dataDir,mcpBinary:'/fixture/gigi-mcp',skillPath:'/fixture/skill/SKILL.md',server,mcp});
+ const result=await restarted.read({workspaceId:'w',sessionId});
+ assert.deepEqual(result.messages,[]);assert.equal(result.state,'interrupted');assert.deepEqual(result.sendReceipt,sent.sendReceipt);
+ assert.equal(server.calls.filter(x=>x.method==='turn/start').length,1);
+});

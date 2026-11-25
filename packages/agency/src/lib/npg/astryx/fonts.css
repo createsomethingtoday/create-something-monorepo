@@ -1,0 +1,13 @@
+/* @fontsource-variable/figtree 5.3.0, SIL Open Font License. Local only. */
+@font-face {
+  font-family: Figtree;
+  font-style: normal;
+  font-weight: 300 900;
+  font-display: swap;
+  src: url('@fontsource-variable/figtree/files/figtree-latin-wght-normal.woff2') format('woff2');
+}
+@font-face {
+  font-family: "Agency Reading";
+  src: url('../../../../static/fonts/agency-stix-two-text.woff2') format('woff2');
+  font-display: swap;
+}

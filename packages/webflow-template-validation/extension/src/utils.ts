@@ -1,7 +1,7 @@
 // Pure helpers shared across the extension. No DOM, no Designer API —
 // everything here is unit-testable in isolation.
 
-export const EXTENSION_VERSION = '1.3.9';
+export const EXTENSION_VERSION = '1.3.13';
 
 export function filterRetiredAccessibilityIssues<T extends { id: string }>(issues: readonly T[]): T[] {
   return issues.filter((issue) => issue.id !== 'color-contrast-violations');
@@ -151,4 +151,24 @@ export function selectValidationDomain(siteInfo?: NormalizedSiteInfo): {
   }
 
   return { url: null, source: 'no published domain found' };
+}
+
+/**
+ * The site's Webflow preview link, or `undefined` for any other text.
+ * The Validator sends it with a run, and the unused styles check then reads
+ * the same site data as the Designer's "Clean up" panel.
+ */
+export function normalizePreviewLink(value: string | null | undefined): string | undefined {
+  const text = (value || '').trim();
+  if (!text) return undefined;
+  let url: URL;
+  try {
+    url = new URL(text);
+  } catch {
+    return undefined;
+  }
+  if (url.protocol !== 'https:' || url.hostname !== 'preview.webflow.com') return undefined;
+  if (!/^\/preview\/[a-z0-9][a-z0-9-]*\/?$/.test(url.pathname)) return undefined;
+  if (!/^[0-9a-f]{32}$/.test(url.searchParams.get('preview') || '')) return undefined;
+  return url.href;
 }

@@ -34,7 +34,7 @@ published: true
 <div class="card-content">
 <h2 class="card-title">Card</h2>
 <p class="card-description">
-				Group related content together with three depth levels to choose from.
+				Group related content with solid surfaces, clear borders and purposeful spacing.
 			</p>
 </div>
 <div class="card-arrow">

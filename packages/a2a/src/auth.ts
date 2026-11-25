@@ -1,12 +1,33 @@
-import { createLocalJWKSet, createRemoteJWKSet, jwtVerify, type JWTPayload } from 'jose';
+import { customFetch, decodeJwt, createLocalJWKSet, createRemoteJWKSet, jwtVerify, type JWTPayload } from 'jose';
 import type { Principal } from './domain-types';
 import type { RuntimeEnv } from './env';
 import { ADMIN_SCOPE, READ_SCOPE, WRITE_SCOPE } from './env';
-import { hash, randomToken, seal, unseal } from './crypto';
+import { hash, randomToken, refreshRequestId, seal, unseal } from './crypto';
 import { HttpError, json } from './http';
 
 const productionIssuer='https://id.createsomething.space';
-const publicKeys=createRemoteJWKSet(new URL(`${productionIssuer}/.well-known/jwks.json`),{timeoutDuration:5000});
+function hasKeyStructure(value:unknown):boolean {
+  if(!value||typeof value!=='object'||Array.isArray(value))return false;
+  const key=value as Record<string,unknown>;
+  if(typeof key.kty!=='string'||!key.kty)return false;
+  const required=key.kty==='EC'?['crv','x','y']:key.kty==='RSA'?['n','e']:key.kty==='OKP'?['crv','x']:key.kty==='oct'?['k']:[];
+  return required.every(field=>typeof key[field]==='string'&&key[field].length>0);
+}
+const createPublicKeys=()=>createRemoteJWKSet(new URL(`${productionIssuer}/.well-known/jwks.json`),{
+  timeoutDuration:5000,
+  [customFetch]:async(url,options)=>{
+    try{
+      const response=await fetch(url,{...options,redirect:'manual'});
+      if(!response.ok)throw new Error('Key provider unavailable');
+      const keyset=await response.clone().json() as {keys?:unknown};
+      // Malformed records must not be cached as a valid set with no matching key.
+      // A well-formed set that lacks the token's kid remains an invalid token.
+      if(!keyset||!Array.isArray(keyset.keys)||!keyset.keys.every(hasKeyStructure))throw new Error('Invalid provider keyset');
+      return response;
+    }catch{throw new HttpError('identity_unavailable',503,'Identity verification is temporarily unavailable.');}
+  }
+});
+let publicKeys=createPublicKeys();
 const sessionCookie='__Host-a2a_session';
 const stateCookie='__Host-a2a_oauth';
 const sessionTtl=7*86400000;
@@ -23,6 +44,7 @@ export function requireScope(principal:Principal,scope:string):void {
   if(!principal.scopes.includes(scope))throw new HttpError('insufficient_scope',403,`This action requires ${scope}.`);
 }
 function admission(env:RuntimeEnv,principal:Principal):void {
+  if(env.SELF_SERVICE_ENABLED==='true')return;
   const allowed=env.ALLOWED_EMAILS.split(',').map(x=>x.trim().toLowerCase()).filter(Boolean);
   if(!principal.email||!allowed.includes(principal.email.toLowerCase()))throw new HttpError('invite_required',403,'This pilot is available to invited owners.');
 }
@@ -31,10 +53,25 @@ export async function verifyIdentityToken(env:RuntimeEnv,token:string):Promise<P
   let payload:JWTPayload;
   try {
     const resolver=env.ENVIRONMENT==='test'&&env.LOCAL_TEST_JWKS
-      ?createLocalJWKSet(JSON.parse(env.LOCAL_TEST_JWKS)):publicKeys;
+      ?createLocalJWKSet(JSON.parse(env.LOCAL_TEST_JWKS)):async(...args:Parameters<typeof publicKeys>)=>{
+        try{return await publicKeys(...args);}catch(error){
+          // No matching signing key is a token rejection; failed provider key
+          // retrieval/import is an availability failure, never a bypass.
+          if((error as {code?:string})?.code==='ERR_JWKS_NO_MATCHING_KEY')throw error;
+          publicKeys=createPublicKeys(); // Do not retain a malformed provider keyset.
+          throw new HttpError('identity_unavailable',503,'Identity verification is temporarily unavailable.');
+        }
+      };
     ({payload}=await jwtVerify(token,resolver,{issuer:env.IDENTITY_ISSUER,audience:env.AUTH_RESOURCE,algorithms:['ES256'],requiredClaims:['sub','exp','iat']}));
-  } catch {throw new HttpError('invalid_token',401,'Sign in with CREATE SOMETHING Identity.');}
+  } catch(error) {
+    if(error instanceof HttpError&&error.status===503)throw error;
+    // Signature, claims, expiry and missing matching key errors remain terminal.
+    throw new HttpError('invalid_token',401,'Sign in with CREATE SOMETHING Identity.');
+  }
   if(payload.kind!=='oauth_access_token'||payload.resource!==env.AUTH_RESOURCE||typeof payload.scope!=='string')throw new HttpError('invalid_token',401,'An access token for this service is required.');
+  const connectionId=payload.connection_id;
+  if(connectionId!==undefined&&(typeof connectionId!=='string'||!connectionId||typeof payload.client_id!=='string'||!payload.client_id))throw new HttpError('invalid_token',401,'Verified connection binding required.');
+  let renewal:Principal['renewal'];
   let email:string|undefined;let displayName:string|undefined;
   const name=(value:unknown)=>typeof value==='string'&&value.trim().length>0&&value.trim().length<=80&&!/[\u0000-\u001f\u007f]/.test(value)?value.trim():undefined;
   if(env.ENVIRONMENT==='test'&&env.LOCAL_TEST_JWKS){
@@ -44,13 +81,22 @@ export async function verifyIdentityToken(env:RuntimeEnv,token:string):Promise<P
   }else{
     let response:Response;
     try{response=await fetch(`${productionIssuer}/oauth/userinfo`,{headers:{authorization:`Bearer ${token}`},redirect:'manual',signal:AbortSignal.timeout(5000)});}catch{throw new HttpError('identity_unavailable',503,'Identity verification is temporarily unavailable.');}
+    if(response.status===429||response.status>=500)throw new HttpError('identity_unavailable',503,'Identity verification is temporarily unavailable.');
     if(!response.ok)throw new HttpError('invalid_token',401,'Your Identity session is no longer available.');
-    const info=await response.json() as Record<string,unknown>;
+    let info:Record<string,unknown>;
+    try{info=await response.json() as Record<string,unknown>;if(!info||typeof info!=='object'||Array.isArray(info))throw new Error();}catch{throw new HttpError('identity_unavailable',503,'Identity verification is temporarily unavailable.');}
+    // A successful provider response must satisfy its identity contract before
+    // any mismatch is treated as evidence that this bearer is no longer valid.
+    const required=['sub','resource',...(payload.client_id!==undefined?['client_id']:[]),...(connectionId!==undefined?['connection_id']:[])];
+    if(required.some(field=>typeof info[field]!=='string'||!(info[field] as string).trim())||typeof info.email_verified!=='boolean')throw new HttpError('identity_unavailable',503,'Identity verification is temporarily unavailable.');
     if(info.sub!==payload.sub||info.resource!==env.AUTH_RESOURCE||info.email_verified!==true)throw new HttpError('invalid_token',401,'Verified resource identity required.');
+    if((payload.client_id!==undefined&&info.client_id!==payload.client_id)||(connectionId!==undefined&&info.connection_id!==connectionId))throw new HttpError('invalid_token',401,'Verified connection binding required.');
     email=typeof info.email==='string'?info.email:undefined;
     displayName=name(info.name);
+    const facts=info.renewal as Record<string,unknown>|undefined;
+    if(facts&&[facts.lastCommittedAt,facts.lastRecoveredAt].every(x=>x===null||typeof x==='number'&&Number.isSafeInteger(x)&&x>=0)&&typeof facts.recoveryResponsesPrepared==='number'&&Number.isSafeInteger(facts.recoveryResponsesPrepared)&&facts.recoveryResponsesPrepared>=0)renewal={lastCommittedAt:facts.lastCommittedAt as number|null,lastRecoveredAt:facts.lastRecoveredAt as number|null,recoveryResponsesPrepared:facts.recoveryResponsesPrepared};
   }
-  const principal={subject:payload.sub!,email,displayName,scopes:payload.scope.split(/\s+/),admin:payload.scope.split(/\s+/).includes(ADMIN_SCOPE)};
+  const principal={accessExpiresAt:payload.exp!*1000,connectionId:connectionId as string|undefined,clientId:typeof payload.client_id==='string'?payload.client_id:undefined,renewal,subject:payload.sub!,email,displayName,scopes:payload.scope.split(/\s+/),admin:payload.scope.split(/\s+/).includes(ADMIN_SCOPE)};
   admission(env,principal);return principal;
 }
 export async function authenticate(request:Request,env:RuntimeEnv):Promise<Principal> {
@@ -62,31 +108,59 @@ export async function authenticate(request:Request,env:RuntimeEnv):Promise<Princ
   if(!row)throw new HttpError('authentication_required',401,'Sign in again to continue.');
   let tokens=JSON.parse(await unseal(env.SESSION_KEY,row.token_ciphertext,`session:${id}`)) as Tokens;
   if(row.access_expires_at<now+60000){
-    const lease=await env.DB.prepare('UPDATE auth_sessions SET refresh_lock_until=? WHERE id_hash=? AND access_expires_at=? AND (refresh_lock_until IS NULL OR refresh_lock_until<?)').bind(now+15000,id,row.access_expires_at,now).run();
+    const fence=randomToken();
+    const lease=await env.DB.prepare('UPDATE auth_sessions SET refresh_lock_until=?,refresh_lock_token=? WHERE id_hash=? AND token_ciphertext=? AND (refresh_lock_until IS NULL OR refresh_lock_until<?)').bind(now+15000,fence,id,row.token_ciphertext,now).run();
     if(!lease.meta.changes)throw new HttpError('session_refreshing',503,'Your session is refreshing. Try again shortly.');
     try{
-      if(!tokens.refresh_token)throw new Error('No refresh credential.');
-      tokens=await exchangeTokens(env,{grant_type:'refresh_token',refresh_token:tokens.refresh_token,client_id:env.AUTH_CLIENT_ID,resource:env.AUTH_RESOURCE});
-      await env.DB.prepare('UPDATE auth_sessions SET token_ciphertext=?,access_expires_at=?,refresh_lock_until=NULL WHERE id_hash=?').bind(await seal(env.SESSION_KEY,JSON.stringify(tokens),`session:${id}`),now+tokens.expires_in*1000,id).run();
-    }catch{await env.DB.prepare('DELETE FROM auth_sessions WHERE id_hash=?').bind(id).run();throw new HttpError('session_expired',401,'Sign in again to continue.');}
+      if(!tokens.refresh_token)throw new HttpError('session_expired',401,'Sign in again to continue.');
+      const previous=tokens;
+      const replacement=await exchangeTokens(env,{grant_type:'refresh_token',refresh_token:previous.refresh_token!,refresh_request_id:await refreshRequestId(env.SESSION_KEY,id,previous.refresh_token!),client_id:env.AUTH_CLIENT_ID,resource:env.AUTH_RESOURCE});
+      // The old JWT is authenticated by encrypted session storage. Its expired
+      // scope remains the upper bound; the replacement must verify independently.
+      const previousScope=decodeJwt(previous.access_token).scope;
+      const principal=await verifyIdentityToken(env,replacement.access_token);
+      if(principal.subject!==row.owner_subject||typeof previousScope!=='string'||principal.scopes.some(scope=>!previousScope.split(/\s+/).includes(scope))||!replacement.refresh_token)throw new HttpError('refresh_invalid_response',503,'Identity renewal is temporarily unavailable.');
+      const saved=await env.DB.prepare('UPDATE auth_sessions SET token_ciphertext=?,access_expires_at=?,refresh_lock_until=NULL,refresh_lock_token=NULL WHERE id_hash=? AND token_ciphertext=? AND refresh_lock_token=? AND refresh_lock_until>?').bind(await seal(env.SESSION_KEY,JSON.stringify(replacement),`session:${id}`),Math.min(Date.now()+replacement.expires_in*1000,Number(decodeJwt(replacement.access_token).exp)*1000),id,row.token_ciphertext,fence,Date.now()).run();
+      if(!saved.meta.changes)throw new HttpError('session_refreshing',503,'Your session is refreshing. Try again shortly.');
+      tokens=replacement;
+    }catch(error){
+      // A lease that expired or a stale predecessor can never delete a successor.
+      if(error instanceof HttpError&&error.status===401&&error.code==='session_expired'){
+        await env.DB.prepare('DELETE FROM auth_sessions WHERE id_hash=? AND token_ciphertext=? AND refresh_lock_token=? AND refresh_lock_until>?').bind(id,row.token_ciphertext,fence,Date.now()).run();
+        throw error;
+      }
+      try{await env.DB.prepare('UPDATE auth_sessions SET refresh_lock_until=NULL,refresh_lock_token=NULL WHERE id_hash=? AND token_ciphertext=? AND refresh_lock_token=?').bind(id,row.token_ciphertext,fence).run();}catch{/* Lease expiry permits a fenced retry if storage is unavailable. */}
+      throw new HttpError('identity_unavailable',503,'Identity renewal is temporarily unavailable. Try again shortly.');
+    }
   }
   const principal=await verifyIdentityToken(env,tokens.access_token);
   if(principal.subject!==row.owner_subject)throw new HttpError('invalid_session',401,'Sign in again to continue.');
   return {...principal,authentication:'owner_session'};
 }
 async function exchangeTokens(env:RuntimeEnv,fields:Record<string,string>):Promise<Tokens> {
-  const response=await fetch(`${productionIssuer}/oauth/token`,{method:'POST',headers:{'content-type':'application/x-www-form-urlencoded'},body:new URLSearchParams(fields),redirect:'manual',signal:AbortSignal.timeout(10000)});
-  const tokens=await response.json() as Partial<Tokens>;
-  if(!response.ok||typeof tokens.access_token!=='string'||typeof tokens.expires_in!=='number')throw new HttpError('token_exchange_failed',401,'Identity sign-in could not be completed.');
+  let response:Response;
+  try{response=await fetch(`${productionIssuer}/oauth/token`,{method:'POST',headers:{'content-type':'application/x-www-form-urlencoded'},body:new URLSearchParams(fields),redirect:'manual',signal:AbortSignal.timeout(10000)});}catch{throw new HttpError('identity_unavailable',503,'Identity renewal is temporarily unavailable.');}
+  let tokens:Partial<Tokens>&{error?:string};
+  try{tokens=await response.json() as typeof tokens;if(!tokens||typeof tokens!=='object')throw new Error();}catch{throw new HttpError('identity_unavailable',503,'Identity returned an incomplete response.');}
+  if(!response.ok){
+    if(response.status===400&&tokens.error==='invalid_grant')throw new HttpError('session_expired',401,'Sign in again to continue.');
+    throw new HttpError('identity_unavailable',503,'Identity renewal is temporarily unavailable.');
+  }
+  if(typeof tokens.access_token!=='string'||!tokens.access_token||typeof tokens.expires_in!=='number'||!Number.isFinite(tokens.expires_in)||tokens.expires_in<=0||tokens.expires_in>86400||(tokens.refresh_token!==undefined&&(typeof tokens.refresh_token!=='string'||!tokens.refresh_token)))throw new HttpError('identity_unavailable',503,'Identity returned an incomplete response.');
   return tokens as Tokens;
 }
 export async function authRoute(request:Request,env:RuntimeEnv):Promise<Response|null> {
   const url=new URL(request.url);const now=Date.now();
+  if(url.pathname==='/auth/signup'&&request.method==='GET'){
+    if(env.SHARED_INBOXES_ENABLED!=='true'||env.SELF_SERVICE_ENABLED!=='true')return new Response('Account enrollment is not enabled.',{status:404});
+    return Response.redirect(`${productionIssuer}/signup?app=a2a`,302);
+  }
   if(url.pathname==='/auth/login'&&request.method==='GET'){
     if(!env.AUTH_CLIENT_ID||env.AUTH_CLIENT_ID==='pending-registration')throw new HttpError('auth_unavailable',503,'Owner sign-in is being configured.');
     await limitAdmission(env,`login:${await hash(request.headers.get('cf-connecting-ip')??'local')}`,20,600000);
+    const returnTo=url.searchParams.get('returnTo')==='/inboxes'?'/inboxes':'/app';
     const state=randomToken();const stateId=await hash(state);const verifier=randomToken();
-    await env.DB.prepare('INSERT INTO oauth_states(id_hash,verifier_ciphertext,return_to,expires_at) VALUES(?,?,?,?)').bind(stateId,await seal(env.SESSION_KEY,verifier,`oauth:${stateId}`),'/app',now+600000).run();
+    await env.DB.prepare('INSERT INTO oauth_states(id_hash,verifier_ciphertext,return_to,expires_at) VALUES(?,?,?,?)').bind(stateId,await seal(env.SESSION_KEY,verifier,`oauth:${stateId}`),returnTo,now+600000).run();
     const auth=new URL(`${productionIssuer}/oauth/authorize`);
     auth.search=new URLSearchParams({response_type:'code',client_id:env.AUTH_CLIENT_ID,redirect_uri:`${env.BASE_URL}/auth/callback`,scope:`openid email profile offline_access mcp ${READ_SCOPE} ${WRITE_SCOPE} ${ADMIN_SCOPE}`,resource:env.AUTH_RESOURCE,state,code_challenge:await hash(verifier),code_challenge_method:'S256'}).toString();
     return new Response(null,{status:302,headers:{location:auth.href,'set-cookie':cookieValue(stateCookie,state,600),'cache-control':'no-store'}});
@@ -102,7 +176,7 @@ export async function authRoute(request:Request,env:RuntimeEnv):Promise<Response
     const principal=await verifyIdentityToken(env,tokens.access_token);
     const session=randomToken();const sessionId=await hash(session);
     await env.DB.prepare('INSERT INTO auth_sessions(id_hash,owner_subject,token_ciphertext,access_expires_at,expires_at,created_at) VALUES(?,?,?,?,?,?)').bind(sessionId,principal.subject,await seal(env.SESSION_KEY,JSON.stringify(tokens),`session:${sessionId}`),now+tokens.expires_in*1000,now+sessionTtl,now).run();
-    const headers=new Headers({location:`${env.BASE_URL}/app`,'cache-control':'no-store'});headers.append('set-cookie',cookieValue(sessionCookie,session,sessionTtl/1000));headers.append('set-cookie',cookieValue(stateCookie,'',0));
+    const headers=new Headers({location:`${env.BASE_URL}${record.return_to==='/inboxes'?'/inboxes':'/app'}`,'cache-control':'no-store'});headers.append('set-cookie',cookieValue(sessionCookie,session,sessionTtl/1000));headers.append('set-cookie',cookieValue(stateCookie,'',0));
     return new Response(null,{status:302,headers});
   }
   if(url.pathname==='/auth/logout'&&request.method==='POST'){

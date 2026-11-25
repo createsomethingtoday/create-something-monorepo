@@ -1,0 +1,11 @@
+{
+  "name": "create-something-custom-crm",
+  "account_id": "9645bd52e640b8a4f40a3a55ff1dd75a",
+  "compatibility_date": "2026-06-24",
+  "workers_dev": false,
+  "preview_urls": false,
+  "assets": { "directory": "./public" },
+  "routes": [
+    { "pattern": "crm.createsomething.agency", "custom_domain": true }
+  ]
+}

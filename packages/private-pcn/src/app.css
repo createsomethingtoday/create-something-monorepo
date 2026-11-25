@@ -1,23 +1,51 @@
 @import '@create-something/canon/styles/tokens.css';
 @font-face {
-  font-family: Editorial;
-  src: url('/fonts/editorial.woff2') format('woff2');
+  font-family: Geist;
+  src: url('/fonts/geist.woff2') format('woff2');
+  font-weight: 100 900;
+  font-display: swap;
+}
+@font-face {
+  font-family: Newsreader;
+  src: url('/fonts/newsreader.woff2') format('woff2');
+  font-weight: 200 800;
+  font-display: swap;
+}
+@font-face {
+  font-family: Newsreader;
+  src: url('/fonts/newsreader-italic.woff2') format('woff2');
+  font-style: italic;
+  font-weight: 200 800;
   font-display: swap;
 }
 :root {
-  font-family: Arial, Helvetica, sans-serif;
-  color: var(--color-performance-paper);
-  background: var(--color-performance-ink);
-  font-synthesis: none;
-  --muted: #a6aca7;
-  --line: #343b35;
-  --signal: var(--color-performance-signal-soft);
-  --paper: var(--color-performance-paper);
-  --state-info: var(--color-performance-signal-soft);
-  --state-success: var(--color-performance-growth-soft);
-  --state-warning: var(--color-performance-gold-soft);
-  --state-error: var(--color-performance-risk-soft);
-  /* PRIVATE product roles: preserve its house type sizes and share Canon rhythm. */
+  color-scheme: light;
+  --enlightr-ink: #0a0a0a;
+  --enlightr-muted: #f1f1ee;
+  --enlightr-code: #4a78ff;
+  --enlightr-design: #ff5b1f;
+  --enlightr-data: #ff8ad8;
+  --enlightr-ai: #86e0a9;
+  --font-sans: Geist, Arial, sans-serif;
+  --font-serif: Newsreader, Georgia, serif;
+  --font-enlightr-serif: var(--font-serif);
+  /* Existing components use these legacy roles for canvas and foreground. */
+  --color-performance-ink: white;
+  --color-performance-paper: var(--enlightr-ink);
+  --color-performance-panel: var(--enlightr-muted);
+  --color-performance-line: #d1d1cb;
+  --panel: var(--enlightr-muted);
+  --paper: var(--enlightr-ink);
+  --muted: #545450;
+  --line: var(--color-performance-line);
+  --signal: #2349ac;
+  --state-info: #2046a3;
+  --state-success: #17603a;
+  --state-warning: #704714;
+  --state-error: #a72e26;
+  font-family: var(--font-sans);
+  color: var(--enlightr-ink);
+  background: white;
   --pcn-leading-heading: 1.08;
   --pcn-leading-price: var(--leading-performance-editorial);
   --pcn-leading-body: var(--leading-performance-relaxed);
@@ -69,16 +97,16 @@ summary:focus-visible {
   outline-offset: 5px;
 }
 ::selection {
-  background: var(--signal);
-  color: #121514;
+  background: var(--enlightr-ai);
+  color: var(--enlightr-ink);
 }
 .skip {
   position: absolute;
   top: -80px;
   left: 20px;
   padding: 15px;
-  background: var(--signal);
-  color: #121514;
+  background: var(--enlightr-ai);
+  color: var(--enlightr-ink);
   z-index: 10;
 }
 .skip:focus {
@@ -100,7 +128,7 @@ summary:focus-visible {
 }
 .wordmark span {
   display: block;
-  font: 10px monospace;
+  font: 10px var(--font-sans);
   letter-spacing: 2px;
   margin-top: 9px;
   color: var(--muted);
@@ -118,11 +146,18 @@ summary:focus-visible {
   color: var(--signal);
 }
 .eyebrow {
-  font: 11px/1.7 monospace;
-  letter-spacing: 1.8px;
-  text-transform: uppercase;
+  font: 11px/1.7 var(--font-sans);
+  letter-spacing: normal;
+  text-transform: none;
   color: var(--muted);
   margin: 0 0 28px;
+}
+h1,
+h2,
+h3,
+h4 {
+  font-family: var(--font-serif);
+  font-weight: 400;
 }
 h1,
 h2,
@@ -138,7 +173,7 @@ h1 {
   margin-bottom: 30px;
 }
 em {
-  font-family: Editorial, Georgia, serif;
+  font-family: Newsreader, Georgia, serif;
   font-weight: 400;
   letter-spacing: -0.055em;
 }
@@ -148,7 +183,7 @@ p {
 }
 .lede {
   max-width: 490px;
-  color: #bdc3bd;
+  color: var(--muted);
   font-size: 18px;
   margin-bottom: 32px;
 }
@@ -157,10 +192,10 @@ p {
   justify-content: space-between;
   align-items: center;
   gap: 36px;
-  padding: 18px 22px;
-  background: var(--signal);
-  border: 1px solid var(--signal);
-  color: #162018;
+  padding: 14px 20px;
+  background: var(--enlightr-ink);
+  border: 1px solid transparent;
+  color: white;
   text-decoration: none;
   font-size: 14px;
   line-height: var(--pcn-leading-control);
@@ -168,15 +203,16 @@ p {
   font-weight: 600;
 }
 .button:hover {
-  background: #e5f6ad;
+  background: var(--enlightr-design);
+  color: var(--enlightr-ink);
 }
 .button.secondary {
   background: transparent;
   color: var(--paper);
-  border-color: #59615a;
+  border-color: #7e7e76;
 }
 .button.secondary:hover {
-  background: #222b24;
+  background: var(--enlightr-muted);
 }
 .hero-note {
   font-size: 11px;
@@ -208,7 +244,7 @@ p {
   padding: 25px 0 12px;
 }
 .service-rows article > span {
-  font: 11px monospace;
+  font: 11px var(--font-sans);
   color: var(--signal);
 }
 h3 {
@@ -267,8 +303,8 @@ label {
 input,
 select,
 textarea {
-  background: #1b211c;
-  border: 1px solid #59615a;
+  background: white;
+  border: 1px solid #7e7e76;
   color: var(--paper);
   padding: 13px;
   min-width: 0;
@@ -340,7 +376,7 @@ textarea {
   border-color: var(--signal);
 }
 .video-cover {
-  background: #b9c895;
+  background: var(--enlightr-ai);
   position: relative;
   aspect-ratio: 1.7;
   color: #223325;
@@ -350,13 +386,13 @@ textarea {
   justify-content: space-between;
 }
 .video-cover > span:first-child {
-  font: 11px monospace;
-  text-transform: uppercase;
-  letter-spacing: 1px;
+  font: 11px var(--font-sans);
+  text-transform: none;
+  letter-spacing: normal;
 }
 .video-cover strong {
   font:
-    75px Editorial,
+    75px Newsreader,
     Georgia,
     serif;
   line-height: 1;
@@ -398,11 +434,12 @@ textarea {
   font-weight: 400;
 }
 .player {
-  background: #090c09;
+  background: var(--enlightr-muted);
   max-width: 1000px;
   margin: 20px 0;
 }
 .player video {
+  background: var(--enlightr-ink);
   width: 100%;
   display: block;
   max-height: 70vh;
@@ -538,8 +575,8 @@ input[type='file'] {
   gap: 24px;
 }
 .hero-edition {
-  font: 10px/1.7 monospace;
-  letter-spacing: 1px;
+  font: 10px/1.7 var(--font-sans);
+  letter-spacing: normal;
   color: var(--muted);
 }
 .creator-hero-grid {
@@ -583,15 +620,15 @@ input[type='file'] {
   border-top: 1px solid var(--line);
   border-bottom: 1px solid var(--line);
   padding: 24px 0;
-  font: 10px/1.7 monospace;
-  letter-spacing: 1px;
+  font: 10px/1.7 var(--font-sans);
+  letter-spacing: normal;
   color: var(--muted);
 }
 .field-caption {
   display: flex;
   justify-content: space-between;
-  font: 9px monospace;
-  letter-spacing: 1px;
+  font: 9px var(--font-sans);
+  letter-spacing: normal;
   padding-bottom: 28px;
   border-bottom: 1px solid var(--color-performance-line);
 }
@@ -620,7 +657,7 @@ input[type='file'] {
   padding: 0;
 }
 .format-options legend {
-  font: 11px monospace;
+  font: 11px var(--font-sans);
   margin-bottom: 14px;
   color: var(--muted);
 }
@@ -678,8 +715,8 @@ input[type='file'] {
   justify-content: space-between;
   padding: 17px 24px;
   border-bottom: 1px solid var(--line);
-  font: 9px monospace;
-  letter-spacing: 1px;
+  font: 9px var(--font-sans);
+  letter-spacing: normal;
   color: var(--muted);
 }
 .network-window-body {
@@ -702,7 +739,7 @@ input[type='file'] {
 }
 .network-heading .eyebrow {
   font-size: var(--pcn-text-metadata);
-  letter-spacing: 1px;
+  letter-spacing: normal;
   margin: 0 0 7px;
 }
 .network-heading h3 {
@@ -737,7 +774,7 @@ input[type='file'] {
   display: flex;
   align-items: center;
   gap: 10px;
-  font: 9px monospace;
+  font: 9px var(--font-sans);
 }
 .execution-diagram span {
   padding: 10px 8px;
@@ -746,8 +783,8 @@ input[type='file'] {
 .example-label {
   display: block;
   margin-top: 26px;
-  font: var(--pcn-text-metadata)/var(--pcn-leading-control) monospace;
-  letter-spacing: 1px;
+  font: var(--pcn-text-metadata)/var(--pcn-leading-control) var(--font-sans);
+  letter-spacing: normal;
 }
 .lesson-list {
   list-style: none;
@@ -763,13 +800,13 @@ input[type='file'] {
   border-bottom: 1px solid var(--line);
 }
 .lesson-number {
-  font: 11px monospace;
+  font: 11px var(--font-sans);
   color: var(--muted);
 }
 .lesson-list small {
   display: block;
-  font: var(--pcn-text-metadata)/var(--pcn-leading-control) monospace;
-  letter-spacing: 1px;
+  font: var(--pcn-text-metadata)/var(--pcn-leading-control) var(--font-sans);
+  letter-spacing: normal;
   color: var(--muted);
   margin-bottom: 6px;
 }
@@ -779,7 +816,7 @@ input[type='file'] {
 }
 .access-label {
   margin-left: auto;
-  font: var(--pcn-text-metadata)/var(--pcn-leading-control) monospace;
+  font: var(--pcn-text-metadata)/var(--pcn-leading-control) var(--font-sans);
   padding: 5px 7px;
   border: 1px solid var(--line);
   color: var(--muted);
@@ -819,8 +856,8 @@ input[type='file'] {
   padding: 21px 0 12px;
 }
 .delivery-steps article > span {
-  font: 10px monospace;
-  letter-spacing: 1px;
+  font: 10px var(--font-sans);
+  letter-spacing: normal;
 }
 .delivery-steps h3 {
   margin: 14px 0 7px;
@@ -855,7 +892,7 @@ input[type='file'] {
 }
 .library-tools p {
   margin: 0 0 12px;
-  font: 11px monospace;
+  font: 11px var(--font-sans);
   color: var(--muted);
 }
 @media (max-width: 1000px) {
@@ -1048,7 +1085,7 @@ input[type='file'] {
   gap: 20px;
   flex-wrap: wrap;
   margin-top: 24px;
-  font: 12px/1.6 monospace;
+  font: 12px/1.6 var(--font-sans);
   color: var(--muted);
 }
 .checksum {
@@ -1111,13 +1148,22 @@ input[type='file'] {
   margin: 40px 0;
 }
 .practice-steps li {
-  padding: 24px 20px 24px 0;
+  padding: 24px;
   line-height: 1.6;
+}
+.practice-steps li:nth-child(1) {
+  background: var(--enlightr-code);
+}
+.practice-steps li:nth-child(2) {
+  background: var(--enlightr-data);
+}
+.practice-steps li:nth-child(3) {
+  background: var(--enlightr-ai);
 }
 .practice-steps span {
   display: block;
-  font: 11px/2 monospace;
-  color: var(--muted);
+  font: 500 14px/2 var(--font-sans);
+  color: var(--enlightr-ink);
 }
 .review-application {
   margin: 24px 0;
@@ -1140,15 +1186,15 @@ input[type='file'] {
   }
 }
 .field-dossier {
-  border: 1px solid var(--line);
+  border: 0;
   padding: 32px;
-  background: var(--panel, #141414);
+  background: var(--enlightr-ai);
 }
 .field-dossier h2 {
   font-size: clamp(25px, 3vw, 38px);
 }
 .field-dossier dt {
-  font: 11px/2 monospace;
+  font: 11px/2 var(--font-sans);
   color: var(--muted);
   margin-top: 24px;
 }
@@ -1181,7 +1227,7 @@ input[type='file'] {
   font-size: 13px;
 }
 
-/* PRIVATE states use Canon's pale semantic colors on its dark product surface.
+/* Semantic states remain legible on the light product surface.
    Every state also has a label and icon; color never grants access or proves skill. */
 [data-tone='neutral'] {
   --state-color: var(--muted);
@@ -1212,7 +1258,7 @@ input[type='file'] {
   color: var(--state-color);
   border: 1px solid color-mix(in srgb, var(--state-color) 50%, var(--color-performance-ink));
   background: color-mix(in srgb, var(--state-color) 6%, var(--color-performance-ink));
-  font: 12px/1.5 var(--font-performance-mono);
+  font: 12px/1.5 var(--font-sans);
   letter-spacing: 0;
   text-transform: none;
   overflow-wrap: anywhere;

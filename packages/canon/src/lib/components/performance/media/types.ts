@@ -37,6 +37,8 @@ export interface PerformanceMediaStudy {
   material?: 'paper' | 'water';
   width?: number;
   height?: number;
+  mobileWidth?: number;
+  mobileHeight?: number;
   objectPosition?: string;
   colorMode?: 'monochrome' | 'natural';
   video?: PerformanceMediaVideo;

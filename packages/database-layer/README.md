@@ -39,6 +39,8 @@ composition, deterministic RDF/OWL and SHACL export, and protected dependency
 change planning. Run `pnpm --filter @create-something/database-layer ontology:check`.
 This validates local structure; it does not establish live health or grant action authority.
 
+The same CLI can learn and maintain a local entity vocabulary from changing documents. See [discovery, plain-language edits and watch mode](./ontology/v1/README.md#learned-entity-vocabulary).
+
 ## Agent Commercial Contract v1
 
 `contracts/agent-commercial/v1/` is the commercial policy layer over
@@ -298,6 +300,17 @@ commands, an explicit promotion boundary, rollback note, and next action. It is
 the bridge from "everything is mapped" to "this specific slice is approved for
 workflow use"; it is not permission to mutate Atlas production, Cloudflare,
 Dify Studio, client systems, or other third-party state.
+
+For a specific review question, preview the evidence choices from the package directory:
+
+```sh
+node scripts/review-slice-evidence.mjs --slice 'substrate:create-something:operating-slice:substrate-create-something-atlas-coverage-group-knowledge-surface-mixed-doc' --question 'Where do we describe how a gateway manages several MCP servers?'
+```
+
+Inspect the preview before appending `--live`. A live review sends the question
+and candidate metadata to Jev using `TYPESAFE_API_KEY`. Use a question and
+candidate set approved for that provider. Follow the suggested path and check
+the source yourself. The original evidence order remains available.
 
 Use `operating-slice-readiness:generate` after `operating-slices:generate` to
 create the local readiness gate projection:

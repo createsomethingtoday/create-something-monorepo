@@ -10,7 +10,8 @@ import {
   latestMondayBoundary,
   parseMetric,
   publishSnapshot,
-  readSellersFromAirtable
+  readSellersFromAirtable,
+  readSellers90OrNote
 } from '../../webflow-dashboard-core/src/marketplace-insights-publish.mjs';
 
 // The read/build/publish steps live in webflow-dashboard-core so the dashboard's
@@ -51,6 +52,7 @@ function querySnowflake(windowStart, windowEnd) {
       COUNT(*) AS SALES_30D,
       COALESCE(COUNT_IF(o.TEMPLATE_FULFILLMENT_CODE_ID IS NOT NULL), 0) AS FULFILLMENT_SALES_30D,
       ROUND(SUM(o.PRICE_VALUE), 2) AS REVENUE_30D,
+      ROUND(SUM(IFF(o.TEMPLATE_FULFILLMENT_CODE_ID IS NOT NULL, o.PRICE_VALUE, 0)), 2) AS FULFILLMENT_REVENUE_30D,
       TO_VARCHAR(CONVERT_TIMEZONE('UTC', ANY_VALUE(l.LOADED_THROUGH)), 'YYYY-MM-DD"T"HH24:MI:SS.FF3"Z"') AS LOADED_THROUGH
     FROM ANALYTICS.WEBFLOW.MARKETPLACE_ORDERS o
     JOIN ANALYTICS.WEBFLOW.MARKETPLACE_PRODUCTS p ON o.MARKETPLACE_PRODUCT_ID = p.DOCUMENT_ID
@@ -113,7 +115,8 @@ function querySnowflake(windowStart, windowEnd) {
     name: row.NAME,
     sales: parseMetric(row.SALES_30D),
     fulfillmentSales: parseMetric(row.FULFILLMENT_SALES_30D),
-    revenue: parseMetric(row.REVENUE_30D)
+    revenue: parseMetric(row.REVENUE_30D),
+    fulfillmentRevenue: parseMetric(row.FULFILLMENT_REVENUE_30D)
   }));
 }
 
@@ -140,9 +143,14 @@ async function main() {
       ? await readSellersFromAirtable(rest, asOf)
       : querySnowflake(new Date(asOf.getTime() - 30 * 86400000), asOf);
   log(`Read ${sellers.length} sellers from ${source} (window ending ${asOf.toISOString()}).`);
-  const { snapshot, taxonomyNotes, creatorEmailNotes } = await buildSnapshotFromAirtable(rest, {
+  // The 90-day window comes from its Fivetran table only. The Snowflake source
+  // builds a 30-day snapshot.
+  const ninety =
+    source === 'airtable' ? await readSellers90OrNote(rest, asOf) : { sellers90: undefined, windowNotes: [] };
+  const { snapshot, taxonomyNotes, creatorEmailNotes, windowNotes } = await buildSnapshotFromAirtable(rest, {
     sellers,
-    snapshotAt: asOf.toISOString()
+    snapshotAt: asOf.toISOString(),
+    sellers90: ninety.sellers90
   });
   // Full review artifact exists even if publication fails. Never logs credentials.
   const runs = join(HERE, 'runs');
@@ -163,6 +171,7 @@ async function main() {
     legacyTablesModified: false,
     taxonomyNotes,
     creatorEmailNotes,
+    windowNotes: [...ninety.windowNotes, ...windowNotes],
     ranAt: new Date().toISOString()
   };
   writeFileSync(

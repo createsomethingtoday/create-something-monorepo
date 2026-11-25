@@ -9,7 +9,7 @@
       description: 'A structured home for teaching people how to build and ship agents.',
       series: 'From prototype to production',
       lessons: ['Design the tool boundary', 'Build an MCP integration', 'Evaluate before you ship'],
-      tags: ['ARCHITECTURE', 'MCP', 'EVALUATION']
+      tags: ['Architecture', 'MCP', 'Evaluation']
     },
     {
       label: 'Builder collective',
@@ -17,7 +17,7 @@
       description: 'A shared reference library for independent builders learning from each other.',
       series: 'Inside the implementation',
       lessons: ['Walk through the agent loop', 'Debug a failed handoff', 'Review the deployment'],
-      tags: ['WALKTHROUGH', 'DEBUGGING', 'DEPLOYMENT']
+      tags: ['Walkthrough', 'Debugging', 'Deployment']
     },
     {
       label: 'Research circle',
@@ -29,7 +29,7 @@
         'Compare retrieval approaches',
         'Read the evaluation results'
       ],
-      tags: ['METHODS', 'RETRIEVAL', 'RESULTS']
+      tags: ['Methods', 'Retrieval', 'Results']
     }
   ];
   let selected = $state(0);
@@ -40,7 +40,7 @@
 
 <section class="network-builder" id="network-preview" aria-labelledby="preview-heading">
   <div class="builder-intro" use:inkReveal>
-    <p class="eyebrow">02 / SHAPE YOUR NETWORK</p>
+    <p class="eyebrow">Shape your network</p>
     <h2 id="preview-heading">Your format.<br /><SerifPhrase text="Your way of teaching." /></h2>
     <p>
       Start with a direction. Try a name and an access model to see how your network could take
@@ -71,18 +71,18 @@
     </p>
   </div>
   <div use:inkReveal={65} class="network-window" aria-label="Illustrative network preview">
-    <div class="window-bar"><span>YOUR NETWORK / PREVIEW</span><span>01—03</span></div>
+    <div class="window-bar"><span>Your network / preview</span><span>01—03</span></div>
     <div class="network-window-body">
       <div class="network-heading">
         <div class="network-monogram" aria-hidden="true"><Icon name="network" size={24} /></div>
         <div>
-          <p class="eyebrow">INDEPENDENT KNOWLEDGE NETWORK</p>
+          <p class="eyebrow">Independent knowledge network</p>
           <h3>{name.trim() || format.name}</h3>
         </div>
       </div>
       <p class="network-description">{format.description}</p>
       <div class="network-feature">
-        <span class="eyebrow">FEATURED SERIES</span>
+        <span class="eyebrow">Featured series</span>
         <h4 use:inkFeedback={format.series}>{format.series}</h4>
         <img
           class="ink-library"
@@ -92,14 +92,14 @@
           loading="lazy"
           alt=""
         />
-        <span class="example-label">EXAMPLE CONTENT / NOT PLAYABLE</span>
+        <span class="example-label">Example content / not playable</span>
       </div>
       <ol class="lesson-list" aria-live="polite">
         {#each format.lessons as lesson, index}<li>
             <span class="lesson-number">0{index + 1}</span>
             <div><small>{format.tags[index]}</small><strong>{lesson}</strong></div>
             <span class="access-label"
-              >{audience === 'Public preview + members' && index === 0 ? 'PUBLIC' : 'MEMBERS'}</span
+              >{audience === 'Public preview + members' && index === 0 ? 'Public' : 'Members'}</span
             >
           </li>{/each}
       </ol>

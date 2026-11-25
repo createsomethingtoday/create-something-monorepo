@@ -28,6 +28,7 @@ test('generic account entry has no credential form, auth request or token issuan
   const html = await response.text();
   assert.doesNotMatch(html, /<form\b|<input\b|fetch\(|\/v1\/auth\/login|access_token|refresh_token/);
   assert.match(html, /Open the app you want to use and sign in there/);
+  assert.match(html, /href="https:\/\/createsomething\.agency\/login">Agency workspace/);
   const links: Record<string, { href?: string; hidden?: boolean }> = {
     '#recovery': {}, '#login': {}, '#return': {}
   };
@@ -158,4 +159,42 @@ test('existing signup identity conflict offers sign-in or recovery without chang
   assert.match(result.error.textContent,/recover your password/);
   assert.equal(result.status.textContent,'');
   assert.deepEqual(result.fields.map(f=>f.value),['','']);
+});
+
+test('A2A signup uses its explicit gate and fixed inbox return',async()=>{
+ assert.equal(accountPage('/signup',{app:'a2a'}),null);
+ const response=accountPage('/signup',{app:'a2a',a2aSignupEnabled:true} as any);assert.ok(response);
+ const html=await response.text();assert.match(html,/Create your A2A account/);assert.match(html,/https:\/\/a2a\.createsomething\.agency\/inboxes/);assert.doesNotMatch(html,/Create your GiGi account/);
+});
+
+test('editorial account pages preserve restrictive CSP and accessible navigation', async () => {
+  for (const path of ['/login', '/recover', '/verify']) {
+    const response = accountPage(path)!;
+    const html = await response.text();
+    assert.match(html, /--color-performance-paper:#faf8f5/);
+    assert.match(html, /--color-performance-ink:#262626/);
+    assert.match(html, /--font-performance-display:'STIX Two Text',Georgia/);
+    assert.match(html, /href="#account-access">Skip to account access/);
+    assert.match(html, /id="account-access" tabindex="-1"/);
+    assert.doesNotMatch(html, /@font-face|font-src|<link|<img/);
+    assert.match(response.headers.get('Content-Security-Policy')!, /^default-src 'none';/);
+  }
+});
+
+test('account feedback and field boundaries meet WCAG contrast thresholds', async () => {
+  const html = await accountPage('/recover')!.text();
+  const token = (name: string) => html.match(new RegExp(`--color-performance-${name}:#([a-f0-9]{6})`))![1];
+  const luminance = (hex: string) => {
+    const channels = [0, 2, 4].map(offset => parseInt(hex.slice(offset, offset + 2), 16) / 255)
+      .map(value => value <= 0.04045 ? value / 12.92 : ((value + 0.055) / 1.055) ** 2.4);
+    return channels[0] * 0.2126 + channels[1] * 0.7152 + channels[2] * 0.0722;
+  };
+  const contrast = (foreground: string, background: string) => {
+    const values = [luminance(token(foreground)), luminance(token(background))].sort((a, b) => b - a);
+    return (values[0] + 0.05) / (values[1] + 0.05);
+  };
+  assert.ok(contrast('risk', 'risk-soft') >= 4.5, 'Error text must remain readable');
+  assert.ok(contrast('growth', 'growth-soft') >= 4.5, 'Success text must remain readable');
+  assert.ok(contrast('muted', 'paper') >= 4.5, 'Supporting text must remain readable');
+  assert.ok(contrast('line-strong', 'panel') >= 3, 'Fields must remain distinguishable');
 });

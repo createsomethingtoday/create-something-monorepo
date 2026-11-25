@@ -1,0 +1,302 @@
+{
+  "schemaVersion": 1,
+  "dataset": "synthetic-vocabulary-v1",
+  "live": true,
+  "provider": "jev",
+  "operatorTime": {
+    "measured": false,
+    "value": null
+  },
+  "limitations": [
+    "Small synthetic fixture, not a production accuracy estimate.",
+    "Elapsed time measures script/ranker wall time, not operator effort.",
+    "A wrong candidate for a true duplicate counts as both an incorrect merge and a missed duplicate.",
+    "Provider errors are reported separately and excluded from decision counts."
+  ],
+  "baseline": {
+    "elapsedMs": 0.22,
+    "totalCases": 12,
+    "scoredCases": 12,
+    "correct": 5,
+    "incorrectMerges": 3,
+    "missedDuplicates": 6,
+    "providerErrors": 0,
+    "results": [
+      {
+        "id": "v01",
+        "expected": "c01",
+        "choice": "c01",
+        "model": "exact-normalized-name",
+        "correct": true,
+        "incorrectMerge": false,
+        "missedDuplicate": false,
+        "elapsedMs": 0.12,
+        "providerError": null
+      },
+      {
+        "id": "v02",
+        "expected": "c03",
+        "choice": "c03",
+        "model": "exact-normalized-name",
+        "correct": true,
+        "incorrectMerge": false,
+        "missedDuplicate": false,
+        "elapsedMs": 0.01,
+        "providerError": null
+      },
+      {
+        "id": "v03",
+        "expected": "c05",
+        "choice": "no_match",
+        "model": "exact-normalized-name",
+        "correct": false,
+        "incorrectMerge": false,
+        "missedDuplicate": true,
+        "elapsedMs": 0.02,
+        "providerError": null
+      },
+      {
+        "id": "v04",
+        "expected": "c07",
+        "choice": "no_match",
+        "model": "exact-normalized-name",
+        "correct": false,
+        "incorrectMerge": false,
+        "missedDuplicate": true,
+        "elapsedMs": 0.01,
+        "providerError": null
+      },
+      {
+        "id": "v05",
+        "expected": "c10",
+        "choice": "c09",
+        "model": "exact-normalized-name",
+        "correct": false,
+        "incorrectMerge": true,
+        "missedDuplicate": true,
+        "elapsedMs": 0.01,
+        "providerError": null
+      },
+      {
+        "id": "v06",
+        "expected": "c11",
+        "choice": "no_match",
+        "model": "exact-normalized-name",
+        "correct": false,
+        "incorrectMerge": false,
+        "missedDuplicate": true,
+        "elapsedMs": 0.01,
+        "providerError": null
+      },
+      {
+        "id": "v07",
+        "expected": "no_match",
+        "choice": "no_match",
+        "model": "exact-normalized-name",
+        "correct": true,
+        "incorrectMerge": false,
+        "missedDuplicate": false,
+        "elapsedMs": 0.01,
+        "providerError": null
+      },
+      {
+        "id": "v08",
+        "expected": "no_match",
+        "choice": "no_match",
+        "model": "exact-normalized-name",
+        "correct": true,
+        "incorrectMerge": false,
+        "missedDuplicate": false,
+        "elapsedMs": 0,
+        "providerError": null
+      },
+      {
+        "id": "v09",
+        "expected": "c17",
+        "choice": "no_match",
+        "model": "exact-normalized-name",
+        "correct": false,
+        "incorrectMerge": false,
+        "missedDuplicate": true,
+        "elapsedMs": 0.01,
+        "providerError": null
+      },
+      {
+        "id": "v10",
+        "expected": "c20",
+        "choice": "c19",
+        "model": "exact-normalized-name",
+        "correct": false,
+        "incorrectMerge": true,
+        "missedDuplicate": true,
+        "elapsedMs": 0.01,
+        "providerError": null
+      },
+      {
+        "id": "v11",
+        "expected": "no_match",
+        "choice": "no_match",
+        "model": "exact-normalized-name",
+        "correct": true,
+        "incorrectMerge": false,
+        "missedDuplicate": false,
+        "elapsedMs": 0,
+        "providerError": null
+      },
+      {
+        "id": "v12",
+        "expected": "no_match",
+        "choice": "c21",
+        "model": "exact-normalized-name",
+        "correct": false,
+        "incorrectMerge": true,
+        "missedDuplicate": false,
+        "elapsedMs": 0,
+        "providerError": null
+      }
+    ]
+  },
+  "shadow": {
+    "elapsedMs": 1600.63,
+    "totalCases": 12,
+    "scoredCases": 12,
+    "correct": 12,
+    "incorrectMerges": 0,
+    "missedDuplicates": 0,
+    "providerErrors": 0,
+    "results": [
+      {
+        "id": "v01",
+        "expected": "c01",
+        "choice": "c01",
+        "model": "jev-1.13.0",
+        "correct": true,
+        "incorrectMerge": false,
+        "missedDuplicate": false,
+        "elapsedMs": 421.65,
+        "providerError": null
+      },
+      {
+        "id": "v02",
+        "expected": "c03",
+        "choice": "c03",
+        "model": "jev-1.13.0",
+        "correct": true,
+        "incorrectMerge": false,
+        "missedDuplicate": false,
+        "elapsedMs": 112.85,
+        "providerError": null
+      },
+      {
+        "id": "v03",
+        "expected": "c05",
+        "choice": "c05",
+        "model": "jev-1.13.0",
+        "correct": true,
+        "incorrectMerge": false,
+        "missedDuplicate": false,
+        "elapsedMs": 110.57,
+        "providerError": null
+      },
+      {
+        "id": "v04",
+        "expected": "c07",
+        "choice": "c07",
+        "model": "jev-1.13.0",
+        "correct": true,
+        "incorrectMerge": false,
+        "missedDuplicate": false,
+        "elapsedMs": 107.39,
+        "providerError": null
+      },
+      {
+        "id": "v05",
+        "expected": "c10",
+        "choice": "c10",
+        "model": "jev-1.13.0",
+        "correct": true,
+        "incorrectMerge": false,
+        "missedDuplicate": false,
+        "elapsedMs": 98.47,
+        "providerError": null
+      },
+      {
+        "id": "v06",
+        "expected": "c11",
+        "choice": "c11",
+        "model": "jev-1.13.0",
+        "correct": true,
+        "incorrectMerge": false,
+        "missedDuplicate": false,
+        "elapsedMs": 113.68,
+        "providerError": null
+      },
+      {
+        "id": "v07",
+        "expected": "no_match",
+        "choice": "no_match",
+        "model": "jev-1.13.0",
+        "correct": true,
+        "incorrectMerge": false,
+        "missedDuplicate": false,
+        "elapsedMs": 104.38,
+        "providerError": null
+      },
+      {
+        "id": "v08",
+        "expected": "no_match",
+        "choice": "no_match",
+        "model": "jev-1.13.0",
+        "correct": true,
+        "incorrectMerge": false,
+        "missedDuplicate": false,
+        "elapsedMs": 135.52,
+        "providerError": null
+      },
+      {
+        "id": "v09",
+        "expected": "c17",
+        "choice": "c17",
+        "model": "jev-1.13.0",
+        "correct": true,
+        "incorrectMerge": false,
+        "missedDuplicate": false,
+        "elapsedMs": 143.6,
+        "providerError": null
+      },
+      {
+        "id": "v10",
+        "expected": "c20",
+        "choice": "c20",
+        "model": "jev-1.13.0",
+        "correct": true,
+        "incorrectMerge": false,
+        "missedDuplicate": false,
+        "elapsedMs": 136.51,
+        "providerError": null
+      },
+      {
+        "id": "v11",
+        "expected": "no_match",
+        "choice": "no_match",
+        "model": "empty-shortlist-local",
+        "correct": true,
+        "incorrectMerge": false,
+        "missedDuplicate": false,
+        "elapsedMs": 0.01,
+        "providerError": null
+      },
+      {
+        "id": "v12",
+        "expected": "no_match",
+        "choice": "no_match",
+        "model": "jev-1.13.0",
+        "correct": true,
+        "incorrectMerge": false,
+        "missedDuplicate": false,
+        "elapsedMs": 115.97,
+        "providerError": null
+      }
+    ]
+  }
+}

@@ -617,7 +617,7 @@ creator-facing feedback.
 - `template_review_format_agent_review_feedback` (read-only comprehensive evidence validator/formatter for Agent Review Feedback drafts; does not write Airtable)
 - `template_review_prepare_published_site_sandbox` (read-only E2B sandbox job/runner bundle for first-class published-site evidence; does not execute E2B or write Airtable)
 - `template_review_run_published_site_sandbox` (read-only bounded E2B execution for rendered-page evidence and screenshots; fixed collector only, no caller-provided code or Airtable writes)
-- `template_review_run_published_site_validation` (read-only published-site validation; no Designer/Preview data or Airtable writes)
+- `template_review_run_published_site_validation` (read-only published-site validation; no Airtable writes. With `asset_id`, the server reads the preview link on the asset record and the validator reports the unused styles in the Designer "Clean up" list. A caller never passes a Preview link.)
 - `template_review_list_releases`
 - `template_review_set_checklist_items` (check/uncheck individual checklist items by index; byte-preserving)
 - `template_review_complete_publishing` (attaches a release; bulk checklist marking is opt-in via `mark_all_publishing_items`)
@@ -639,6 +639,20 @@ creator-facing feedback.
 - `template_review_update_ticket_status` (status/tags + private note on the version's linked ticket; reviewer must own the version; never a public reply)
 - `template_review_create_ticket` (opens a NEW outbound ticket to a template creator and emails them; requires `confirm_send: true`)
 - `template_review_link_version_ticket` (make a ticket the version's 🧘ZD ID; fresh-read precondition + `confirm_replace: true`)
+
+### Community response queue
+
+The Marketplace Creators community (Bettermode) has a response queue in another system: one item for each thread where a creator is waiting for staff. These tools reach it through the `COMMUNITY_QUEUE` service binding (the creator MCP's private `QueueApi` entrypoint) and fail closed with `COMMUNITY_QUEUE_NOT_CONFIGURED` without it.
+
+- `template_review_community_queue` (open items as flat rows, longest wait first, with the reply draft)
+- `template_review_community_thread` (one thread: messages, authors, staff or creator)
+- `template_review_community_health` (sweep, webhook, counts, sends; `viewer_can_write`)
+- `template_review_community_history` (closed items: sent, answered, dismissed, removed)
+- `template_review_community_save_draft` (internal; replaces the draft)
+- `template_review_community_dismiss` (internal; closes an item with a reason)
+- `template_review_community_send` (CREATOR-FACING: posts a public reply; requires `confirm_public_reply: true`)
+
+The three write tools need the `template-review:write` scope and a directory account listed in `COMMUNITY_QUEUE_ADMIN_ACCOUNT_IDS`. Other reviewers can read.
 
 ## Zendesk ticket leg
 
@@ -890,49 +904,6 @@ Behavior:
 - targets `🆕Ready for Review` rows by default
 - skips rows that already have agent feedback unless `--overwrite` is set
 - does lightweight same-origin page discovery from the asset `Website URL` or preview URL when available, so the draft is not limited to a single page when no sitemap exists
-
-## Template Review Hub Agent Feedback Runner
-
-Run the standalone `TEMPLATE REVIEW HUB` Dify agent over the most recently submitted Ready for Review versions with blank `📝Agent Review Feedback`:
-
-```bash
-infisical run --env=prod --path=/ --include-imports=true -- \
-  pnpm template-review:hub-agent-feedback -- --dry-run --since-days 7 --limit 20
-```
-
-The default is list-only dry run. A no-write Dify probe for one candidate is available when validating prompt/tool behavior:
-
-```bash
-infisical run --env=prod --path=/ --include-imports=true -- \
-  pnpm template-review:hub-agent-feedback -- --run-dify-dry-run --since-days 7 --limit 1
-```
-
-To authorize the agent to save feedback:
-
-```bash
-infisical run --env=prod --path=/ --include-imports=true -- \
-  pnpm template-review:hub-agent-feedback -- --write --since-days 7 --limit 5 --concurrency 1
-```
-
-Ongoing operation should use small recurring batches, for example every 30-60 minutes:
-
-```bash
-infisical run --env=prod --path=/ --include-imports=true -- \
-  pnpm template-review:hub-agent-feedback -- --write --since-days 7 --limit 5 --concurrency 1 --timeout-ms 600000
-```
-
-The repo also includes `.github/workflows/template-review-hub-agent-feedback.yml` for ongoing hourly runs. Scheduled runs use `--write --since-days 7 --limit 5 --concurrency 1`; manual dispatch defaults to dry-run unless the `write` input is enabled. GitHub must have `AIRTABLE_API_KEY` and `DIFY_TEMPLATE_REVIEW_HUB_API_KEY` configured as repository secrets before the scheduled job can run.
-
-Behavior:
-
-- lists newest submitted rows first using `📅Submission Datetime`
-- scopes to `🆕Ready for Review` and blank `📝Agent Review Feedback` by default
-- re-reads each version immediately before calling Dify and skips rows that are no longer blank or no longer in scope
-- calls the Dify Service API using `DIFY_TEMPLATE_REVIEW_HUB_API_KEY`, stored at `prod:/dify/template-review-hub`
-- lets the Dify agent use Hub MCP and first-class E2B tools for comprehensive review
-- expects comprehensive reviews to take several minutes per item; keep scheduled concurrency at `1` until live timings are stable
-- authorizes only the narrow `template_review_save_agent_feedback` write path; the runner does not write review status, creator-facing feedback, owner, or publishing fields directly
-
 
 ### Handoff observation boundary
 

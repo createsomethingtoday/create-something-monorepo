@@ -1,0 +1,4 @@
+After staging the final CSS-contract correction:
+$ bash scripts/ona-bootstrap-local.sh pnpm auth:retired-provider:check
+retired identity provider check: pass (16628 tracked files)
+Exit: 0

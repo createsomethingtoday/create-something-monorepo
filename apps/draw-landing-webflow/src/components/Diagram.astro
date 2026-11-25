@@ -1,0 +1,61 @@
+---
+interface Props {
+  kind: "sketch" | "connect" | "export" | "pair";
+}
+const { kind } = Astro.props;
+---
+
+<svg
+  viewBox="0 0 240 160"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="1.3"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+  aria-hidden="true"
+>
+  {kind === "sketch" && (
+    <g>
+      <path d="M36 114c12-30 23-62 46-57 27 6-13 58-23 44-9-14 29-46 51-34 25 14-12 41-16 27s39-25 56-17" />
+      <path d="m149 77 6-19 40-41q3-3 7 1l4 4q3 3 0 6l-41 42z M157 57l10 10 M190 23l11 11 M149 77l6-3-3-3z" />
+      <circle cx="45" cy="92" r="2.5" fill="currentColor" />
+      <path d="M30 126h164" stroke-dasharray="2 5" opacity=".5" />
+    </g>
+  )}
+  {kind === "connect" && (
+    <g>
+      <rect x="21" y="57" width="65" height="44" rx="3" />
+      <rect x="149" y="20" width="68" height="43" rx="3" />
+      <rect x="149" y="100" width="68" height="43" rx="3" />
+      <path d="M86 79h21q10 0 10-10V52q0-10 10-10h22M117 69v43q0 10 10 10h22 M32 72h35m-35 10h23m118-48h32m-32 10h20m-20 70h33m-33 10h21" />
+      <circle cx="117" cy="79" r="3" fill="currentColor" />
+    </g>
+  )}
+  {kind === "export" && (
+    <g>
+      <path d="m71 60 68-23 46 42-68 24z M71 71l-11 4 55 46 83-28-11-10 M60 88l-12 4 65 52 95-33-10-9" />
+      <path d="m95 66 17-6 13 12 17-6 14 12 M155 49l27-33m-16 1 18-3-1 19" />
+      <path d="m57 93 55 44 86-30" stroke-dasharray="2 5" opacity=".55" />
+      <circle cx="109" cy="61" r="2.7" fill="currentColor" />
+    </g>
+  )}
+  {kind === "pair" && (
+    <g>
+      <rect x="26" y="27" width="133" height="88" rx="5" />
+      <path d="M34 35h117v70H34z M23 116h137l10 12H12z" />
+      <rect x="174" y="66" width="43" height="75" rx="6" />
+      <path d="M186 71h19m-17 63h16 M62 80c13-23 26-28 26-15s-17 25-16 14 19-17 34-10m78 36 7-9 6 7 9-12" />
+      <g opacity=".6" stroke-width=".75">
+        {Array.from({ length: 68 }, (_, i) => {
+          const column = i % 17,
+            row = Math.floor(i / 17);
+          const x = 41 + column * 6.3,
+            y = 42 + row * 16 + Math.sin(column * 0.44 + row) * 3;
+          return <path d={`M${x} ${y}l2 -1`} />;
+        })}
+      </g>
+      <circle cx="104" cy="69" r="2.7" fill="currentColor" />
+      <path d="M139 57c16-13 37-11 51 1" stroke-dasharray="2 4" />
+    </g>
+  )}
+</svg>

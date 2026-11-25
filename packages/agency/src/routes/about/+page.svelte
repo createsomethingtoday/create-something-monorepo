@@ -37,6 +37,7 @@
     </footer>
   </article>
   <nav class="letter-next" aria-label="Explore CREATE SOMETHING">
+    <a href="/canon">How Canon took shape <span aria-hidden="true">↗</span></a>
     <a href="/services">Services and membership <span aria-hidden="true">↗</span></a>
     <a href="/products#cato-tour">See the work <span aria-hidden="true">↗</span></a>
     <a href="/stack">What you keep <span aria-hidden="true">↗</span></a>

@@ -58,6 +58,7 @@ apps/*
 apps/client-collaboration-pilot/.local/
 !apps/gigi-desktop/
 !apps/gigi-desktop/**
+!apps/custom-crm/
 !apps/create-something-scheduler/
 !apps/create-something-scheduler/**
 !apps/guard-performance-lab/
@@ -186,3 +187,6 @@ packages/webflow-automation/*/runs/
 # Local scratch: agent output and screen recordings (force-add PR evidence with git add -f)
 /output/
 /videos/
+
+!apps/draw-landing-webflow/
+!apps/draw-landing-webflow/**

@@ -26,6 +26,8 @@
 	let { user, onLogout, settingsHref = '/account', avatarUrl, name }: Props = $props();
 
 	let isOpen = $state(false);
+	let triggerRef: HTMLButtonElement;
+	const menuId = $props.id();
 	let menuRef = $state<HTMLDivElement | null>(null);
 
 	// Get display name or fallback to email
@@ -58,7 +60,8 @@
 		isOpen = !isOpen;
 	}
 
-	function close() {
+	function close(restoreFocus = false) {
+		if (restoreFocus) triggerRef?.focus();
 		isOpen = false;
 	}
 
@@ -69,8 +72,19 @@
 
 	function handleKeydown(e: KeyboardEvent) {
 		if (e.key === 'Escape') {
-			close();
+			e.preventDefault();
+			close(true);
 		}
+	}
+
+	function handleMenuKeydown(event: KeyboardEvent) {
+		const items = [...(menuRef?.querySelectorAll<HTMLElement>('[role=menuitem]') || [])];
+		const index = items.indexOf(document.activeElement as HTMLElement);
+		if (['ArrowDown','ArrowUp','Home','End'].includes(event.key)) {
+			event.preventDefault();
+			const next = event.key === 'Home' ? 0 : event.key === 'End' ? items.length-1 : (index + (event.key === 'ArrowDown' ? 1 : -1) + items.length) % items.length;
+			items[next]?.focus();
+		} else if (event.key === 'Tab') close();
 	}
 
 	function handleClickOutside(e: MouseEvent) {
@@ -81,6 +95,7 @@
 
 	$effect(() => {
 		if (isOpen) {
+			menuRef?.querySelector<HTMLElement>('[role=menuitem]')?.focus();
 			document.addEventListener('click', handleClickOutside);
 			document.addEventListener('keydown', handleKeydown);
 		}
@@ -92,7 +107,7 @@
 </script>
 
 <div class="user-menu" bind:this={menuRef}>
-	<button class="trigger" onclick={toggle} aria-expanded={isOpen} aria-haspopup="true">
+	<button type="button" class="trigger" bind:this={triggerRef} aria-label={`Account menu for ${displayName}`} onclick={toggle} aria-expanded={isOpen} aria-haspopup="menu" aria-controls={isOpen ? menuId : undefined}>
 		<span class="avatar" style="background-image: url({gravatarUrl})">
 			{#if !avatarUrl}
 				<span class="initials">{initials}</span>
@@ -106,7 +121,7 @@
 	</button>
 
 	{#if isOpen}
-		<div class="dropdown" role="menu">
+		<div class="dropdown" role="menu" id={menuId} tabindex="-1" onkeydown={handleMenuKeydown}>
 			<div class="user-info">
 				<span class="user-name">{displayName}</span>
 				<span class="user-email">{user.email}</span>
@@ -115,7 +130,7 @@
 
 			<div class="divider"></div>
 
-			<a href={settingsHref} class="menu-item" role="menuitem" onclick={close}>
+			<a href={settingsHref} class="menu-item" role="menuitem" tabindex="-1" onclick={() => close()}>
 				<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
 					<circle cx="12" cy="12" r="3" />
 					<path
@@ -125,7 +140,7 @@
 				Account settings
 			</a>
 
-			<button type="button" class="menu-item logout" role="menuitem" onclick={handleLogout}>
+			<button type="button" class="menu-item logout" role="menuitem" tabindex="-1" onclick={handleLogout}>
 				<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
 					<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
 					<polyline points="16 17 21 12 16 7" />
@@ -143,13 +158,15 @@
 	}
 
 	.trigger {
+		min-height: 44px;
+		min-width: 44px;
 		display: flex;
 		align-items: center;
 		gap: var(--space-performance-xs);
 		padding: var(--space-performance-xs);
 		background: transparent;
 		border: none;
-		border-radius: var(--radius-performance-scale-full);
+		border-radius: var(--radius-performance-scale-md);
 		cursor: pointer;
 		transition: background var(--duration-performance-micro) var(--ease-performance-standard);
 	}
@@ -166,7 +183,7 @@
 	.avatar {
 		width: 32px;
 		height: 32px;
-		border-radius: var(--radius-performance-scale-full);
+		border-radius: var(--radius-performance-scale-md);
 		background-color: var(--color-performance-bg-surface);
 		background-size: cover;
 		background-position: center;
@@ -198,23 +215,13 @@
 		right: 0;
 		min-width: 220px;
 		border-radius: var(--radius-performance-scale-lg);
-		background-color: var(--glass-performance-bg-medium);
-		backdrop-filter: blur(var(--glass-performance-blur-lg)) var(--glass-performance-saturate-lg);
-		-webkit-backdrop-filter: blur(var(--glass-performance-blur-lg)) var(--glass-performance-saturate-lg);
-		border: 1px solid var(--glass-performance-border-medium);
+		background-color: var(--color-performance-bg-elevated);
+		border: 1px solid var(--color-performance-border-default);
 		box-shadow: var(--glass-performance-shadow-md);
 		padding: var(--space-performance-xs);
 		z-index: 50;
 		overflow: hidden;
 		animation: fadeIn var(--duration-performance-micro) var(--ease-performance-standard);
-	}
-
-	.dropdown::before {
-		content: '';
-		position: absolute;
-		inset: 0;
-		background: var(--liquid-glass-performance-highlight-subtle);
-		pointer-events: none;
 	}
 
 	@keyframes fadeIn {
@@ -264,6 +271,7 @@
 	}
 
 	.menu-item {
+		min-height: 44px;
 		position: relative;
 		z-index: 1;
 		display: flex;
@@ -301,14 +309,10 @@
 
 	@media (prefers-reduced-transparency: reduce) {
 		.dropdown {
-			backdrop-filter: none;
-			-webkit-backdrop-filter: none;
 			background-color: var(--color-performance-bg-surface);
 			border-color: var(--color-performance-border-emphasis);
 		}
 
-		.dropdown::before {
-			display: none;
-		}
 	}
+	@media (prefers-reduced-motion: reduce) {.dropdown {animation:none;}}
 </style>

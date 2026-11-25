@@ -6,6 +6,8 @@ export interface LeaderboardEntry {
 	totalRevenue30d?: number;
 	/** Part of totalSales30d through fulfillment links; only for the viewer's own templates. */
 	fulfillmentSales30d?: number;
+	/** Revenue from Marketplace checkout only; only for the viewer's own templates, absent in older snapshots. */
+	checkoutRevenue30d?: number;
 	salesRank: number;
 	revenueRank: number;
 	isUserTemplate: boolean;
@@ -22,6 +24,31 @@ export interface CategoryEntry {
 	revenueRank: number;
 	trend?: 'up' | 'down' | 'neutral';
 	changePercent?: number;
+	/** Part of totalSales30d through fulfillment links; its revenue is counted at list price, an upper limit. */
+	fulfillmentSales30d?: number;
+	/** Templates listed now or sold in a window of the snapshot. Absent when the source has no supply. */
+	listedTemplates?: number;
+	/** 90-day window ending at the snapshot time. Absent when the source has no 90-day data. */
+	templatesWithSales90d?: number;
+	totalSales90d?: number;
+	totalRevenue90d?: number;
+	fulfillmentSales90d?: number;
+}
+
+/** Marketplace-wide segment context. Every field is null when the snapshot does not carry it. */
+export interface SegmentTotals {
+	/** Unique templates listed now or sold in a window of the snapshot. */
+	listedTemplates: number | null;
+	/** Unique templates with a sale in the 30-day window. */
+	sellingTemplates: number | null;
+	/** Sales in the 30-day window through fulfillment links. */
+	fulfillmentSales: number | null;
+	/** Unique marketplace totals for the 30-day window. */
+	totalSales: number | null;
+	totalRevenue: number | null;
+	totalSales90d: number | null;
+	totalRevenue90d: number | null;
+	sellingTemplates90d: number | null;
 }
 
 export interface Insight {
@@ -38,6 +65,8 @@ export interface LeaderboardResponse {
 		totalMarketplaceSales: number;
 		/** Part of totalMarketplaceSales through fulfillment links; null when the snapshot has no split. */
 		totalFulfillmentSales?: number | null;
+		/** What leaderboard revenue and revenue rank count. Older snapshots count link sales at list price. */
+		revenueBasis?: 'marketplace-checkout' | 'list-price';
     snapshotVersion?: string;
     salesSource?: 'marketplace-snapshot' | 'leaderboard-top-50';
 		userBestRank: number | null;
@@ -64,6 +93,7 @@ export type MarketplaceSummary = Omit<LeaderboardResponse['summary'], 'totalMark
 	totalMarketplaceSales: number | null;
 	salesSource: MarketplaceSalesSource;
 	dataWarning?: string | null;
+	segments?: SegmentTotals;
 };
 
 export interface CategoriesResponse {
@@ -88,6 +118,7 @@ export interface CategoriesResponse {
 		isFreshnessEstimated?: boolean;
 		isStale?: boolean;
 		staleSinceHours?: number | null;
+		segments?: SegmentTotals;
 	};
 }
 
@@ -153,7 +184,7 @@ export function buildMarketplaceSummary(
     if (categorySummary.salesSource !== 'marketplace-snapshot' || leaderboardData.summary.salesSource !== 'marketplace-snapshot' || categorySummary.lastUpdated !== leaderboardData.summary.lastUpdated || categoryTotal !== leaderboardTotal || !categorySummary.snapshotVersion || categorySummary.snapshotVersion !== leaderboardData.summary.snapshotVersion) {
       return { ...baseSummary, dataWarning: 'Marketplace snapshots differ; refresh to load a consistent snapshot.' };
     }
-    return { ...baseSummary, totalMarketplaceSales: categoryTotal, salesSource: 'marketplace-snapshot', dataWarning: null };
+    return { ...baseSummary, totalMarketplaceSales: categoryTotal, salesSource: 'marketplace-snapshot', dataWarning: null, segments: categorySummary.segments };
   }
 
 	// Category rows overlap (a multi-tag template sits in each of its categories),

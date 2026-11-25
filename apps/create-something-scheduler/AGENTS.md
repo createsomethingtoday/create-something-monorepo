@@ -8,6 +8,8 @@ The `BookingService` command/query interface owns scheduling behavior and all bo
 
 The host-scoped Durable Object is the authoritative state and serialization boundary for link configuration, recurring availability exceptions, booking state, idempotency, lifecycle receipts, encrypted provider credentials, and reminder alarms. Google Calendar remains the external source of truth for busy intervals and created meeting events. If Calendar availability or event mutation cannot be confirmed, fail closed and return an operator-actionable receipt.
 
+Private audience reporting uses the separate provider-free `BookingReports` query contract. It reads fixed-host lifecycle receipt aggregates through the named `AudienceReports` service-binding entrypoint. It does not make scheduling decisions, initialize schema, call providers, create receipts, or change alarms; booking behavior and mutations remain owned by `BookingService`. Reporting callers must not reconstruct bookings from browser events or private payloads.
+
 ## Tier ownership
 
 - Database: Durable Object storage for configuration, date-specific availability overrides, bookings, rooms, role-capability fingerprints, idempotency, OAuth state/credentials, reminder queue, and receipts.

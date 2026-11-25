@@ -1,0 +1,18 @@
+{
+  "purpose": "Historical originals preserved outside shipping static trees; not current Canon identity",
+  "issue": "CRE-2455",
+  "assets": [
+    {
+      "property": "lms",
+      "path": "packages/lms/static/workshop/canon.png",
+      "url": "https://learn.createsomething.space/workshop/canon.png",
+      "dimensions": [
+        192,
+        208
+      ],
+      "sha256": "c190069466ae0f46e4bff1867736853645b6364d8d1e1e5666579af7ee4d237e",
+      "preservedAt": "packages/lms/content/assets/brand/legacy-canon-20261114/workshop/canon.png",
+      "redirectTo": "/workshop/canon-body-felt-r15.webp"
+    }
+  ]
+}

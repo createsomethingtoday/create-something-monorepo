@@ -1,5 +1,6 @@
 <script lang="ts">
-  import WorkshopScene from '$lib/workshop/WorkshopScene.svelte';
+  import { canonTaskScenes } from '$lib/canon-task-scenes';
+  import TaskOpening from '$lib/components/TaskOpening.svelte';
   import { SEO } from '@create-something/canon';
   import { page } from '$app/stores';
   import { goto } from '$app/navigation';
@@ -19,10 +20,11 @@
   title="Projects | CREATE SOMETHING .space"
   description="Browse tools, workflows, skills, plugins, and reusable code from the CREATE SOMETHING public workshop."
   propertyName="space"
-  ogImage="/images/workshop/stories/tool-fit-without-forcing.webp"
+  ogImage={canonTaskScenes['tool-fit'].src}
 />
 <div class="workshop">
-  <header class="section wrap story-opening">
+  <TaskOpening scene="tool-fit" caption="Check the fit before making the connection.">
+<div class="section wrap story-opening">
     <div>
       <p class="eyebrow">The collection</p>
       <h1>Find your<br />next useful thing.</h1>
@@ -31,8 +33,9 @@
         and boundaries.
       </p>
     </div>
-    <WorkshopScene scene="fit" eager />
-  </header>
+
+  </div>
+</TaskOpening>
   <section class="wrap collection" aria-label="Project collection">
     <form action="/projects" method="GET" class="filters">
       <label
@@ -92,7 +95,7 @@
 </div>
 
 <style>
-  header h1 {
+  .story-opening h1 {
     margin: 1.5rem 0;
   }
   .filters {

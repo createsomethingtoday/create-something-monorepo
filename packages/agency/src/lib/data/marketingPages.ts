@@ -999,6 +999,21 @@ export const marketingPagePortfolio: MarketingPageEntry[] = [
     selfHealing: ['copy:heal', 'search-route:sync']
   },
   {
+    path: '/canon',
+    cluster: 'about',
+    role: 'support',
+    decision: 'index',
+    audience: 'People curious about the character in the Agency workshop.',
+    funnelStage: 'discover',
+    intent: 'Tell the design history through the materials, gestures and repairs that shaped Canon.',
+    primaryAction: 'Start with the hop',
+    requiredTerms: ['Canon', 'felt', 'notebook', 'hop'],
+    requiredLinks: ['/about', '/practice#practice-workbench'],
+    schema: 'article',
+    search: { changefreq: 'monthly', priority: '0.6', lastmod: '2026-11-24' },
+    selfHealing: ['copy:heal', 'search-route:sync']
+  },
+  {
     path: '/about',
     cluster: 'about',
     role: 'pillar',

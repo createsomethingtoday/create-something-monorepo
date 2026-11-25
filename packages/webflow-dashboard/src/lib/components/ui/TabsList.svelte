@@ -1,6 +1,42 @@
 <script lang="ts">
 	import type { Snippet } from 'svelte';
 	import type { HTMLAttributes } from 'svelte/elements';
+	import { onMount } from 'svelte';
+	import { EASE, gsap, motionOK } from '$lib/motion/core';
+
+	let listEl = $state<HTMLDivElement | null>(null);
+	let indicatorEl = $state<HTMLSpanElement | null>(null);
+
+	// Click: one marker slides to the chosen tab, so the change of place is seen.
+	function placeIndicator(animate: boolean) {
+		if (!listEl || !indicatorEl) return;
+		const current = listEl.querySelector<HTMLElement>('[role="tab"][aria-selected="true"]');
+		if (!current) {
+			gsap.set(indicatorEl, { autoAlpha: 0 });
+			return;
+		}
+		const target = { x: current.offsetLeft, width: current.offsetWidth, autoAlpha: 1 };
+		if (animate && motionOK()) {
+			gsap.to(indicatorEl, { ...target, duration: 0.36, ease: EASE.out, overwrite: 'auto' });
+		} else {
+			gsap.set(indicatorEl, target);
+		}
+	}
+
+	onMount(() => {
+		if (!listEl) return;
+		listEl.classList.add('has-indicator');
+		placeIndicator(false);
+		const observer = new MutationObserver(() => placeIndicator(true));
+		observer.observe(listEl, { attributes: true, attributeFilter: ['aria-selected'], subtree: true });
+		const onResize = () => placeIndicator(false);
+		window.addEventListener('resize', onResize);
+		void document.fonts?.ready.then(() => placeIndicator(false));
+		return () => {
+			observer.disconnect();
+			window.removeEventListener('resize', onResize);
+		};
+	});
 
 	interface Props extends HTMLAttributes<HTMLDivElement> {
 		children?: Snippet;
@@ -35,7 +71,14 @@
 	}
 </script>
 
-<div class="tabs-list {className}" role="tablist" onkeydown={handleKeydown} {...restProps}>
+<div
+	class="tabs-list {className}"
+	role="tablist"
+	bind:this={listEl}
+	onkeydown={handleKeydown}
+	{...restProps}
+>
+	<span class="tabs-indicator" bind:this={indicatorEl} aria-hidden="true"></span>
 	{#if children}
 		{@render children()}
 	{/if}
@@ -43,12 +86,24 @@
 
 <style>
 	.tabs-list {
-		display: inline-flex;
-		align-items: center;
-		gap: 0;
+		position: relative;
+		display: flex;
+		align-items: stretch;
+		gap: 0.25rem;
 		padding: 0;
-		border: 1px solid var(--color-border-default);
-		border-radius: var(--radius-sm);
-		overflow: hidden;
+		border-bottom: 1px solid var(--color-shell-border-default);
+	}
+
+	/* A rule under the selected tab; GSAP slides it to the next one. */
+	.tabs-indicator {
+		position: absolute;
+		bottom: -1px;
+		left: 0;
+		width: 0;
+		height: 2px;
+		visibility: hidden;
+		border-radius: 2px 2px 0 0;
+		background: var(--color-info);
+		pointer-events: none;
 	}
 </style>

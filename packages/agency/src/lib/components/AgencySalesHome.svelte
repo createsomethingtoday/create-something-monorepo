@@ -19,6 +19,7 @@
   import BuiltWork from './BuiltWork.svelte';
   import SelectedClientWork from './SelectedClientWork.svelte';
   import { enhanceWalkthroughEntrance } from '$lib/motion/walkthroughEntrance';
+  import { enhanceHeroPlayback } from '$lib/motion/heroPlayback';
   import { enhanceStoryHome } from '$lib/motion/storyHome';
   import { enhanceChapterEntrances } from '$lib/motion/chapterEntrance';
   import { alignScrollProgress } from '$lib/motion/scrollProgress';
@@ -29,6 +30,8 @@
     const abort = new AbortController();
     const paperRoot = root.querySelector<HTMLElement>('.paper-example');
     const disposePaper = paperRoot ? enhancePaperExample(paperRoot) : () => {};
+    const hero = root.querySelector<HTMLElement>('.canon-scene-hero');
+    const heroPlayback = hero ? enhanceHeroPlayback(hero) : null;
     const story = enhanceStoryHome(root);
     const chapters = enhanceChapterEntrances(root);
     const progress = alignScrollProgress(root);
@@ -111,6 +114,7 @@
       abort.abort();
       disposePaper();
       entrance.destroy();
+      heroPlayback?.destroy();
       story.destroy();
       chapters.destroy();
       progress.destroy();
@@ -124,7 +128,7 @@
   });
 </script>
 
-<svelte:head><link rel="stylesheet" href="/styles/agency/paper-example.css?v=paper-dashboard-20261110" /><link rel="stylesheet" href="/styles/agency/story-home.css?v=walkthrough-entry-20261106" /><link rel="preload" as="image" href="/images/agency-sales/hero.webp" fetchpriority="high" /><link rel="stylesheet" href="/styles/agency/image-treatment.css?v=graphite-frames-20261105" /><link rel="stylesheet" href="/styles/agency/measured-foundation.css?v=measured-foundation-20261106" /></svelte:head>
+<svelte:head><link rel="stylesheet" href="/styles/agency/paper-example.css?v=canon-replacement-20261114" /><link rel="stylesheet" href="/styles/agency/story-home.css?v=canon-agency-20261114" /><link rel="stylesheet" href="/styles/agency/image-treatment.css?v=graphite-frames-20261105" /><link rel="stylesheet" href="/styles/agency/measured-foundation.css?v=animated-hero-20261117" /></svelte:head>
 <div class="agency-home measured-foundation" bind:this={root}>
   <div class="page-progress" aria-hidden="true"></div>
   <AgencyChapterDial />

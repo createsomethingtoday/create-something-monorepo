@@ -81,7 +81,6 @@ body.design-preview .clear-page-section--hero>.agency-preview-media{grid-column:
 body.design-preview .clear-page-section--hero.agency-preview-hero .clear-page-section__aside{grid-column:1/-1;grid-row:2;min-width:0}
 @media(max-width:1000px){body.design-preview .clear-page-section--hero.agency-preview-hero{grid-template-columns:minmax(0,1fr)}body.design-preview .clear-page-section--hero>.agency-preview-media{grid-column:1;grid-row:2}body.design-preview .clear-page-section--hero.agency-preview-hero .clear-page-section__aside{grid-row:3}}
 /* Replace prior decorative opening photography without suppressing real artifacts or proof. */
-body.design-preview .performance-campaign-opening:has(>.agency-preview-media[data-asset^='original-stories/'])>.performance-campaign-opening__media{display:none!important}
 body.design-preview .methodology-page>.hero.agency-preview-hero{display:grid;grid-template-columns:minmax(0,.9fr) minmax(0,1.1fr);gap:var(--space-performance-lg);align-items:center;padding:var(--space-performance-xl) 6vw;min-height:0;height:auto}
 body.design-preview .methodology-page>.hero.agency-preview-hero>.hero-content{grid-column:1;grid-row:1;width:100%;max-width:none;text-align:left;padding:0}
 body.design-preview .methodology-page>.hero.agency-preview-hero :is(.hero-title,.hero-subtitle){text-align:left;max-width:none}

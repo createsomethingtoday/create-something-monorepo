@@ -23,7 +23,7 @@
 </svelte:head>
 <main id="main" class="legal-page">
   <header class="legal-header">
-    <p class="eyebrow">PRIVATE / THE AGREEMENT</p>
+    <p class="eyebrow">Legal</p>
     <h1>{title}</h1>
     <p class="intro">{description}</p>
     <p class="updated">Effective {effectiveDate} · Version {version}</p>
@@ -38,7 +38,7 @@
   </header>
   <div class="legal-layout">
     <nav class="contents" aria-label="On this page">
-      <p class="eyebrow">ON THIS PAGE</p>
+      <p class="eyebrow">On this page</p>
       <ol>
         {#each sections as section}<li><a href={`#${section.id}`}>{section.title}</a></li>{/each}
       </ol>

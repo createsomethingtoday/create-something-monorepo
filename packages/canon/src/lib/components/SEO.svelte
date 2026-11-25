@@ -70,19 +70,20 @@
 
   const organizationId = 'https://createsomething.ltd/#organization';
   const organizationLogoUrl = 'https://createsomething.ltd/icon-512.png';
-  const config = propertyConfig[propertyName];
-  const fullTitle = title ? title.includes('CREATE SOMETHING') ? title : `${title} | ${config.name}` : config.name;
-  const fullDescription = description || config.tagline;
-  const canonicalPath = $page.url.pathname === '/' ? '/' : $page.url.pathname.replace(/\/$/, '');
-  const canonicalUrl = canonical || `${config.domain}${canonicalPath === '/' ? '' : canonicalPath}`;
-  const fullOgImage = ogImage.startsWith('http') ? ogImage : `${config.domain}${ogImage}`;
-  const effectiveBreadcrumbs = breadcrumbs.length > 0 ? breadcrumbs : createBreadcrumbs(canonicalPath);
+  // Keep page- and prop-derived head data live during SvelteKit navigation.
+  $: config = propertyConfig[propertyName];
+  $: fullTitle = title ? title.includes('CREATE SOMETHING') ? title : `${title} | ${config.name}` : config.name;
+  $: fullDescription = description || config.tagline;
+  $: canonicalPath = $page.url.pathname === '/' ? '/' : $page.url.pathname.replace(/\/$/, '');
+  $: canonicalUrl = canonical || `${config.domain}${canonicalPath === '/' ? '' : canonicalPath}`;
+  $: fullOgImage = ogImage.startsWith('http') ? ogImage : `${config.domain}${ogImage}`;
+  $: effectiveBreadcrumbs = breadcrumbs.length > 0 ? breadcrumbs : createBreadcrumbs(canonicalPath, config.domain);
 
-  const websiteId = `${config.domain}/#website`;
-  const webPageId = `${canonicalUrl}#webpage`;
-  const socialImageId = `${fullOgImage}#image`;
+  $: websiteId = `${config.domain}/#website`;
+  $: webPageId = `${canonicalUrl}#webpage`;
+  $: socialImageId = `${fullOgImage}#image`;
   const organizationReference = { '@id': organizationId };
-  const socialImage = {
+  $: socialImage = {
     '@type': 'ImageObject',
     '@id': socialImageId,
     url: fullOgImage,
@@ -140,7 +141,7 @@
   };
 
   // Schema.org WebSite
-  const websiteSchema = {
+  $: websiteSchema = {
     '@context': 'https://schema.org',
     '@type': 'WebSite',
     '@id': websiteId,
@@ -151,7 +152,7 @@
     inLanguage: 'en-US'
   };
 
-  const webPageSchema = {
+  $: webPageSchema = {
     '@context': 'https://schema.org',
     '@type': 'WebPage',
     '@id': webPageId,
@@ -174,7 +175,7 @@
   };
 
   // Article schema (if applicable)
-  const articleSchema = ogType === 'article' ? {
+  $: articleSchema = ogType === 'article' ? {
     '@context': 'https://schema.org',
     '@type': 'Article',
     headline: title,
@@ -219,7 +220,7 @@
   }
 
   // Service schema (for .agency services page)
-  const serviceSchemas = services.length > 0 ? services.map(service => ({
+  $: serviceSchemas = services.length > 0 ? services.map(service => ({
     '@context': 'https://schema.org',
     '@type': 'Service',
     name: service.name,
@@ -234,7 +235,7 @@
   })) : [];
 
   // FAQ schema (for AEO)
-  const faqSchema = faqItems.length > 0 ? {
+  $: faqSchema = faqItems.length > 0 ? {
     '@context': 'https://schema.org',
     '@type': 'FAQPage',
     mainEntity: faqItems.map(item => ({
@@ -248,7 +249,7 @@
   } : null;
 
   // Breadcrumb schema
-  const breadcrumbSchema = effectiveBreadcrumbs.length > 0 ? {
+  $: breadcrumbSchema = effectiveBreadcrumbs.length > 0 ? {
     '@context': 'https://schema.org',
     '@type': 'BreadcrumbList',
     itemListElement: effectiveBreadcrumbs.map((item, index) => ({
@@ -260,7 +261,7 @@
   } : null;
 
   // AggregateRating schema (from reviews)
-  const aggregateRatingSchema = reviews.length > 0 ? {
+  $: aggregateRatingSchema = reviews.length > 0 ? {
     '@context': 'https://schema.org',
     '@type': ogType === 'article' ? 'Article' : 'Product',
     name: title,
@@ -289,7 +290,7 @@
   } : null;
 
   // VideoObject schema
-  const videoSchema = video ? {
+  $: videoSchema = video ? {
     '@context': 'https://schema.org',
     '@type': 'VideoObject',
     name: video.name || title,
@@ -303,7 +304,7 @@
   } : null;
 
   // Course schema
-  const courseSchema = course ? {
+  $: courseSchema = course ? {
     '@context': 'https://schema.org',
     '@type': 'Course',
     name: course.name || title,
@@ -327,7 +328,7 @@
   } : null;
 
   // Robots directive
-  const robotsContent = [
+  $: robotsContent = [
     noindex ? 'noindex' : 'index',
     nofollow ? 'nofollow' : 'follow'
   ].join(', ');
@@ -336,19 +337,19 @@
     return `<script type="application/ld+json">${JSON.stringify(schema)}</scr` + 'ipt>';
   }
 
-  function createBreadcrumbs(pathname: string): Array<{ name: string; url: string }> {
+  function createBreadcrumbs(pathname: string, domain: string): Array<{ name: string; url: string }> {
     if (pathname === '/') {
       return [];
     }
 
     const segments = pathname.split('/').filter(Boolean);
     return [
-      { name: 'Home', url: config.domain },
+      { name: 'Home', url: domain },
       ...segments.map((segment, index) => {
         const path = `/${segments.slice(0, index + 1).join('/')}`;
         return {
           name: titleCaseSegment(segment),
-          url: `${config.domain}${path}`
+          url: `${domain}${path}`
         };
       })
     ];

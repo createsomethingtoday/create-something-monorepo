@@ -15,6 +15,12 @@ export interface Env {
 	/** Comma-separated HTTPS origins of the dashboard upload path. */
 	ALLOWED_COVER_ORIGINS?: string;
 	TEMPLATE_SEARCH_URL?: string;
+	/**
+	 * Service binding to the template-search Worker. A Worker cannot reach another
+	 * Worker on the same account through its workers.dev URL (the fetch returns
+	 * 404), so inventory checks go through this binding when it is present.
+	 */
+	TEMPLATE_SEARCH?: Fetcher;
 	/** Local fixture runs only: loopback Airtable stand-in. */
 	AIRTABLE_API_BASE_URL?: string;
 }
@@ -121,4 +127,10 @@ export function requireAuthoringConfig(env: Env): AuthoringConfig {
 		allowedCoverOrigins: parsedOrigins as string[],
 		templateSearchUrl: env.TEMPLATE_SEARCH_URL!
 	};
+}
+
+/** Fetch used for inventory checks: the service binding when bound, otherwise the public network. */
+export function inventoryFetch(env: Env): typeof fetch {
+	const binding = env.TEMPLATE_SEARCH;
+	return binding ? (input, init) => binding.fetch(input, init) : (input, init) => fetch(input, init);
 }

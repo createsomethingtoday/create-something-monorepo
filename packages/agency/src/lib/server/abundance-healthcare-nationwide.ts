@@ -352,9 +352,10 @@ export async function queryNationwideCoverage(db: D1Database, input: {
 						ORDER BY unixepoch(e.verified_at) DESC, e.created_at DESC, e.id DESC
 					) AS evidence_rank
 				FROM abundance_healthcare_provider_recruiting_evidence e
-				INNER JOIN abundance_healthcare_nationwide_memberships m
-					ON m.provider_npi = e.provider_npi
-				WHERE ${where}
+				WHERE EXISTS (
+					SELECT 1 FROM abundance_healthcare_nationwide_memberships m
+					WHERE m.provider_npi = e.provider_npi AND ${where}
+				)
 					AND (
 						(e.evidence_kind IN ('license_or_privilege', 'discipline') AND e.source_system = 'missouri_board_or_nursys')
 						OR (e.evidence_kind = 'exclusion' AND e.source_system = 'oig_leie')

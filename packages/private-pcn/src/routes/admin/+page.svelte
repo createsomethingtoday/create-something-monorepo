@@ -113,9 +113,9 @@
     content="noindex"
   /></svelte:head
 >
-<main id="main" tabindex="-1" class="workspace creator-workspace">
+<main id="main" tabindex="-1" class="workspace creator-workspace operator-surface">
   <NetworkContext network={data.network} canManage={true} />
-  {#if !data.network}<p class="eyebrow">PRIVATE / CREATOR WORKSPACE</p>{/if}
+  {#if !data.network}<p class="eyebrow">Private / creator workspace</p>{/if}
   <h1>Your lessons.</h1>
   <p>Uploads start private and unpublished. Review processing before you choose an audience.</p>
   <nav class="studio-navigation" aria-label="Creator workspace">

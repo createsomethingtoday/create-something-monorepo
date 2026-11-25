@@ -71,7 +71,7 @@ const STANDARDS: Record<ReviewerStandardId, Standard> = {
 	'self-promotion': {
 		message: (n) => `Links promote the creator or other templates on ${n} page(s)`,
 		description: 'Buyers publish the template as their own site, so "Buy template", "Get template" and "More templates" links ship to their visitors. One "Designed by" credit in the footer is allowed.',
-		howToFix: 'Remove buy, get and more-templates links and links to template stores. Keep at most one "Designed by" credit in the footer.'
+		howToFix: 'Remove buy, get and more-templates links and links to template stores, on every page including Licenses: an asset that comes from a paid store cannot ship in a template. Keep at most one "Designed by" credit in the footer.'
 	},
 	'licenses-boilerplate': {
 		message: () => 'The Licenses page is missing the required opening text',
@@ -273,7 +273,11 @@ function faviconDetail(elements: Node[], pageUrl: URL): string | null {
 	return problems.length ? problems.join(' and ') : null;
 }
 
-/** Guideline layout-and-content-18: promotional links that leave the site, and links to template stores. */
+/**
+ * Guideline layout-and-content-18: promotional links that leave the site, and links to template stores.
+ * This includes the Licenses page: a store link there is a premium asset or the creator's own product,
+ * and reviewers request changes for both. (2.13.1 allowed store links on /licenses; 2.13.3 restored the check.)
+ */
 function selfPromotionDetail(elements: Node[], pageUrl: URL): string | null {
 	const found = new Set<string>();
 	for (const link of elements.filter((el) => el.name === 'a')) {
@@ -339,6 +343,12 @@ function trademarksDetail(elements: Node[], root: Node): string | null {
 	const index = content.search(/[®™]/);
 	const sample = content.slice(Math.max(0, index - 30), index + 10).trim();
 	return `${count} symbol(s), for example "…${sample}…"`;
+}
+
+/** Text of a page that a visitor could read, as the checks in this file read it. */
+export function pageText(html: string): string {
+	const root = parseDocument(html) as unknown as Node;
+	return normalize(text(renderedDescendants(root).find((el) => el.name === 'body') ?? root));
 }
 
 /** Elements of an HTML document that a browser renders (template and noscript subtrees are skipped). */

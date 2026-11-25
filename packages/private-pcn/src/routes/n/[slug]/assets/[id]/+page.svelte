@@ -252,7 +252,7 @@
             <p class="preserve">{release.manifest[key as keyof typeof release.manifest]}</p>
           </section>{/each}
         {#if release.entitled}<section class="manifest-section">
-            <p class="eyebrow">YOUR INSTALLATION GUIDE</p>
+            <p class="eyebrow">Your installation guide</p>
             <h2>From package to working setup.</h2>
             <ol class="install-steps">
               {#each [['install', 'Install'], ['verify', 'Check it works'], ['uninstall', 'Remove or roll back']] as [key, label]}<li
@@ -276,7 +276,7 @@
         </section>{/if}
     </section>
     <aside class="builder-panel purchase-panel">
-      <p class="eyebrow">{data.owner ? 'BUYER PREVIEW' : 'SELECTED RELEASE'}</p>
+      <p class="eyebrow">{data.owner ? 'Buyer preview' : 'Selected release'}</p>
       <h2>{assetPrice(data.asset.price_cents)}{data.asset.price_cents ? ' USD' : ''}</h2>
       <p>
         One release. Its included files and the license shown here. Network sessions and future
@@ -347,7 +347,7 @@
   </div>
   {#if data.owner}<section class="builder-split">
       <div>
-        <p class="eyebrow">01 / SHAPE THE OFFER</p>
+        <p class="eyebrow">01 / Shape the offer</p>
         <h2>Be clear about<br /><SerifPhrase text="what it does." /></h2>
         <p>
           Make the outcome specific. Buyers should understand the technique, intended runtime and
@@ -390,7 +390,7 @@
     </section>
     <section class="builder-split">
       <div>
-        <p class="eyebrow">02 / MAKE IT REPRODUCIBLE</p>
+        <p class="eyebrow">02 / Make it reproducible</p>
         <h2>A release someone<br /><SerifPhrase text="can actually use." /></h2>
         <p>
           Upload a ZIP up to 16 MiB. Include the package, documentation and license. Five immutable
@@ -452,4 +452,10 @@
   .purchase-panel button {
     margin: 8px 0;
   }
+
+  .asset-heading { font-family: var(--font-serif); font-size: clamp(48px, 7vw, 88px); font-weight: 400; }
+  .purchase-panel { background: var(--enlightr-ai); color: #111; border: 0; padding: 32px; }
+  .purchase-panel .muted, .purchase-panel .eyebrow { color: #111; }
+  .manifest-section { border-top: 1px solid var(--line); padding-block: 24px; }
+
 </style>

@@ -11,6 +11,12 @@ export interface MarketplaceCategoryEntry {
   revenueRank: number;
   trend?: 'up' | 'down' | 'neutral';
   changePercent?: number;
+  fulfillmentSales30d?: number;
+  listedTemplates?: number;
+  templatesWithSales90d?: number;
+  totalSales90d?: number;
+  totalRevenue90d?: number;
+  fulfillmentSales90d?: number;
 }
 
 export interface MarketplaceUserCategoryEntry {
@@ -46,6 +52,27 @@ export function getCompetitionIndicator(templateCount: number): CompetitionIndic
   if (templateCount < 30) return { key: 'medium', level: 'Medium', color: 'info' };
   if (templateCount < 70) return { key: 'high', level: 'High', color: 'warning' };
   return { key: 'very-high', level: 'Very High', color: 'error' };
+}
+
+/**
+ * Competition from listed supply: how many templates a new one sits beside.
+ * The bands follow the spread of listed templates per subcategory on
+ * 2026-11-24 (quartiles 42 / 83 / 172, 90th percentile 428).
+ */
+export function getSupplyCompetitionIndicator(listedTemplates: number): CompetitionIndicator {
+  if (listedTemplates < 50) return { key: 'low', level: 'Low', color: 'success' };
+  if (listedTemplates < 150) return { key: 'medium', level: 'Medium', color: 'info' };
+  if (listedTemplates < 400) return { key: 'high', level: 'High', color: 'warning' };
+  return { key: 'very-high', level: 'Very High', color: 'error' };
+}
+
+/** Listed supply decides when the snapshot has it; older snapshots fall back to templates with sales. */
+export function getCategoryCompetition(
+  category: Pick<MarketplaceCategoryEntry, 'templatesInSubcategory' | 'listedTemplates'>
+): CompetitionIndicator {
+  return category.listedTemplates === undefined
+    ? getCompetitionIndicator(category.templatesInSubcategory)
+    : getSupplyCompetitionIndicator(category.listedTemplates);
 }
 
 export function getCompetitionClass(level: string): string {
@@ -110,7 +137,7 @@ export function filterMarketplaceCategories(
 
     if (
       filters.competitionFilter !== 'all' &&
-      getCompetitionIndicator(category.templatesInSubcategory).key !== filters.competitionFilter
+      getCategoryCompetition(category).key !== filters.competitionFilter
     ) {
       return false;
     }

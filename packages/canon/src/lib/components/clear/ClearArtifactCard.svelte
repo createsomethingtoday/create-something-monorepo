@@ -67,10 +67,10 @@
 	.clear-artifact-card span {
 		color: var(--color-performance-muted, #5e6268);
 		font-family: var(--font-performance-mono);
-		font-size: 0.72rem;
+		font-size:0.875rem;
 		font-weight: var(--font-performance-medium);
 		letter-spacing: 0;
-		text-transform: uppercase;
+		text-transform:none;
 	}
 
 	.clear-artifact-card strong {

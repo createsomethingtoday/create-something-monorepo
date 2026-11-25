@@ -1,4 +1,5 @@
 <script lang="ts">
+  import CanonCompanion from '$lib/components/CanonCompanion.svelte';
   import { SEO } from '@create-something/canon';
   import { agencyCoreMessaging } from '$lib/data/marketingCopy';
   import {
@@ -97,14 +98,7 @@
             </div>
           </li>
         </ol>
-        <img
-          class="dental-canon"
-          src="/images/agency-sales/canon-guide-cutout-v1.webp"
-          alt="Canon, our illustrated graphite collaborator, pointing toward the workflow."
-          width="307"
-          height="384"
-          fetchpriority="high"
-        />
+        <span class="dental-canon"><CanonCompanion /></span>
         <p class="desk-footnote mono">Useful work.<br />Visible boundaries.</p>
         <figcaption id="dental-map-caption">
           Concept illustration · booking access depends on your approved systems.
