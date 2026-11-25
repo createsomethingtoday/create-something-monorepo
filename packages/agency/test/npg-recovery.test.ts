@@ -851,7 +851,7 @@ test("same-owner receipt hold returns canonical evidence without paid replay or 
         }),
         "call",
         "resp",
-        JSON.stringify({ providers: ["pdl", "exa", "apify"] }),
+        JSON.stringify({ providers: ["pdl", "exa", "apify", "treg"] }),
         store.now() + 600000,
       )
       .run();
@@ -1085,7 +1085,7 @@ test("new composite result clears the older active receipt selection", () =>
         }),
         "call",
         "resp",
-        JSON.stringify({ providers: ["pdl", "exa", "apify"] }),
+        JSON.stringify({ providers: ["pdl", "exa", "apify", "treg"] }),
         store.now() + 600000,
       )
       .run();
@@ -1118,6 +1118,7 @@ test("new composite result clears the older active receipt selection", () =>
           npi: "9999999999",
           uncertain_dispatch: false,
           providers: {
+            treg: { status: "complete" },
             pdl: { status: "matched" },
             exa: { status: "complete" },
             apify: { status: "no_contact", charge_reconciled: true },
@@ -1178,3 +1179,31 @@ test('follow-up model input resolves only currently authorized saved evidence wi
       assert.deepEqual(JSON.parse((await store.read(owner, chat.id)).state_json).sources, []);
     }
   }));
+
+
+test('four-provider outcomes retain Treg evidence and unknown costs without upgrading legacy scope', () => {
+  const legacy = { providers: { pdl: {status:'matched', actual_cost_usd:0.1}, exa:{status:'complete', actual_cost_usd:0.2}, apify:{status:'no_contact',charge_reconciled:true,charge_usd:0.1} }, spend_tracking:{} };
+  assert.equal(recomputeProfile(legacy).status, 'complete');
+  assert.equal(recomputeProfile(legacy, true).status, 'partial');
+  assert.equal(recomputeProfile(legacy, true).uncertain_dispatch, true);
+  const treg = {status:'no_match', actual_cost_usd:null};
+  const result = recomputeProfile({...legacy, providers:{...legacy.providers,treg}});
+  assert.equal(result.status,'complete');
+  assert.equal(result.providers.treg,treg);
+  assert.equal(result.spend_tracking.pending_receipts,1);
+  assert.equal(result.spend_tracking.actual_usd,0.4);
+  const held = recomputeProfile({...legacy, providers:{...legacy.providers,treg:{status:'privacy_blocked_review'}}});
+  assert.equal(held.status,'blocked');
+});
+
+test('profile totals include Treg confirmed subcall subtotal once while retaining unknown remainder', () => {
+  const base = {providers:{pdl:{status:'matched',actual_cost_usd:0.1},exa:{status:'complete',actual_cost_usd:0.2},apify:{status:'no_contact',charge_usd:0.1,charge_reconciled:true},treg:{status:'partial',uncertain_dispatch:false,actual_cost_usd:null,confirmed_subtotal_usd:0.12}},spend_tracking:{actual_usd:0.4,pending_receipts:1}};
+  const partial = recomputeProfile(base);
+  assert.equal(partial.spend_tracking.actual_usd,0.52);
+  assert.equal(partial.spend_tracking.pending_receipts,1);
+  assert.equal(partial.billing_reconciliation_required,true);
+  assert.equal(recomputeProfile(partial).spend_tracking.actual_usd,0.52);
+  const complete = recomputeProfile({...partial, providers:{...partial.providers,treg:{status:'complete',actual_cost_usd:0.16,confirmed_subtotal_usd:0.16}},spend_tracking:{...partial.spend_tracking,pending_receipts:0}});
+  assert.equal(complete.spend_tracking.actual_usd,0.56);
+  assert.equal(complete.billing_reconciliation_required,false);
+});

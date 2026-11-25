@@ -18,7 +18,7 @@ test('workerd D1 tracks independent bundles without caps while rejecting request
   });
   try {
     const db = await mf.getD1Database('DB');
-    const sql = readFileSync('migrations/0064_enrichment_budget.sql', 'utf8').replace(
+    const sql = (readFileSync('migrations/0064_enrichment_budget.sql', 'utf8') + '\n' + readFileSync('migrations/0068_npg_treg_enrichment_provider.sql', 'utf8')).replace(
       /^--.*$/gm,
       ''
     );
@@ -32,7 +32,7 @@ test('workerd D1 tracks independent bundles without caps while rejecting request
     assert.equal(results.filter((r) => r.status === 'fulfilled').length, 2);
     const reservation = (results[0] as PromiseFulfilledResult<any>).value;
     await assert.rejects(reserveEnrichment(db, 'complete', 'a'.repeat(64), '1234567893'));
-    assert.equal((await enrichmentReadiness(db, 'clay')).spend.pending_count, 6);
+    assert.equal((await enrichmentReadiness(db, 'clay')).spend.pending_count, 8);
     const claims = await Promise.allSettled([
       claimEnrichment(db, reservation.grants.pdl),
       claimEnrichment(db, reservation.grants.pdl)
@@ -45,4 +45,51 @@ test('workerd D1 tracks independent bundles without caps while rejecting request
   } finally {
     await mf.dispose();
   }
+});
+
+test('workerd D1 sums separate Treg call receipts and preserves pending and no-dispatch units', async () => {
+  const mf = new Miniflare({ modules:true, script:'export default {fetch(){return new Response("ok")}}', compatibilityDate:'2026-06-01', d1Databases:['DB'] });
+  try {
+    const db = await mf.getD1Database('DB');
+    const sql = ['0064_enrichment_budget.sql','0068_npg_treg_enrichment_provider.sql'].map(file=>readFileSync(`migrations/${file}`,'utf8')).join('\n').replace(/^--.*$/gm,'');
+    await db.batch(sql.match(/\s*CREATE TRIGGER[\s\S]*?END;|[^;]+;/g)!.map((s:string)=>db.prepare(s)));
+    const {recordEnrichment} = await import('../src/lib/server/enrichment-budget');
+    const r = await reserveEnrichment(db,'treg','c'.repeat(64),'1234567893');
+    const grant = r.grants.treg!;
+    await claimEnrichment(db,grant);
+    await recordEnrichment(db,grant,{event_id:`${grant.id}:treg:phone`,status:'complete',actual_usd:0.12});
+    let spend = (await enrichmentReadiness(db,'treg')).spend;
+    assert.equal(spend.confirmed_usd,0.12);
+    assert.equal(spend.pending_count,1,'missing email receipt stays pending');
+    await recordEnrichment(db,grant,{event_id:`${grant.id}:treg:email`,status:'uncertain',actual_usd:null});
+    spend = (await enrichmentReadiness(db,'treg')).spend;
+    assert.equal(spend.confirmed_usd,0.12);
+    assert.equal(spend.pending_count,1,'unknown email price cannot be masked by phone actual');
+    const second = await reserveEnrichment(db,'treg','d'.repeat(64),'1234567893');
+    await claimEnrichment(db,second.grants.treg!);
+    for(const [kind,cost] of [['phone',0.12],['email',0.04]] as const)
+      await recordEnrichment(db,second.grants.treg!,{event_id:`${second.id}:treg:${kind}`,status:'complete',actual_usd:cost});
+    spend = (await enrichmentReadiness(db,'treg')).spend;
+    assert.equal(spend.confirmed_usd,0.28,'both settled calls contribute once');
+    assert.equal(spend.pending_count,1);
+    await recordEnrichment(db,second.grants.treg!,{event_id:`${second.id}:treg:phone:invoice-1`,status:'complete',actual_usd:0.10});
+    spend = (await enrichmentReadiness(db,'treg')).spend;
+    assert.equal(spend.confirmed_usd,0.26,'corrected phone replaces its previous amount');
+    await recordEnrichment(db,second.grants.treg!,{event_id:'invoice-final-1',status:'complete',actual_usd:0.13});
+    spend = (await enrichmentReadiness(db,'treg')).spend;
+    assert.equal(spend.confirmed_usd,0.25,'whole-operation invoice supersedes its component charges');
+    assert.equal(spend.pending_count,1);
+    const noDispatch = await reserveEnrichment(db,'treg','e'.repeat(64),'1234567893');
+    await claimEnrichment(db,noDispatch.grants.treg!);
+    await recordEnrichment(db,noDispatch.grants.treg!,{event_id:`${noDispatch.id}:treg:identity-unavailable`,status:'failed',actual_usd:0});
+    spend = (await enrichmentReadiness(db,'treg')).spend;
+    assert.equal(spend.pending_count,1,'known no-dispatch zero is settled');
+    assert.equal(spend.confirmed_usd,0.25);
+    const legacy = await reserveEnrichment(db,'treg','f'.repeat(64),'1234567893');
+    await claimEnrichment(db,legacy.grants.treg!);
+    await recordEnrichment(db,legacy.grants.treg!,{event_id:`${legacy.id}:legacy-unknown`,status:'uncertain',actual_usd:null});
+    spend = (await enrichmentReadiness(db,'treg')).spend;
+    assert.equal(spend.pending_count,2,'unknown legacy event remains tracked');
+    assert.equal(spend.by_provider.find((p:any)=>p.provider==='treg')!.request_count,4);
+  } finally {await mf.dispose();}
 });

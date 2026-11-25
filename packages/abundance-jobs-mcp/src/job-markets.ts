@@ -1,3 +1,4 @@
+import type { PublicJobRow } from './index.js';
 import { US_STATE_CODES } from './us-states.js';
 
 // Values come exclusively from the finite repository-owned state list.
@@ -90,8 +91,12 @@ export function jobsWhere(query: JobsQuery, omitState = false, omitSpecialty = f
   }
   return { sql: clauses.length ? ` WHERE ${clauses.join(' AND ')}` : '', values };
 }
-const columns =
-  'id,title,employer,city,state,country,location_text,specialty,discipline,employment_type,shift,pay_min,pay_max,pay_text,currency,status,source_url,application_url,posted_at,last_seen_at,fetched_at';
+const columns = [
+  'id', 'title', 'employer', 'city', 'state', 'country', 'location_text', 'specialty',
+  'discipline', 'employment_type', 'shift', 'pay_min', 'pay_max', 'pay_text', 'currency',
+  'status', 'source_url', 'application_url', 'posted_at', 'last_seen_at', 'fetched_at'
+] as const satisfies readonly (keyof PublicJobRow)[];
+type BrowserJobRow = Pick<PublicJobRow, (typeof columns)[number]>;
 export async function queryJobsBrowser(db: D1Database, query: JobsQuery) {
   const filtered = jobsWhere(query);
   const states = jobsWhere(query, true);
@@ -100,7 +105,7 @@ export async function queryJobsBrowser(db: D1Database, query: JobsQuery) {
   const results = await db.batch<Record<string, unknown>>([
     db
       .prepare(
-        `SELECT ${columns} FROM abundance_public_jobs${filtered.sql} ORDER BY last_seen_at DESC, id ASC LIMIT ? OFFSET ?`
+        `SELECT ${columns.join(',')} FROM abundance_public_jobs${filtered.sql} ORDER BY last_seen_at DESC, id ASC LIMIT ? OFFSET ?`
       )
       .bind(...filtered.values, query.limit, query.offset),
     db
@@ -120,13 +125,14 @@ export async function queryJobsBrowser(db: D1Database, query: JobsQuery) {
       .bind(...specialties.values)
   ]);
   if (results.some((result) => !result.success)) throw new Error('Jobs read failed');
+  const jobs = results[0].results as BrowserJobRow[];
   const summary = results[1].results[0] as {
     total: number;
     lastSeenAt: string | null;
     fetchedAt: string | null;
   };
   return {
-    jobs: results[0].results.map((job) => ({
+    jobs: jobs.map((job) => ({
       ...job,
       source_url: safeJobUrl(job.source_url),
       application_url: safeJobUrl(job.application_url)

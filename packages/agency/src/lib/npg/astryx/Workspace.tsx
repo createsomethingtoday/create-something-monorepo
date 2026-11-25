@@ -1510,7 +1510,7 @@ export function Workspace({ bootstrap }: { bootstrap: NpgBootstrap }) {
               {summary?.price !== 'Unknown' && <Text weight="semibold">{summary?.price}</Text>}
             </Text>
           </HStack>
-          {summary?.title === 'Complete profile · three providers' && <Text type='supporting'>PDL · Exa · Skip Trace</Text>}
+          {completeReview && summary?.providerScope && <Text type='supporting'>{summary.providerScope}</Text>}
           {completeReview && <Text weight="medium">{summary?.price === 'Unknown' ? 'Price unknown. ' : ''}Confirmed receipts are prior spend.</Text>}
           {summary?.name && (
             <HStack gap={1} className="min-w-0">
@@ -1686,7 +1686,7 @@ export function Workspace({ bootstrap }: { bootstrap: NpgBootstrap }) {
         </Theme>
         {empty && <Collapsible trigger="Enrichment availability" defaultIsOpen={false}>
           <Text color="secondary">
-            Complete enrichment attempts PDL, Exa and Skip Trace independently for one selected NPI, with one exact paid review. Provider
+            Complete enrichment attempts PDL, Exa, Skip Trace and Treg independently for one selected NPI, with one exact paid review. Provider
             failures remain visible alongside available results.
           </Text>
           <Text color="secondary">
@@ -2046,6 +2046,21 @@ export function Workspace({ bootstrap }: { bootstrap: NpgBootstrap }) {
                             </Text>
                           </VStack>
                           <ProviderRows enrichment={enrichment} />
+                          {enrichment.phones.length > 0 && <VStack gap={2}>
+                            <Heading level={3}>Associated phone evidence</Heading>
+                            <Text type="supporting" color="secondary">Ownership and consent remain unknown. Vendor line checks report a moment in time and do not establish permission to contact.</Text>
+                            <List aria-label="Associated phone evidence">
+                              {enrichment.phones.map(phone => <ListItem key={phone.number} label={
+                                <VStack gap={1} className="min-w-0">
+                                  <Text weight="semibold" wordBreak="break-word">{phone.number}</Text>
+                                  <Text type="supporting" wordBreak="break-word">{phone.roles.join(' · ')}</Text>
+                                  <Text type="supporting" color="secondary" wordBreak="break-word">{phone.sources.map(source => source.replace(/https:\/\/[^\s]+/g, url => { try { return new URL(url).hostname; } catch { return url; } })).join(' · ')}</Text>
+                                  {phone.lineType !== 'Unknown' && <Text type="supporting" color="secondary">Vendor line type: {phone.lineType}</Text>}
+                                  {phone.vendorReports.map(report => <Text key={report} type="supporting" color="secondary">Reported {report} by {phone.lineCheckProvider ?? 'Treg line check'}.</Text>)}
+                                </VStack>
+                              } />)}
+                            </List>
+                          </VStack>}
                           <Section
                             padding={0}
                             paddingBlockStart={3}
@@ -2124,7 +2139,9 @@ export function Workspace({ bootstrap }: { bootstrap: NpgBootstrap }) {
                           />
                           <Text>
                             {conversation.pending.tool === 'enrich_candidate_complete_profile'
-                              ? summary?.title === 'Complete profile · three providers'
+                              ? summary?.providerScope?.includes('Treg')
+                                ? 'One approval checks PDL, Exa, Skip Trace and Treg. Treg contact checks report vendor evidence only. Identity, ownership, reachability and consent remain unverified.'
+                                : summary?.title === 'Complete profile · three providers'
                                 ? 'One approval checks PDL, Exa and Skip Trace. Includes professional and personal-contact candidates. Identity and consent remain unverified.'
                                 : 'This saved approval checks PDL, Clay, Exa and Skip Trace. Its original scope is unchanged. Identity and consent remain unverified.'
                               : 'Approve only this request. Contact consent remains unverified.'}

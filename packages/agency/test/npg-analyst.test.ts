@@ -186,7 +186,7 @@ test('history titles project only the owner first question, without exposing ful
     assert.equal((await store.list('bob'))[0].title, 'New conversation');
   });
 });
-const message = (c: { id: string; version: number }): Command => ({
+const message = (c: { id: string; version: number }): Extract<Command, { type: 'message' }> => ({
   type: 'message',
   id: c.id,
   version: c.version,
@@ -1471,7 +1471,8 @@ function completeFixture(
     providers: {
       pdl: { status: 'matched' },
       exa: { status: 'matched' },
-      apify: { status: 'no_contact' }
+      apify: { status: 'no_contact' },
+      treg: { status: 'no_match' }
     }
   },
   blocked = ''
@@ -1497,7 +1498,7 @@ function completeFixture(
       name: 'get_enrichment_readiness',
       inputSchema: {
         type: 'object',
-        properties: { provider: { enum: ['pdl', 'exa', 'apify'] } },
+        properties: { provider: { enum: ['pdl', 'exa', 'apify', 'treg'] } },
         required: ['provider'],
         additionalProperties: false
       }
@@ -1513,7 +1514,7 @@ function completeFixture(
         reason: args.provider === blocked ? 'Missing access' : null,
         budget: { ...ready.budget, reserved: 0, remaining: 98 }
       };
-    return result;
+    return { ...(result as any), providers: { treg: { status: 'no_match' }, ...(result as any).providers } };
   };
   return f;
 }
@@ -1527,7 +1528,7 @@ test('complete profile covers all four providers and exact one-use approval', ()
     assert.equal((proposed.pending!.arguments as any).operation_id, proposed.pending!.id);
     assert.deepEqual(
       f.calls.map((c) => (c.args as any).provider),
-      ['pdl', 'exa', 'apify']
+      ['pdl', 'exa', 'apify', 'treg']
     );
     const approved = await executeCommand(store, 'alice', approve(proposed), () => f.p);
     assert.equal(approved.status, 'idle');
@@ -1567,6 +1568,8 @@ test('complete-profile uncertain partial receipt holds paid work and preserves e
     assert.equal(out.status, 'ambiguous');
     assert.deepEqual(out.sources.at(-1)!.data, {
       ...result,
+      active_providers: ['pdl', 'exa', 'apify', 'treg'],
+      providers: { treg: { status: 'no_match' }, ...result.providers },
       billing_reconciliation_required: true
     });
     await store.acquirePaid('another');
@@ -1608,7 +1611,7 @@ test('known pending complete-profile receipts remain partial without an uncertai
     const proposed = await executeCommand(store, 'alice', message(c), () => f.p);
     const out = await executeCommand(store, 'alice', approve(proposed), () => f.p);
     assert.equal(out.status, 'idle');
-    assert.deepEqual(out.sources.at(-1)!.data, result);
+    assert.deepEqual(out.sources.at(-1)!.data, { ...result, active_providers: ['pdl','exa','apify','treg'], providers: { treg: { status: 'no_match' }, ...result.providers } });
     assert.match(out.messages.at(-1)!.text, /incomplete.*reconciliation.*do not repeat/s);
     assert.equal((await store.action('alice', proposed.pending!.id)).status, 'completed');
   }));
@@ -2293,3 +2296,81 @@ for (const tool of ['get_healthcare_coverage', 'search_coverage_candidates']) {
     assert.equal(next.sources[0].assistantMessageIndex, 1);
   }));
 }
+
+for (const status of ['partial', 'unavailable'])
+  test(`Treg ${status} remains a separate incomplete outcome without hiding other providers`, () =>
+    database(async (store) => {
+      const f = completeFixture({npi:completeArgs.npi, providers:{pdl:{status:'matched'},exa:{status:'complete'},apify:{status:'no_contact'},treg:{status,uncertain_dispatch:false,actual_cost_usd:null}}});
+      const c = await conversation(store);
+      const proposed = await executeCommand(store,'alice',message(c),()=>f.p);
+      const out = await executeCommand(store,'alice',approve(proposed),()=>f.p);
+      assert.equal(out.status,'idle');
+      const result = out.sources.at(-1)!.data as any;
+      assert.equal(result.status,'partial');
+      assert.equal(result.providers.treg.status,status);
+      assert.equal(result.providers.pdl.status,'matched');
+      assert.equal(result.uncertain_dispatch,false);
+      assert.equal(result.providers.treg.actual_cost_usd,null);
+    }));
+
+test('three-provider saved pending review cannot dispatch the newly expanded scope', () =>
+  database(async (store) => {
+    const f = completeFixture();
+    const c = await conversation(store);
+    const addAction = store.addAction.bind(store);
+    store.addAction = async (row, action) => addAction(row, {...action, review_json: JSON.stringify({providers:['pdl','exa','apify']})});
+    const proposed = await executeCommand(store,'alice',message(c),()=>f.p);
+    const out = await executeCommand(store,'alice',approve(proposed),()=>f.p);
+    assert.equal(out.status,'idle');
+    assert.match(out.messages.at(-1)!.text,/outdated provider scope/);
+    assert.equal(f.calls.filter(call=>call.name==='enrich_candidate_complete_profile').length,0);
+  }));
+
+for (const field of ['phone','email'])
+  test(`async pending Treg ${field} prevents same-NPI replay for owner and other owner`,()=>database(async store=>{
+    const first = completeFixture({npi:completeArgs.npi,providers:{pdl:{status:'matched'},exa:{status:'complete'},apify:{status:'no_contact',charge_reconciled:true},treg:{status:'partial',uncertain_dispatch:false,contacts:{[field]:{status:'pending'}},actual_cost_usd:0.12}}});
+    const c = await conversation(store);
+    const proposal = await executeCommand(store,'alice',message(c),()=>first.p);
+    const original = await executeCommand(store,'alice',approve(proposal),()=>first.p);
+    assert.equal(original.status,'idle');
+    const again = completeFixture();
+    const next = await conversation(store);
+    const saved = await executeCommand(store,'alice',message(next),()=>again.p);
+    assert.equal(saved.pending,null,'own saved pending contact must prevent a new approval');
+    assert.ok(saved.sources.some(source=>source.actionId===proposal.pending!.id));
+    assert.equal(again.calls.filter(call=>call.name==='enrich_candidate_complete_profile').length,0);
+    const other = await conversation(store,'bob');
+    const otherProvider = completeFixture();
+    const reviewed = await executeCommand(store,'bob',message(other),()=>otherProvider.p);
+    assert.ok(reviewed.pending,'other owners can prepare their own review without private receipt disclosure');
+    const held = await executeCommand(store,'bob',approve(reviewed),()=>otherProvider.p);
+    assert.equal(otherProvider.calls.filter(call=>call.name==='enrich_candidate_complete_profile').length,0,'shared exact-NPI guard prevents vendor replay');
+    assert.equal(held.sources.length,0,'another owner must not receive original private receipt');
+    assert.match(held.messages.at(-1)!.text,/receipt|reconcil/i);
+    const distinctNpi = '1234567891';
+    const distinct = completeFixture({npi:distinctNpi,providers:{pdl:{status:'matched'},exa:{status:'complete'},apify:{status:'no_contact',charge_reconciled:true},treg:{status:'complete',actual_cost_usd:0}}});
+    const respond = distinct.p.respond;
+    distinct.p.respond = async (...args) => {
+      const response = await respond(...args);
+      if(response.call)response.call.arguments=JSON.stringify({npi:distinctNpi,confirm_paid_enrichment:true});
+      return response;
+    };
+    const separate = await conversation(store,'carol');
+    const distinctReview = await executeCommand(store,'carol',{...message(separate),text:'Enrich selected NPI '+distinctNpi},()=>distinct.p);
+    const distinctOut = await executeCommand(store,'carol',approve(distinctReview),()=>distinct.p);
+    assert.equal(distinctOut.status,'idle');
+    assert.equal(distinct.calls.filter(call=>call.name==='enrich_candidate_complete_profile').length,1,'another NPI remains available');
+  }));
+
+test('Treg unavailable outcome does not create a pending-contact hold',()=>database(async store=>{
+  const first = completeFixture({npi:completeArgs.npi,providers:{pdl:{status:'matched'},exa:{status:'complete'},apify:{status:'no_contact',charge_reconciled:true},treg:{status:'unavailable',uncertain_dispatch:false,actual_cost_usd:0}}});
+  const c = await conversation(store);
+  const proposal = await executeCommand(store,'alice',message(c),()=>first.p);
+  await executeCommand(store,'alice',approve(proposal),()=>first.p);
+  assert.equal(await store.savedReceipt('alice',completeArgs.npi),undefined);
+  const next = await conversation(store,'bob');
+  const second = completeFixture();
+  const reviewed = await executeCommand(store,'bob',message(next),()=>second.p);
+  await executeCommand(store,'bob',approve(reviewed),()=>second.p);
+  assert.equal(second.calls.filter(call=>call.name==='enrich_candidate_complete_profile').length,1);
+}));

@@ -319,3 +319,48 @@ for (const status of ['association_failure', 'privacy_blocked_review', 'billing_
     assert.deepEqual(Object.keys(result.providers),['pdl','exa','apify']);
   });
 }
+
+for(const pendingEmail of [false,true])
+test(`four-provider combined response uses exact Exa-grounded practice identity for Treg (${pendingEmail?'partial charge':'settled'})`,async()=>{
+ const f=fixture();
+ const baseFetch=f.options.fetchFn;
+ const routedBodies:Record<string,unknown>[]=[];
+ f.options.tregToken='fixture';
+ f.options.fetchFn=async(input:any,init:any)=>{
+  const url=new URL(String(input));
+  if(url.hostname==='treg.to'){
+   routedBodies.push(JSON.parse(init.body));
+   assert.equal(init.headers['X-Treg-Route-Verify'],'true');
+   if(pendingEmail && url.pathname.includes('email'))return new Response('unresolved',{status:503});
+   return Response.json({output:url.pathname.includes('phone')?{phone:'+12125550101',line_type:'mobile'}:{email:'jordan@practice.example'},_treg:{served_by:'fixture',verification:{verdict:'valid',checked:true}}},{headers:{'X-Treg-Call-Id':url.pathname.includes('phone')?'phone-receipt':'email-receipt','X-Treg-Cost-Micro':'1200'}});
+  }
+  if(url.hostname==='api.exa.ai')return Response.json({id:'grounded-run',status:'completed',output:{structured:{match_status:'verified_match',identity_reason:'Registry NPI explicitly on practice biography',professional_profile_url:null,professional_email:null,professional_phone:null,employer_domain:'practice.example',employer_staff_source_url:'https://practice.example/providers/jordan-test',evidence_summary:'Exact practitioner biography'},grounding:[{url:'https://practice.example/providers/jordan-test'}]},costDollars:{total:.05}});
+  const response=await baseFetch(input,init);
+  if(url.pathname==='/api/abundance/enrichment-budget'&&init?.method==='POST'&&!JSON.parse(init.body).action){
+   const body=await response.json();body.data.grants.treg={id:'f'.repeat(64),provider:'treg',npi:f.npi,token:'fixture'};return Response.json(body);
+  }
+  return response;
+ };
+ const {createAbundanceHealthcareServer}=await import('../src/index.js');
+ const {Client}=await import('@modelcontextprotocol/sdk/client/index.js');
+ const {InMemoryTransport}=await import('@modelcontextprotocol/sdk/inMemory.js');
+ const server=createAbundanceHealthcareServer(f.options);
+ const client=new Client({name:'treg-combined',version:'1'});
+ const [a,b]=InMemoryTransport.createLinkedPair();
+ await server.connect(a);await client.connect(b);
+ let r:any;
+ try{
+  const response=await client.callTool({name:'enrich_candidate_complete_profile',arguments:{npi:f.npi,confirm_paid_enrichment:true,operation_id:'11111111-1111-4111-8111-111111111111'}});
+  assert.equal(response.isError,undefined);r=response.structuredContent;
+ }finally{await client.close();await server.close();}
+ assert.deepEqual(r.active_providers,['pdl','exa','apify','treg']);
+ assert.equal(r.providers.treg.contacts.phone.value,'+12125550101');
+ assert.equal(r.providers.treg.contacts.email.value??null,pendingEmail?null:'jordan@practice.example');
+ assert.equal(r.providers.treg.actual_cost_usd,pendingEmail?null:.0024);
+ assert.equal(r.providers.treg.confirmed_subtotal_usd,pendingEmail?.0012:.0024);
+ assert.equal(r.spend_tracking.actual_usd,pendingEmail?.0512:.0524);
+ assert.equal(r.spend_tracking.pending_receipts,pendingEmail?3:2);
+ assert.equal(r.billing_reconciliation_required,true);
+ assert.deepEqual(routedBodies,[{first_name:'Jordan',last_name:'Test',domain:'practice.example'},{first_name:'Jordan',last_name:'Test',domain:'practice.example'}]);
+ assert.equal(f.events.filter(e=>e==='record:treg').length,2);
+});

@@ -228,8 +228,8 @@ export function fixture(mode: string | null) {
           operation_id: '1d0822cf-c2ac-4713-a6ba-fef887b7bccc'
         },
         review: {
-          providers: ['pdl', 'exa', 'apify'],
-          provider: 'PDL + Exa + Skip Trace',
+          providers: ['pdl', 'exa', 'apify', 'treg'],
+          provider: 'PDL + Exa + Skip Trace + Treg',
           currency: 'USD',
           confirmedTrackedUsd: 0.2,
           pendingReceipts: 2,
@@ -243,9 +243,9 @@ export function fixture(mode: string | null) {
           spendPolicy:
             'Spend tracking only. Estimates are separate from confirmed USD; unknown estimates do not block this request. No application spend limit.',
           contactScope:
-            'One selected NPI. Professional and personal-contact candidates from PDL, public professional contacts from Exa, and broker personal-contact candidates from Skip Trace. Identity, ownership and consent are unverified.',
+            'One selected NPI. Professional and personal-contact candidates from PDL, public professional contacts from Exa, broker personal-contact candidates from Skip Trace, and contact discovery with vendor line checks from Treg. Identity, ownership and consent are unverified.',
           execution:
-            'PDL, Exa and Skip Trace are attempted independently. Failures stay visible. Do not repeat uncertain operations; recover exact existing receipts.'
+            'PDL, Exa, Skip Trace and Treg are attempted independently. Failures stay visible. Do not repeat uncertain operations; recover exact existing receipts.'
         },
         expiresAt: Date.now() + 600000
       };
@@ -356,6 +356,11 @@ export function fixture(mode: string | null) {
           }
         };
       }
+      if (mode === 'complete-treg') {
+        delete providers.clay;
+        providers.treg = {status:'complete',verification:'unverified',contacts:{phone:{status:'found',value:'(555) 555-0100',source:{system:'treg',served_by:'Synthetic finder',identity_source_url:'https://example.invalid/jamie'},verification:{verdict:'live',provider:'Synthetic line checker',checked:true,pending:false,line_type:'mobile'},receipt:{call_id:'synthetic',actual_usd:null,reported_usd:null,settled:false}},email:{status:'not_found'}}};
+        Object.assign(registry,{phone_evidence:{status:'available',phones:[{number:'555-555-0102',role:'practice'},{number:'555-555-0103',role:'practice fax'},{number:'+15555550100',role:'mailing'}]}});
+      }
       if (mode === 'complete-three') {
         providers.pdl = {status:'no_match'};
         providers.exa = {status:'no_match'};
@@ -366,6 +371,7 @@ export function fixture(mode: string | null) {
       view.sources.push({
         tool: 'enrich_candidate_complete_profile',
         data: {
+          ...(mode === 'complete-treg' ? {active_providers:['pdl','exa','apify','treg']} : {}),
           status: mode === 'complete-three' ? 'complete' : 'partial',
           ...(['complete-three','complete-pending','complete-identity-blocked'].includes(mode ?? '') ? {active_providers:['pdl','exa','apify']} : {}),
           npi,

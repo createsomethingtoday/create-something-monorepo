@@ -106,7 +106,7 @@ try {
       await gotoState(page, 'complete-review');
       const bar = page.locator('.npg-review-decision-bar');
       await expect(bar.getByText('Price unknown. Confirmed receipts are prior spend.', {exact:true})).toBeInViewport();
-      await expect(bar.getByText('PDL · Exa · Skip Trace', {exact:true})).toBeInViewport();
+      await expect(bar.getByText('PDL · Exa · Skip Trace · Treg', {exact:true})).toBeInViewport();
       await expect(bar.getByRole('button', {name:'Approve paid lookup'})).toBeInViewport();
       const contactScope = page.getByRole('heading', { name: 'Contact scope', exact: true }).locator('..');
       await contactScope.scrollIntoViewIfNeeded();
@@ -116,7 +116,7 @@ try {
       const metadata = page.getByRole('button',{name:'Original review metadata',exact:true});
       await metadata.click();
       await expect(page.getByText('Providers in this approval',{exact:true})).toBeVisible();
-      await expect(page.getByText('PDL, Exa, Skip Trace',{exact:true})).toBeVisible();
+      await expect(page.getByText('PDL, Exa, Skip Trace, Treg',{exact:true})).toBeVisible();
       assert.deepEqual(await commands(page), []);
     }, {width, height:width === 390 ? 844 : 900});
   }
@@ -1052,6 +1052,35 @@ try {
     await expect(page.getByText('Could not complete the request')).toHaveCount(0);
     assert.equal((await commands(page)).filter(command=>command.type==='message').length,1);
   });
+  for (const [name, viewport] of [['desktop',{width:1440,height:900}],['mobile',{width:390,height:844}]]) {
+    await scenario('Treg phone evidence ' + name, async page => {
+      await gotoState(page,'complete-treg');
+      const back = page.getByRole('button',{name:'Back to conversation',exact:true});
+      if (await back.isVisible()) await back.click();
+      const phones = page.getByRole('list',{name:'Associated phone evidence'});
+      const number = phones.getByText('(555) 555-0100',{exact:true});
+      await expect(number).toHaveCount(1);
+      await page.locator('.npg-thread').hover();
+      await page.mouse.wheel(0,450);
+      await number.scrollIntoViewIfNeeded();
+      await expect(number).toBeInViewport();
+      await expect(phones).toContainText('Public registry · mailing');
+      await expect(phones).toContainText('PDL');
+      await expect(phones).toContainText('Treg · Synthetic finder');
+      await expect(phones).toContainText('Reported live by Synthetic line checker.');
+      await expect(phones).toContainText('Fax');
+      assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);
+      await page.screenshot({path:`${evidence}/${name}-phones.png`});
+      const evidenceButton=page.getByRole('button',{name:'Inspect Treg evidence',exact:true});
+      await evidenceButton.focus();
+      await page.keyboard.press('Enter');
+      await expect(page.getByRole('heading',{name:'Treg evidence',exact:true})).toBeFocused();
+      await page.getByRole('button',{name:'Close provider evidence'}).focus();
+      await page.keyboard.press('Enter');
+      await expect(evidenceButton).toBeFocused();
+      assert.deepEqual(await commands(page),[]);
+    },viewport);
+  }
 } finally {
   await browser.close();
   await writeFile(`${evidence}/browser-report.json`, JSON.stringify(report, null, 2));

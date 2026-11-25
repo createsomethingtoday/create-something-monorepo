@@ -12,6 +12,7 @@ function fixture() {
   const sql = new DatabaseSync(':memory:');
   sql.exec(readFileSync('migrations/0054_abundance_clay_jobs.sql', 'utf8'));
   sql.exec(readFileSync('migrations/0064_enrichment_budget.sql', 'utf8'));
+  sql.exec(readFileSync('migrations/0068_npg_treg_enrichment_provider.sql', 'utf8'));
   sql.exec(
     'CREATE TABLE abundance_healthcare_nationwide_memberships(run_id TEXT,provider_npi TEXT,provider_snapshot_json TEXT,PRIMARY KEY(run_id,provider_npi));'
   );

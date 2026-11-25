@@ -1,7 +1,7 @@
 /** Durable spend tracking. The historical filename is retained for internal clients;
  * this module does not impose dollar, credit or daily limits. */
-export type EnrichmentProvider = 'pdl' | 'clay' | 'exa' | 'apify';
-const PROVIDERS: EnrichmentProvider[] = ['pdl', 'clay', 'exa', 'apify'];
+export type EnrichmentProvider = 'pdl' | 'clay' | 'exa' | 'apify' | 'treg';
+const PROVIDERS: EnrichmentProvider[] = ['pdl', 'clay', 'exa', 'apify', 'treg'];
 export function requireEnrichmentProvider(value: unknown): EnrichmentProvider {
   if (!PROVIDERS.includes(value as EnrichmentProvider))
     throw new TypeError('Unknown enrichment provider');
@@ -62,19 +62,46 @@ function safeLabel(value: unknown, maximum: number) {
   if (!/^[a-zA-Z0-9_.:\/-]+$/.test(value)) throw new TypeError('Invalid receipt reference');
   return value;
 }
+// Subcall corrections retain the original unit; an invoice total supersedes
+// all subcalls for that grant. Every receipt remains in the append-only ledger.
+const TREG_SPEND_SQL = `WITH grants AS (
+ SELECT reservation_id FROM npg_enrichment_grants WHERE provider='treg'
+), events AS (
+ SELECT r.*, CASE
+   WHEN event_id=request_id||':treg:phone' OR instr(event_id,request_id||':treg:phone:')=1 THEN 'phone'
+   WHEN event_id=request_id||':treg:email' OR instr(event_id,request_id||':treg:email:')=1 THEN 'email'
+   ELSE 'operation' END AS unit
+ FROM npg_enrichment_receipts r WHERE provider='treg'
+), split_grants AS (
+ SELECT reservation_id FROM grants g
+ WHERE EXISTS(SELECT 1 FROM events e WHERE e.request_id=g.reservation_id AND e.unit IN ('phone','email'))
+ AND NOT EXISTS(SELECT 1 FROM events e WHERE e.request_id=g.reservation_id AND e.unit='operation' AND actual_micros IS NOT NULL)
+), units AS (
+ SELECT reservation_id,'phone' AS unit FROM split_grants
+ UNION ALL SELECT reservation_id,'email' FROM split_grants
+ UNION ALL SELECT reservation_id,'operation' FROM grants WHERE reservation_id NOT IN (SELECT reservation_id FROM split_grants)
+), amounts AS (
+ SELECT (SELECT actual_micros FROM events e WHERE e.request_id=u.reservation_id AND e.unit=u.unit AND actual_micros IS NOT NULL ORDER BY id DESC LIMIT 1) AS actual,
+ (SELECT estimated_micros FROM events e WHERE e.request_id=u.reservation_id AND e.unit=u.unit AND estimated_micros IS NOT NULL ORDER BY id DESC LIMIT 1) AS estimated
+ FROM units u
+)
+SELECT (SELECT COUNT(*) FROM grants) AS request_count,
+ COALESCE(SUM(actual),0) AS actual,
+ SUM(CASE WHEN actual IS NULL THEN estimated END) AS estimated,
+ SUM(CASE WHEN actual IS NULL THEN 1 ELSE 0 END) AS pending_count FROM amounts`;
 export async function enrichmentReadiness(db: D1Database, provider: EnrichmentProvider) {
   requireEnrichmentProvider(provider);
   const by_provider = [];
   for (const p of PROVIDERS) {
     const row = await db
       .prepare(
-        `SELECT COUNT(*) AS request_count,
+        p === 'treg' ? TREG_SPEND_SQL : `SELECT COUNT(*) AS request_count,
  COALESCE(SUM((SELECT actual_micros FROM npg_enrichment_receipts r WHERE r.request_id=g.reservation_id AND r.provider=g.provider AND actual_micros IS NOT NULL ORDER BY id DESC LIMIT 1)),0) AS actual,
  SUM(CASE WHEN NOT EXISTS(SELECT 1 FROM npg_enrichment_receipts r WHERE r.request_id=g.reservation_id AND r.provider=g.provider AND actual_micros IS NOT NULL) THEN (SELECT estimated_micros FROM npg_enrichment_receipts r WHERE r.request_id=g.reservation_id AND r.provider=g.provider AND estimated_micros IS NOT NULL ORDER BY id DESC LIMIT 1) END) AS estimated,
  SUM(CASE WHEN NOT EXISTS(SELECT 1 FROM npg_enrichment_receipts r WHERE r.request_id=g.reservation_id AND r.provider=g.provider AND actual_micros IS NOT NULL) THEN 1 ELSE 0 END) AS pending_count
  FROM npg_enrichment_grants g WHERE provider=?`
       )
-      .bind(p)
+      .bind(...(p === 'treg' ? [] : [p]))
       .first<{
         request_count: number;
         actual: number;

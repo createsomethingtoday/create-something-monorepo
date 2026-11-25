@@ -1,8 +1,8 @@
 # NPG enrichment recovery
 
-PDL, Exa and Skip Trace are the only active providers. One separate exact owner approval requests these three independently. Clay has been removed from tools, readiness, dispatch and recovery. New results contain only `pdl`, `exa`, `apify` and record that exact `active_providers` scope. Saved older approvals must be replaced with a fresh review before dispatch.
+New owner approvals cover PDL, Exa, Skip Trace and Treg for one exact NPI. Saved receipts retain their original provider scope. A pending approval created with an older scope requires a fresh review before dispatch.
 
-Historical jobs, receipts and original action scopes remain intact in D1. Unresolved Clay receipts remain unchanged inside their historical source; the aggregate is marked `retired` once active providers are settled, rather than falsely complete. `retired_providers: [clay]` identifies the audit-only source. A legacy Clay-only pending receipt does not prevent a fresh three-provider request for the same candidate. Exact unresolved Skip receipts and identity/privacy holds still prevent duplicate lookup.
+Historical jobs, receipts and original action scopes remain intact in D1. Unresolved Clay receipts remain unchanged inside their historical source; the aggregate is marked `retired` once active providers are settled, rather than falsely complete. `retired_providers: [clay]` identifies the audit-only source. A legacy Clay-only pending receipt does not prevent a fresh complete-profile request for the same candidate. Exact unresolved Skip receipts and identity/privacy holds still prevent duplicate lookup.
 
 ## Existing receipt recovery
 
@@ -18,7 +18,7 @@ Only one operation is available in receipt-only mode:
 
 Recovery never creates another paid lookup. The approved action must match the owner, conversation, operation ID, tool and NPI. Changed or unknown associations withhold affected contact evidence and require review. A pending receipt also prevents another paid request for the same candidate, including from a different conversation.
 
-The three active result states and the nested profile are recomputed after recovery. Historical charges on a cached job do not become charges for the current approval. A finished lookup can still have unknown billing or unverified contacts. Exhaustion requires operator reconciliation; it does not authorize another dispatch.
+The approved provider result states and the nested profile are recomputed after recovery. Historical charges on a cached job do not become charges for the current approval. A finished lookup can still have unknown billing or unverified contacts. Exhaustion requires operator reconciliation; it does not authorize another dispatch.
 
 The browser reads saved state every 15 seconds while recovery is pending, up to 120 checks per mounted recovery interval. It pauses reads while hidden or while an interactive command is running. Closing the browser does not stop the Worker scheduler. Reloading obtains persisted state. The browser does not call enrichment providers directly.
 

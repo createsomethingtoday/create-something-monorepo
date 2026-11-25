@@ -11,6 +11,7 @@ import {
 function fixture() {
   const sql = new DatabaseSync(':memory:');
   sql.exec(readFileSync('migrations/0064_enrichment_budget.sql', 'utf8'));
+  sql.exec(readFileSync('migrations/0068_npg_treg_enrichment_provider.sql', 'utf8'));
   class Statement {
     constructor(
       readonly q: string,
@@ -41,13 +42,13 @@ test('tracking admits distinct requests without known prices or historical USD',
     const b = await reserveEnrichment(f.db, 'complete', 'e'.repeat(64), '1234567893');
     assert.ok(a.grants.apify);
     assert.ok(b.grants.pdl);
-    assert.equal((await enrichmentReadiness(f.db, 'pdl')).spend.pending_count, 6);
+    assert.equal((await enrichmentReadiness(f.db, 'pdl')).spend.pending_count, 8);
     await assert.rejects(reserveEnrichment(f.db, 'complete', 'd'.repeat(64), '1234567893'));
   } finally {
     f.sql.close();
   }
 });
-test('three active one-use candidate grants retain replay protection without a financial hold', async () => {
+test('four active one-use candidate grants retain replay protection without a financial hold', async () => {
   const f = fixture();
   try {
     const r = await reserveEnrichment(f.db, 'complete', 'c'.repeat(64), '1234567893');
@@ -55,7 +56,7 @@ test('three active one-use candidate grants retain replay protection without a f
     await assert.rejects(claimEnrichment(f.db, { ...grant, npi: '1234567894' }));
     await claimEnrichment(f.db, grant);
     await assert.rejects(claimEnrichment(f.db, grant));
-    for (const p of ['exa', 'apify'] as const) await claimEnrichment(f.db, r.grants[p]!);
+    for (const p of ['exa', 'apify', 'treg'] as const) await claimEnrichment(f.db, r.grants[p]!);
     assert.throws(() => f.sql.exec('DELETE FROM npg_enrichment_requests'));
     assert.throws(() => f.sql.exec('UPDATE npg_enrichment_grants SET consumed=0'));
   } finally {
@@ -93,7 +94,7 @@ test('actual USD, estimates and credit units remain separate and receipts append
       { unit: 'pdl_credit', amount: 1 }
     ]);
     assert.equal(sum.estimated_usd, 0.102);
-    assert.equal(sum.pending_count, 3);
+    assert.equal(sum.pending_count, 4);
     await recordEnrichment(f.db, exa, {
       event_id: 'exa:receipt',
       status: 'complete',
@@ -103,7 +104,7 @@ test('actual USD, estimates and credit units remain separate and receipts append
     sum = (await enrichmentReadiness(f.db, 'exa')).spend;
     assert.equal(sum.confirmed_usd, 0.17);
     assert.equal(sum.estimated_usd, null);
-    assert.equal(sum.pending_count, 2);
+    assert.equal(sum.pending_count, 3);
     assert.equal(sum.historical_usd, null);
     await recordEnrichment(f.db, exa, {
       event_id: 'exa:refresh',

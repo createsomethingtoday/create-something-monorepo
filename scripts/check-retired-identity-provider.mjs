@@ -36,7 +36,7 @@ if (process.argv.includes('--self-test')) {
   process.exit(0);
 }
 
-const tracked = execFileSync('git', ['ls-files', '-z'], { encoding: 'utf8' }).split('\0').filter(Boolean);
+const tracked = execFileSync('git', ['ls-files', '-z'], { encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 }).split('\0').filter(Boolean);
 const violations = [];
 for (const file of tracked) {
   if (!existsSync(file) || !statSync(file).isFile()) continue;
