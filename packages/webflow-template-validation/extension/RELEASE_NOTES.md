@@ -1,5 +1,26 @@
 # Webflow Way Validator - Release Notes
 
+## Version 1.3.14 - Panel design and usability
+
+- One result block at the top of the report: the outcome, the error, warning and note counts, the score, and the next action. It replaces the report header, the outcome card, the four number tiles and the blocker card, which said the same thing three times.
+- Categories with work to do come first and are open. Categories with no work are one closed line. A category with more than 10 findings shows the first 8, errors first, and a "Show more" button.
+- Findings are rows, not cards. A location on the checked site shows as its page path.
+- A run now shows its progress. Earlier builds showed the progress bar only while the Validator script was missing; a normal run showed a spinner.
+- New empty state before the first run on a site, with the three steps to a result.
+- The main button follows the state. With a report on screen, "Open Fix List" is the blue button and the run button reads "Run again". During script setup, "Copy Validator script" is the blue button.
+- Finding badges use one word set in both tabs: Error, Warning, Note.
+- Categories with no findings fold into one line ("11 categories with no findings").
+- "Flag as incorrect" shows on the row in use (hover or keyboard focus).
+- The status line says "Running the Validator..." during a run and goes back to the script state after it.
+- The Options menu has two columns and fits the panel. "Current page only" was cut off before.
+- Script setup: the four steps are one line, the snippet wraps, and "Rotate script token" is a quiet link.
+- Disclosure arrows are drawn in CSS and the page declares UTF-8, so the arrows cannot show as broken characters.
+- Small text is 11px (was 10px) and muted text meets WCAG AA contrast (4.5:1 or more; was 3.2:1 on the panel background).
+- Fix List checkboxes work with the keyboard.
+- No change to checks, findings, the score or the data sent to the Worker.
+
+---
+
 ## Version 1.3.13 - Unused styles from a preview link
 
 - Options has a new field, "Preview link (optional)". With the site's preview link, the unused styles check reads the same site data as "Clean up" in the Style selectors panel and reports the same list.

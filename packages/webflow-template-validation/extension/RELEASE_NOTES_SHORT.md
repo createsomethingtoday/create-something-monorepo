@@ -1,11 +1,13 @@
-# Webflow Way Validator v1.3.13
+# Webflow Way Validator v1.3.14
 
 ## Changes/Fixes
 
-- New option "Preview link (optional)": with the site's preview link, the unused styles check reports the same list as "Clean up" in the Style selectors panel.
-- Without the link, the check compares the published pages, as before.
-- The extension does not save the link.
+- New report layout: one result block with the outcome, counts, score and next action. Categories with work come first; long categories show 8 findings and a "Show more" button.
+- A run shows its progress bar and current step.
+- New empty state, a two-column Options menu that fits the panel, and a clearer script setup.
+- Larger small text and higher contrast for muted text.
+- No change to checks, findings or the score.
 
 ## Worker pairing
 
-Requires Worker 2.16.1 or later for the preview link. Earlier Workers ignore it.
+No Worker change. Works with Worker 2.20.1.
