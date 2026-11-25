@@ -186,8 +186,10 @@ export function auditReviewNotes(elements: MarkupNode[], root: MarkupNode, pageU
 		if (targetHost === pageUrl.hostname.toLowerCase()) {
 			const targetPath = target.pathname.replace(/\/+$/, '') || '/';
 			if (/^(?:https?:)?\/\//i.test(href) && data.ownDomainLinks.length < MAX_SAMPLES) data.ownDomainLinks.push(href.slice(0, 120));
-			if (!ERROR_STATUS_PATHS.has(targetPath)) internal.add(targetPath);
-			if (targetPath.split('/').length === 3 && ancestors(el).some((parent) => classes(parent).includes('w-dyn-item'))) items.add(targetPath);
+			// A path that starts with "//" resolves to another host when it is joined to the site again, so it is not a target of this site.
+			const sitePath = !targetPath.startsWith('//');
+			if (sitePath && !ERROR_STATUS_PATHS.has(targetPath)) internal.add(targetPath);
+			if (sitePath && targetPath.split('/').length === 3 && ancestors(el).some((parent) => classes(parent).includes('w-dyn-item'))) items.add(targetPath);
 		} else if (/\.webflow\.io$/i.test(targetHost)) {
 			if (!isDesignCredit(el)) otherSites.add(targetHost);
 		} else if (ancestors(el).some(isFooter)) {

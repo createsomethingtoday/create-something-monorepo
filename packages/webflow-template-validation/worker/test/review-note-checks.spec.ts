@@ -109,6 +109,11 @@ describe('Review-note checks', () => {
 			expect(uncheckedInternalTargets([home, about], 1)).toEqual(['/licenses']);
 		});
 
+		it('does not list a path that would resolve to another host', () => {
+			const home = page('/', `${NAV}<a href="${SITE}//other-host.example/p">Odd</a>${FOOTER}`);
+			expect(uncheckedInternalTargets([home, page('/about', NAV + FOOTER)], 10)).toEqual(['/licenses']);
+		});
+
 		it('reports a target the site answered with 404, and the pages that link to it', () => {
 			const home = page('/', `${NAV}<a href="/services/design">Design</a>${FOOTER}`);
 			const [entry] = detail('links-internal-not-found', [home], { notFoundTargets: ['/services/design'] })!;

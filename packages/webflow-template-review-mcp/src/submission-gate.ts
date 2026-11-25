@@ -6,8 +6,9 @@
  * can be published again after that pass, at submit time before the form
  * checked it (submissions before 2026-11) or while the template waits for a
  * review or a re-review. This reads the same two public facts the form reads,
- * so a reviewer sees the state before a full review. It writes nothing and
- * sends nothing to the creator.
+ * so a reviewer sees the state before a full review. It changes no review
+ * status and sends nothing to the creator. The validation worker records the
+ * lookup in its usage log, as it does for a lookup by the form.
  */
 
 export const DEFAULT_VALIDATOR_RESULT_URL = 'https://validation-worker.createsomething.workers.dev/app-validator/submission/latest';
@@ -41,7 +42,9 @@ export interface SubmissionGateConfig {
 
 const LAST_PUBLISHED_COMMENT = /<!--\s*Last Published:\s*([^>]*?)\s*-->/i;
 const SITE_ID = /<html\b[^>]*\bdata-wf-site=["']([0-9a-f]{24})["']/i;
-const BRIDGE_SITE_ID = /window\.__WF_REVIEW_BRIDGE\s*=\s*\{[\s\S]*?\bsiteId\s*:\s*["'`]([0-9a-f]{24})["'`]/i;
+/** The bridge object only: a site id in a later script is not the bridge's. */
+const BRIDGE_OBJECT = /window\.__WF_REVIEW_BRIDGE\s*=\s*\{([^}]*)\}/;
+const BRIDGE_SITE_ID = /\bsiteId\s*:\s*["'`]([0-9a-f]{24})["'`]/i;
 const REQUIRED_CHECKS = ['designer', 'assets', 'content'];
 
 function readLastPublishedAt(html: string): string | undefined {
@@ -76,7 +79,7 @@ export async function readSubmissionGateStatus(publishedUrl: string, config: Sub
     const lastPublishedAt = readLastPublishedAt(html);
     if (!siteId) return { status: 'unavailable', summary: 'The page has no Webflow site id, so the gate status is not known.', lastPublishedAt };
 
-    const bridgeSiteId = BRIDGE_SITE_ID.exec(html)?.[1].toLowerCase();
+    const bridgeSiteId = BRIDGE_SITE_ID.exec(BRIDGE_OBJECT.exec(html)?.[1] ?? '')?.[1].toLowerCase();
     if (bridgeSiteId && bridgeSiteId !== siteId) {
       return {
         status: 'site_mismatch',
@@ -119,10 +122,12 @@ export async function readSubmissionGateStatus(publishedUrl: string, config: Sub
     if (!fullPass) {
       return { status: 'failed', summary: `The latest stored Validator run is not a 100% pass (${result.score}%, ${result.totalErrors} error(s)).`, ...base };
     }
-    if (hoursPublishedAfterRun !== undefined && hoursPublishedAfterRun > 0) {
+    // The form compares the two times exactly, so this does too: the rounded hours are for reading only.
+    if (Number.isFinite(runTime) && Number.isFinite(publishTime) && publishTime > runTime) {
+      const gap = hoursPublishedAfterRun ? `${hoursPublishedAfterRun} hour(s)` : 'a few minutes';
       return {
         status: 'stale',
-        summary: `The site was published ${hoursPublishedAfterRun} hour(s) after the latest stored Validator run, so the stored 100% pass does not describe the site under review. Read the live validation results before a full review.`,
+        summary: `The site was published ${gap} after the latest stored Validator run, so the stored 100% pass does not describe the site under review. Read the live validation results before a full review.`,
         ...base
       };
     }

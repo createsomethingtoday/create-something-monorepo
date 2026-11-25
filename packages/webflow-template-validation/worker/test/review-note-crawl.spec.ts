@@ -58,6 +58,35 @@ describe('Review-note checks in the content crawl', () => {
 		expect(result.pages.every((entry) => entry.reviewerAudit && entry.reviewerAudit.notes === undefined)).toBe(true);
 	});
 
+	it('asks for at most five targets at a time, and only on the site', async () => {
+		const links = Array.from({ length: 12 }, (_, index) => `<a href="/services/s-${index}">S</a>`).join('');
+		vi.mocked(fetchHTML).mockImplementation(async (url: string) => {
+			const html = { '/': page(`<a href="/about">About</a>${links}`), '/about': page('<a href="/">Home</a>') }[new URL(url).pathname];
+			if (!html) throw new Error('HTTP 404: Not Found');
+			return { html, status: 200, headers: { 'content-type': 'text/html' }, size: html.length, loadTime: 0 };
+		});
+		let open = 0;
+		let mostOpen = 0;
+		const hosts = new Set<string>();
+		vi.stubGlobal(
+			'fetch',
+			vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+				if (init?.method === 'HEAD') {
+					hosts.add(new URL(String(input)).host);
+					mostOpen = Math.max(mostOpen, ++open);
+					await new Promise((resolve) => setTimeout(resolve, 5));
+					open--;
+				}
+				return new Response('', { status: 200 });
+			})
+		);
+		await validateContent(SITE, ['about']);
+
+		expect(mostOpen).toBeGreaterThan(1);
+		expect(mostOpen).toBeLessThanOrEqual(5);
+		expect([...hosts]).toEqual([new URL(SITE).host]);
+	});
+
 	it('asks for no link target on a run with a page limit', async () => {
 		const linkChecks = serve(PAGES, ['/services/retired']);
 		const result = await validateContent(SITE, ['about'], { maxPages: 2 });

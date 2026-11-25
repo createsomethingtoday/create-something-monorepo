@@ -56,6 +56,19 @@ test('a site published after the run is stale, with the gap in hours', async () 
   assert.match(report.summary, /published 46\.5 hour\(s\) after the latest stored Validator run/);
 });
 
+test('a publish two minutes after the run is stale, as it is for the submission form', async () => {
+  const { fn } = fetcher(page({ published: 'Tue Nov 24 2026 18:07:00 GMT+0000 (Coordinated Universal Time)' }), stored());
+  const report = await readSubmissionGateStatus(SITE, { fetcher: fn });
+  assert.equal(report.status, 'stale');
+  assert.match(report.summary, /published a few minutes after/);
+});
+
+test('a site id in a later script is not read as the bridge site id', async () => {
+  const html = page().replace('<head>', `<head><script>window.__WF_REVIEW_BRIDGE = { version: "0.3.0" };</script><script>var other = { siteId: "${OTHER_SITE_ID}" };</script>`);
+  const report = await readSubmissionGateStatus(SITE, { fetcher: fetcher(html, stored()).fn });
+  assert.equal(report.status, 'current');
+});
+
 test('a failed run and a partial run are named before the age of the run', async () => {
   const late = page({ published: 'Thu Nov 26 2026 16:35:00 GMT+0000 (Coordinated Universal Time)' });
   const failed = stored({ passed: false, summary: { totalErrors: 3, failedCategories: 1, totalCategories: 6, score: 83, passed: false } });
