@@ -35,3 +35,13 @@ Keep literal unknown terms, original source data, count scope, source freshness 
 ## Validation boundary
 
 The review baseline was the released client bundle exercised against local synthetic HTTP responses. The live private destination redirected to sign-in; authenticated production behavior was not inspected in this work. Functional tests, actual browser review, motion interruption and independent review are required before local handoff. Any production promotion remains a separate authorized release.
+
+## CRE-2582 operator refresh (local review)
+
+The operator explicitly broadened the design brief: "Everything can be improved. The main thing to retain is the logo." This permits the current Figtree heading system, deep-blue navigation and cooler work canvas; the original uncropped logo remains unchanged. The earlier pale-navigation and serif-heading choices describe the previous baseline.
+
+The refreshed shell separates durable workspace destinations from recent research. The new-research view leads with specialty/location input and editable starters. Results retain source-specific rows, explicit pending icons and phone-role provenance; geographic coverage limits remain readable with an icon and text without competing with candidate outcomes. Exact paid reviews lead with the prospective price, distinguish prior receipts and keep the selected NPI, expiry and decision reachable in a compact mobile footer. The full provider scope remains visible in the scrollable review before the decision.
+
+Jobs prioritize searchable listings and source freshness; the geographic map is an optional disclosure and connector instructions follow the listing task. Market activity retains the original saved-activity definitions and uses compact summaries above locale comparison. No authentication, approval, dispatch, data ownership or contact-authority rule changes.
+
+Research inspected static Mobbin previews for Optimal Workshop, Customer.io and Sprig. Adopted task grouping, compact evidence and selected-context details; avoided copying trade dress or inferring animation behavior from screenshots. Local synthetic screenshots and browser checks are review evidence, not authenticated production acceptance. This refresh does not authorize deployment.

@@ -106,7 +106,10 @@ try {
       await gotoState(page, 'complete-review');
       const bar = page.locator('.npg-review-decision-bar');
       await expect(bar.getByText('Price unknown. Confirmed receipts are prior spend.', {exact:true})).toBeInViewport();
-      await expect(bar.getByText('PDL · Exa · Skip Trace · Treg', {exact:true})).toBeInViewport();
+      await expect(page.getByText('Price for this lookup is unknown.', {exact:true})).toBeInViewport();
+      await expect(page.getByText(/^One approval checks PDL, Exa, Skip Trace and Treg\./)).toBeInViewport();
+      if(width === 390) assert.ok((await bar.boundingBox()).height <= 140, 'Mobile decision stays compact');
+      else await expect(bar.getByText('PDL · Exa · Skip Trace · Treg', {exact:true})).toBeInViewport();
       await expect(bar.getByRole('button', {name:'Approve paid lookup'})).toBeInViewport();
       const contactScope = page.getByRole('heading', { name: 'Contact scope', exact: true }).locator('..');
       await contactScope.scrollIntoViewIfNeeded();
@@ -607,7 +610,7 @@ try {
         await gotoState(page, 'review');
         const brand = page
           .getByRole('navigation', { name: 'NPG workspace', exact: true })
-          .getByText(/^(Healthcare analyst|Analyst)$/);
+          .getByText(/^(Research & sourcing|Research)$/);
         const fits = await brand.evaluate(
           (element) => element.scrollWidth <= element.clientWidth + 1
         );
@@ -775,7 +778,7 @@ try {
       await expect(input).toBeVisible();
       await expect(input).toBeFocused();
       await expect(input).toHaveText('');
-      await expect(page.getByRole('heading', { name: 'Who are you looking for?' })).toBeVisible();
+      await expect(page.getByRole('heading', { name: 'Find your next practitioner.' })).toBeVisible();
       assert.deepEqual(
         (await commands(page)).map((command) => command.type),
         ['create']
@@ -974,7 +977,7 @@ try {
   await scenario('reduced motion keeps an honest empty state', async (page) => {
     await page.emulateMedia({ reducedMotion: 'reduce' });
     await gotoState(page, 'new');
-    await expect(page.getByRole('heading', { name: 'Who are you looking for?' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Find your next practitioner.' })).toBeVisible();
     await page.screenshot({ path: `${evidence}/empty.png` });
   });
   await scenario(

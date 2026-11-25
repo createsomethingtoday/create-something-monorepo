@@ -29,9 +29,7 @@ import { Link } from '@astryxdesign/core/Link';
 import { Icon } from '@astryxdesign/core/Icon';
 import {
   Plus,
-  MessagesSquare,
   ChartColumn,
-  LockKeyhole,
   UserRound,
   ArrowUp,
   Download,
@@ -497,20 +495,13 @@ function Evidence({
                   />
                 )}
                 {incomplete && (
-                  <Banner
-                    status="warning"
-                    title={
-                      unresolved
-                        ? Number(unresolved.value).toLocaleString() + ' unresolved locations'
-                        : 'Location coverage is incomplete'
-                    }
-                    description={
-                      <Text size="base">
-                        Some addresses could not be located. Review the source limits before using
-                        geographic results.
-                      </Text>
-                    }
-                  />
+                  <HStack gap={2} align="start" padding={2} role="note" aria-label="Location coverage incomplete">
+                    <Icon icon={TriangleAlert} color="warning" />
+                    <VStack gap={1}>
+                      <Text weight="semibold">{unresolved ? Number(unresolved.value).toLocaleString() + ' unresolved locations' : 'Location coverage is incomplete'}</Text>
+                      <Text type="supporting" color="secondary">Some addresses could not be located. Review the source limits before using geographic results.</Text>
+                    </VStack>
+                  </HStack>
                 )}
                 {artifact.links.map((href) => (
                   <VStack key={href} gap={1}>
@@ -677,7 +668,7 @@ function ThreadSurface({
         onScroll={onScroll}
         gap={0}
         minHeight={0}
-        className="npg-thread min-w-0 flex-1 overflow-y-auto overflow-x-hidden"
+        className="npg-thread min-w-0 flex-1 overflow-y-auto overflow-x-hidden bg-workspace-canvas"
       >
         {children}
       </VStack>
@@ -730,8 +721,7 @@ function ProviderRows({
             label={
               <HStack gap={2} wrap="wrap" align="center">
                 <Text weight="semibold">{row.label}</Text>
-                <Text
-                  type="supporting"
+                <HStack gap={1}
                   className={
                     row.pending
                       ? 'text-state-info'
@@ -740,8 +730,8 @@ function ProviderRows({
                         : 'text-state-neutral'
                   }
                 >
-                  {row.outcome}
-                </Text>
+                  {row.pending && <Icon icon={Clock} size="sm" color="info" />}<Text type="supporting" color="inherit">{row.outcome}</Text>
+                </HStack>
               </HStack>
             }
             description={<Text color="secondary">{row.summary}</Text>}
@@ -1500,6 +1490,13 @@ export function Workspace({ bootstrap }: { bootstrap: NpgBootstrap }) {
     >
       <VStack gap={1}>
         <VStack gap={0.5} className="npg-review-summary" id="npg-decision-context">
+          {completeReview && narrow ? <>
+            <HStack gap={2} justify="between" wrap="wrap">
+              <Text weight="semibold">{summary?.target}</Text>
+              <Text type="supporting" weight="medium" role="status">{expired ? 'Review expired' : 'Expires ' + new Date(conversation!.pending!.expiresAt).toLocaleTimeString([], {hour:'numeric',minute:'2-digit'})}</Text>
+            </HStack>
+            <Text type="supporting">{summary?.price === 'Unknown' ? 'Price unknown.' : 'Estimate ' + summary?.price} Confirmed receipts are prior spend.</Text>
+          </> : <>
           <HStack gap={2} justify="between" wrap="wrap">
             <Text weight="semibold">{completeReview ? 'Complete profile' : summary?.title}</Text>
             <Text className={completeReview ? 'rounded-md bg-workspace-tint px-2' : undefined}>
@@ -1536,6 +1533,7 @@ export function Workspace({ bootstrap }: { bootstrap: NpgBootstrap }) {
                   })}
             </Text>
           </HStack>
+          </>}
         </VStack>
         <HStack gap={1} wrap="wrap" className="[&>button]:!px-2">
           <Button
@@ -1571,13 +1569,12 @@ export function Workspace({ bootstrap }: { bootstrap: NpgBootstrap }) {
       </VStack>
     </Section>
   ) : (
-    <Section
-      className="npg-composer-surface max-w-reading mx-auto w-full"
-      variant="section"
-      padding={empty ? 0 : 1.5}
+    <VStack
+      className="npg-composer-surface max-w-reading mx-auto w-full rounded-xl bg-surface"
+      padding={empty ? 3 : 1.5}
     >
       <VStack gap={1}>
-        {empty && <Text weight="medium">Your question</Text>}
+        {empty && <Text weight="semibold">What would you like to research?</Text>}
         {exampleReplacement !== null && (
           <VStack gap={2} role="group" aria-label="Replace draft with example">
             <Text>Your draft has text. Replace it with this example?</Text>
@@ -1630,7 +1627,7 @@ export function Workspace({ bootstrap }: { bootstrap: NpgBootstrap }) {
                 enterKeyHint="enter"
                 placeholder={
                   empty
-                    ? 'Describe the specialty and location…'
+                    ? 'For example, family NPs near Springfield, Missouri…'
                     : 'Ask a follow-up about these results…'
                 }
                 handleRef={input}
@@ -1698,7 +1695,7 @@ export function Workspace({ bootstrap }: { bootstrap: NpgBootstrap }) {
           </Text>
         </Collapsible>}
       </VStack>
-    </Section>
+    </VStack>
   );
   useLayoutEffect(() => {
     const region = thread.current;
@@ -1773,8 +1770,8 @@ export function Workspace({ bootstrap }: { bootstrap: NpgBootstrap }) {
                   className="w-12 lg:w-16 h-auto object-contain"
                 />
               }
-              heading={smallPhone ? 'Analyst' : 'Healthcare analyst'}
-              superheading={smallPhone ? 'NPG · Private' : 'NPG · Private workspace'}
+              heading={smallPhone ? 'Research' : 'Research & sourcing'}
+              superheading={smallPhone ? 'Private workspace' : 'The Nurse Practitioner Group'}
             />
           }
           endContent={
@@ -1799,14 +1796,15 @@ export function Workspace({ bootstrap }: { bootstrap: NpgBootstrap }) {
           aria-label="Your conversations"
           header={
             <SideNavHeading
-              icon={<Icon icon={MessagesSquare} />}
-              heading="Conversations"
+              heading="Research workspace"
             />
           }
           topContent={
-            <VStack gap={1} align="start">
+            <VStack gap={2} align="stretch">
               <Button
                 icon={<Icon icon={Plus} />}
+                variant="secondary"
+                className="npg-new-research !justify-start"
                 label="New chat"
                 isDisabled={busy}
                 onClick={() => { setMarketsOpen(false); setJobsOpen(false); void create(); }}
@@ -1814,6 +1812,7 @@ export function Workspace({ bootstrap }: { bootstrap: NpgBootstrap }) {
               <Button
                 icon={<Icon icon={ChartColumn} />}
                 label="Market activity"
+                className="!justify-start"
                 variant="ghost"
                 aria-current={marketsOpen && !jobsOpen ? 'page' : undefined}
                 isDisabled={busy}
@@ -1828,6 +1827,7 @@ export function Workspace({ bootstrap }: { bootstrap: NpgBootstrap }) {
               <Button
                 icon={<Icon icon={MapPin} />}
                 label="Jobs"
+                className="!justify-start"
                 variant="ghost"
                 aria-current={jobsOpen ? 'page' : undefined}
                 isDisabled={busy}
@@ -1844,12 +1844,12 @@ export function Workspace({ bootstrap }: { bootstrap: NpgBootstrap }) {
           footer={
             conversations.length ? (
               <HStack gap={2} align="center">
-                <Icon icon={LockKeyhole} size="sm" />
                 <Text type="supporting" color="secondary">Private to your account</Text>
               </HStack>
             ) : null
           }
         >
+          <Text type="supporting" weight="semibold" className="px-3 pt-4 pb-2">Recent research</Text>
           {conversations.length ? (
             conversations.map((item) => (
               <SideNavItem
@@ -1916,7 +1916,7 @@ export function Workspace({ bootstrap }: { bootstrap: NpgBootstrap }) {
         focusAfterNavigation(Boolean(conversation?.pending), 'restore');
       }} /> : <HStack gap={0} height="100%" minHeight={0} className="npg-workspace min-w-0" align="stretch">
         <VStack gap={0} minHeight={0} className="npg-chat-column flex-1 min-w-0">
-          <Section padding={narrow ? 2 : 4} dividers={['bottom']}>
+          <Section padding={narrow ? 2 : 3} dividers={['bottom']}>
             {narrow && enrichment && !conversation?.pending ? (
               <VStack gap={1}>
                 {titleHeading}
@@ -1982,26 +1982,25 @@ export function Workspace({ bootstrap }: { bootstrap: NpgBootstrap }) {
                     {empty && (
                       <VStack
                         gap={5}
-                        paddingBlock={narrow ? 4 : 6}
+                        paddingBlock={narrow ? 3 : 8}
                         width="100%"
-                        className="npg-welcome max-w-screen-sm mx-auto"
+                        className="npg-welcome max-w-reading mx-auto"
                       >
-                        <VStack gap={2}>
-                          <Heading level={1} accessibilityLevel={2} className="!text-3xl md:!text-4xl !tracking-tight !leading-tight">
-                            Who are you looking for?
+                        <VStack gap={3}>
+                          <Heading level={1} accessibilityLevel={2} className="!text-3xl md:!text-5xl !tracking-tight !leading-tight">
+                            Find your next practitioner.
                           </Heading>
                           <Text type="body" size="lg" color="secondary">
-                            Find nurse practitioners by specialty and location, check the registry
-                            evidence, and export the full list.
+                            Start with a specialty and location. Review the registry evidence behind every result.
                           </Text>
                         </VStack>
                         {composer}
                         <List
-                          density="spacious"
+                          density="compact"
                           hasDividers
                           edge="flush"
                           header={
-                            <Text weight="semibold">Start with an editable request</Text>
+                            <VStack gap={1}><Text weight="semibold">Choose a starting point</Text></VStack>
                           }
                         >
                           {examples.map((example) => (
@@ -2024,13 +2023,13 @@ export function Workspace({ bootstrap }: { bootstrap: NpgBootstrap }) {
                     {!conversation?.pending && savedMessages}
                     {enrichment && (
                       <Section
-                        padding={3}
-                        dividers={['top', 'bottom']}
+                        padding={4}
+                        dividers={['bottom']}
                         aria-labelledby="npg-enrichment-title"
-                        className="npg-enrichment-results min-w-0"
+                        className="npg-enrichment-results min-w-0 rounded-xl"
                       >
                         <VStack gap={3}>
-                          <VStack gap={1} className="rounded-lg bg-workspace-tint px-3 py-2">
+                          <VStack gap={1} className="rounded-xl bg-workspace-tint px-4 py-3">
                             <Heading id="npg-enrichment-title" level={2}>
                               {originalConversation ? 'Saved enrichment results' : 'Enrichment results'}
                             </Heading>
@@ -2122,7 +2121,11 @@ export function Workspace({ bootstrap }: { bootstrap: NpgBootstrap }) {
                               Review: {completeReview ? 'Complete profile' : summary?.title}
                             </Heading>
                           </VStack>
-                          <VStack gap={1} className="rounded-lg bg-workspace-tint px-3 py-2">
+                          {completeReview && <VStack gap={1}>
+                            <Text weight="semibold">{summary?.price === 'Unknown' ? 'Price for this lookup is unknown.' : 'Estimate for this lookup: ' + summary?.price}</Text>
+                            <Text type="supporting" color="secondary">Recorded receipts below are prior spend, separate from this request.</Text>
+                          </VStack>}
+                          <VStack gap={1} className="rounded-xl bg-workspace-tint px-4 py-3">
                             {summary?.name && (
                               <Text weight="semibold" wordBreak="break-word">
                                 {summary.name}{' '}
@@ -2148,12 +2151,16 @@ export function Workspace({ bootstrap }: { bootstrap: NpgBootstrap }) {
                           </Text>
                           <Fields compact={!narrow} fields={terms.filter((field) => field.label === 'Scope')} />
                           <Divider />
+                          {completeReview && <VStack gap={2}>
+                            <Heading level={3}>Prior recorded receipts</Heading>
+                            <Fields compact={!narrow} fields={terms.filter(field => ['Currency','Confirmed subtotal (USD)','Pending receipts','Historical spend'].includes(field.label))} />
+                          </VStack>}
                           <Fields
                             review
                             compact={!narrow}
                             fields={terms.filter(
                               (field) => !policyTerms.includes(field) &&
-                                !['Provider', 'Scope', ...(completeReview ? ['Providers in this approval'] : [])].includes(field.label)
+                                !['Provider', 'Scope', ...(completeReview ? ['Providers in this approval','Currency','Confirmed subtotal (USD)','Pending receipts','Historical spend'] : [])].includes(field.label)
                             )}
                           />
                           {policyTerms.map((field) => (
