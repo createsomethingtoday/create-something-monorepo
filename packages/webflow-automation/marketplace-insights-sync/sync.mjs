@@ -10,7 +10,8 @@ import {
   latestMondayBoundary,
   parseMetric,
   publishSnapshot,
-  readSellersFromAirtable
+  readSellersFromAirtable,
+  readSellers90OrNote
 } from '../../webflow-dashboard-core/src/marketplace-insights-publish.mjs';
 
 // The read/build/publish steps live in webflow-dashboard-core so the dashboard's
@@ -140,9 +141,14 @@ async function main() {
       ? await readSellersFromAirtable(rest, asOf)
       : querySnowflake(new Date(asOf.getTime() - 30 * 86400000), asOf);
   log(`Read ${sellers.length} sellers from ${source} (window ending ${asOf.toISOString()}).`);
-  const { snapshot, taxonomyNotes, creatorEmailNotes } = await buildSnapshotFromAirtable(rest, {
+  // The 90-day window comes from its Fivetran table only. The Snowflake source
+  // builds a 30-day snapshot.
+  const ninety =
+    source === 'airtable' ? await readSellers90OrNote(rest, asOf) : { sellers90: undefined, windowNotes: [] };
+  const { snapshot, taxonomyNotes, creatorEmailNotes, windowNotes } = await buildSnapshotFromAirtable(rest, {
     sellers,
-    snapshotAt: asOf.toISOString()
+    snapshotAt: asOf.toISOString(),
+    sellers90: ninety.sellers90
   });
   // Full review artifact exists even if publication fails. Never logs credentials.
   const runs = join(HERE, 'runs');
@@ -163,6 +169,7 @@ async function main() {
     legacyTablesModified: false,
     taxonomyNotes,
     creatorEmailNotes,
+    windowNotes: [...ninety.windowNotes, ...windowNotes],
     ranAt: new Date().toISOString()
   };
   writeFileSync(

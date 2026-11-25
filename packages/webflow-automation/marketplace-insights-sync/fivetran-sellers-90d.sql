@@ -1,8 +1,12 @@
--- Marketplace Insights sellers (90d). PROPOSED: no Fivetran dataset runs this yet.
--- It feeds the optional `sellers90` input of buildSnapshotFromAirtable, which
--- gives the dashboard a 90-day view of each subcategory. Until a dataset and an
--- Airtable table exist for it, snapshots carry 30-day numbers only and the
--- dashboard hides the 90-day switch.
+-- Marketplace Insights sellers (90d): SQL of the Fivetran dataset of that name.
+-- The activation "Marketplace Insights sellers (90d) -> Airtable" upserts every
+-- row into Airtable tblAlUQbYfyQZ81hK on TEMPLATE_ID; the weekly publish step
+-- reads it (readSellers90FromAirtable). Keep this file and the dataset
+-- identical. The dataset and activation IDs are in README.md.
+--
+-- It gives each snapshot a 90-day view of each subcategory. A window that is
+-- missing or incomplete is left out of the snapshot and named in the receipt;
+-- the 30-day snapshot is still published and the dashboard hides its 90-day switch.
 --
 -- Same rules as fivetran-sellers-30d.sql, with a 90-day window:
 --  - Window: the 90 days ending at the latest Monday 16:00 UTC.
