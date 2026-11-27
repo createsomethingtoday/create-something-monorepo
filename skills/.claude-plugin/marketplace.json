@@ -1,24 +1,32 @@
 {
   "name": "webflow-marketplace-skills",
-  "owner": { "name": "CREATE SOMETHING", "url": "https://github.com/createsomethingtoday" },
+  "owner": {
+    "name": "CREATE SOMETHING",
+    "url": "https://github.com/createsomethingtoday"
+  },
   "metadata": {
-    "description": "Tested skills for Webflow Marketplace submissions: templates and Apps. Not an official Webflow product.",
-    "version": "0.1.0"
+    "description": "Tested skills for Webflow Marketplace submissions: templates and Apps. Not an official Webflow product."
   },
   "plugins": [
     {
       "name": "webflow-templates",
       "description": "Check a Webflow template against the Marketplace submission guidelines before you submit it.",
-      "version": "0.1.0",
-      "source": "./",
+      "source": {
+        "source": "git-subdir",
+        "url": "https://github.com/createsomethingtoday/create-something-monorepo.git",
+        "path": "skills"
+      },
       "strict": false,
       "skills": ["./template-preflight"]
     },
     {
       "name": "webflow-apps",
       "description": "Prepare a Webflow App for Marketplace review, and resolve review findings after you receive them.",
-      "version": "0.1.0",
-      "source": "./",
+      "source": {
+        "source": "git-subdir",
+        "url": "https://github.com/createsomethingtoday/create-something-monorepo.git",
+        "path": "skills"
+      },
       "strict": false,
       "skills": ["./webflow-app-preflight", "./webflow-app-review-remediation"]
     }

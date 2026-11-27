@@ -212,6 +212,15 @@
       "flagged_when": "says Lenis must be removed or is not allowed",
       "basis": "reviewer-practice",
       "note": "Lenis is a pre-approved library in the creator GSAP guide; the guidelines page does not list it."
+    },
+    {
+      "id": "T05",
+      "title": "Style Guide page with no noindex",
+      "where": "/style-guide has no robots meta",
+      "flagged_when": "tells the creator to add noindex to the Style Guide page",
+      "basis": "published",
+      "rule": "required-pages-08",
+      "note": "The guidelines require noindex on the Licenses and Changelog pages only."
     }
   ]
 }

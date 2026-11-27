@@ -63,6 +63,12 @@ class Tests(unittest.TestCase):
         text,code=self.scan();self.assertNotIn('FAIL   / coverage/sitemap',text);self.assertNotIn('FAIL   coverage/sitemap',text);self.assertIn('not a template requirement',text);self.assertEqual(code,0,text)
         self.routes['/sitemap.xml']='not xml'
         text,code=self.scan();self.assertNotRegex(text,r'FAIL.*coverage/sitemap');self.assertEqual(code,0,text)
+    def test_noindex_required_on_licenses_and_changelog_only(self):
+        plain=lambda path:self.routes[path].replace('<meta name="robots" content="noindex">','')
+        self.routes['/style-guide']=plain('/style-guide')
+        text,code=self.scan();self.assertNotRegex(text,r'FAIL +/style-guide seo/noindex');self.assertEqual(code,0,text)
+        self.routes['/licenses']=plain('/licenses');self.routes['/changelog']=plain('/changelog')
+        text,code=self.scan();self.assertRegex(text,r'FAIL +/licenses seo/noindex');self.assertRegex(text,r'FAIL +/changelog seo/noindex')
     def test_utilities_not_content(self):
         text,code=self.scan('/licenses');self.assertNotIn('FAIL   /licenses seo/noindex',text);self.assertEqual(code,0,text)
     def test_wrong_footer_and_unassociated_label(self):
@@ -89,6 +95,19 @@ class Tests(unittest.TestCase):
     def test_asset_links_not_a_proof(self):
         self.routes['/licenses']=page('/licenses','<p>'+REQ+'</p><a href="https://example.com">Social</a><a href="https://example.org">Contact</a>')
         text,code=self.scan();self.assertIn('MANUAL /licenses licenses/inventory',text);self.assertNotIn('PASS   /licenses licenses/inventory',text)
+    def test_sitemap_index_over_the_limit_fails(self):
+        self.routes['/sitemap.xml']='<sitemapindex>'+''.join('<sitemap><loc>'+self.base+'/s'+str(i)+'.xml</loc></sitemap>' for i in range(21))+'</sitemapindex>'
+        for i in range(21):self.routes['/s'+str(i)+'.xml']='<urlset><url><loc>'+self.base+'/</loc></url></urlset>'
+        text,code=self.scan();self.assertIn('FAIL   coverage/incomplete',text);self.assertNotEqual(code,0)
+    def test_gsap_documentation_on_instructions_or_a_separate_guide_page(self):
+        gsap='<script>gsap.from(".hero",{opacity:0})</script>';docs='<h2>How to Edit GSAP Animations</h2><h3>Element Map</h3><h3>Customizing Key Variables</h3><h3>Removing GSAP Animations</h3>'
+        self.routes['/']=page('/','<a href="/instructions">Instructions</a>'+gsap)
+        self.routes['/instructions']=page('/instructions','<a href="/gsap-guide">GSAP Guide</a>');self.routes['/gsap-guide']=page('/gsap-guide',docs)
+        text,code=self.scan();self.assertNotIn('scripts/gsap',text)
+        self.routes['/gsap-guide']=page('/gsap-guide','<h2>How to Edit GSAP Animations</h2><h3>Element Map</h3>')
+        text,code=self.scan();self.assertIn('missing Customizing Key Variables',text);self.assertIn('missing Removing GSAP',text);self.assertNotEqual(code,0)
+        self.routes['/instructions']=page('/instructions',docs);del self.routes['/gsap-guide']
+        text,code=self.scan();self.assertNotIn('scripts/gsap',text)
     def test_incomplete_crawl_fails(self):
         self.routes['/']=page('/','<a href="/about">About</a>');self.routes['/about']=page('/about')
         text,code=self.scan('--max-pages','2');self.assertIn('FAIL   coverage/incomplete',text);self.assertNotEqual(code,0)

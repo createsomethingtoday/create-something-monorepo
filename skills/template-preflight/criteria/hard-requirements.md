@@ -13,7 +13,7 @@ To publish, a template must meet **all** of these AND score at least "Good" on e
 - [ ] `/licenses` lists license info for every custom asset: each custom font with a license link; all images, icons, and other assets confirmed free for personal + commercial use with source/license links.
 - [ ] `/changelog` exists.
 - [ ] `/instructions` exists **if** the template uses advanced/complex interactions, hidden components, inline SVG code, or GSAP custom code — with brief guidance on how to access and edit them. GSAP custom code additionally requires the "How to Edit GSAP Animations" section (see Interactions below).
-- [ ] All required utility pages have `<meta name="robots" content="noindex">` in their page-level custom head code, and **no other page does** (a noindexed FAQ or Services page is flagged). (This is one of the allowed custom-code exceptions.)
+- [ ] The Licenses and Changelog pages have `<meta name="robots" content="noindex">` in Page settings → Custom code → Inside `<head>` tag (required). The Style Guide and Instructions pages do not need it. No content page has it (a noindexed FAQ or Services page is flagged).
 - [ ] A custom, branded 404 page exists with the site navbar, the footer and CTAs.
 - [ ] The footer on **every page** includes a visible link to the Licenses page.
 - [ ] The footer includes **"Powered by Webflow" as a real link** to https://webflow.com (not plain text, not `href="#"`).
@@ -138,7 +138,7 @@ Custom code (site settings, embeds, page settings) is **not allowed**, with exac
 
 1. GSAP custom code (with the required Instructions documentation)
 2. Font smoothing in project settings: `-webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale;`
-3. `<meta name="robots" content="noindex">` on required utility pages (Licenses, Changelog, Style Guide, Instructions when required)
+3. `<meta name="robots" content="noindex">` on the Licenses and Changelog pages (required there)
 4. Inline SVG code — requires an Instructions page explaining how to use it
 5. Lenis smooth scrolling, including its initialization code
 6. The Webflow Way Validator snippet in Site Settings → Custom Code → Head code (required for submission)

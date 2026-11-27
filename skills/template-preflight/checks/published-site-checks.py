@@ -144,7 +144,7 @@ class Scanner:
                         if c:found.append(c)
                         else:self.emit('MANUAL','coverage/sitemap',f'Sitemap URL outside scan origin or not HTML: {target}')
             except (ET.ParseError,ValueError) as e:self.emit('INFO','coverage/sitemap',f'{url}: {e}; sitemap not used for discovery.')
-        if pending:self.emit('MANUAL','coverage/incomplete','Sitemap limit reached; pending sitemap documents remain. Pass missing pages as extra paths.')
+        if pending:self.emit('FAIL','coverage/incomplete','Sitemap limit reached; pending sitemap documents remain. Pass missing pages as extra paths.')
         return found
     def crawl(self):
         home=self.canonical(self.base)
@@ -253,7 +253,8 @@ class Scanner:
         noindex=any(re.search(r'\b(?:noindex|none)\b',s,re.I) for s in doc.meta('robots'))
         # Headers can prohibit indexing too, but utility requirements specifically demand a head meta.
         header_noindex=bool(re.search(r'\b(?:noindex|none)\b',self.cache[url][2].get('X-Robots-Tag',''),re.I)) if url in self.cache else False
-        if utility and not noindex:out('FAIL','seo/noindex','Utility page needs robots noindex meta.')
+        # Required on Licenses and Changelog only (required-pages-08). Style Guide and Instructions: not required, not a failure.
+        if utility and not noindex and urlsplit(url).path.rstrip('/').split('/')[-1] in {'licenses','license','licensing','changelog'}:out('FAIL','seo/noindex','Licenses and Changelog pages need the robots noindex meta in Page settings.')
         if not utility and (noindex or header_noindex):out('FAIL','seo/noindex','Content page must remain indexable; robots noindex/none found.')
         links=[a for a in doc.nodes('a') if not a.hidden() and self.footer(a)]
         license_links=[a for a in links if (self.canonical(a.attrs.get('href',''),url) or '').rstrip('/')==urljoin(self.base,'licenses')]
@@ -378,14 +379,15 @@ class Scanner:
         if len(self.seps)>1:self.emit('FAIL','seo/separators',json.dumps(self.seps,ensure_ascii=False))
         if not self.name:self.emit('MANUAL','seo/name','Could not infer template name from valid homepage title; rerun with --template-name matching the listing.')
         else:self.emit('MANUAL','seo/identity',f'Confirm listing name/description and visible logo wordmark exactly match {self.name!r}; image pixels are not inferred from URLs or alt text.')
-        for src in sorted(self.scripts):self.emit('WARN','scripts/external',f'{src}: verify custom-code allowance; GSAP requires instructions, other exceptions are Lenis smooth scrolling, font smoothing, utility noindex and documented SVG.')
+        for src in sorted(self.scripts):self.emit('WARN','scripts/external',f'{src}: verify custom-code allowance; GSAP requires instructions, other exceptions are the Validator snippet, Lenis smooth scrolling, font smoothing, noindex on Licenses and Changelog, and documented SVG.')
         if self.gsap:
             ins=self.pages.get(urljoin(self.base,'instructions'))
             if not ins:self.emit('FAIL','scripts/gsap','Custom GSAP detected; /instructions missing from checked pages.')
             else:
-                text=norm(ins.root.text())
+                # The GSAP documentation can be on /instructions or on a separate guide page (for example /gsap-guide).
+                text=' '.join(t for u,d in self.pages.items() for t in [norm(d.root.text())] if d is ins or 'gsap' in urlsplit(u).path.lower() or 'How to Edit GSAP Animations' in t)
                 for part in ('How to Edit GSAP Animations','Element Map','Customizing Key Variables','Removing GSAP'):
-                    if part not in text:self.emit('FAIL','scripts/gsap','Instructions missing '+part)
+                    if part not in text:self.emit('FAIL','scripts/gsap','Instructions (or a separate GSAP Guide page) missing '+part)
         nf=self.fetch(urljoin(self.base,'this-page-should-not-exist-preflight-404'))
         self.emit('MANUAL','404',f'HTTP {nf[0]}; verify custom branding, navigation and CTAs on the missing-page route.')
         # Preserve the original bounded weight sample, clearly reported as a sample.

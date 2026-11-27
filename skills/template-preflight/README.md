@@ -7,10 +7,11 @@ A creator checklist and Claude skill for reviewing Webflow templates before subm
 Requires Python 3.10+. The scanner uses only the Python standard library; aspell is optional.
 
 ```bash
-cp -R template-preflight ~/.claude/skills/
+claude plugin marketplace add https://raw.githubusercontent.com/createsomethingtoday/create-something-monorepo/main/skills/.claude-plugin/marketplace.json
+claude plugin install webflow-templates@webflow-marketplace-skills
 ```
 
-If that directory already exists, back it up first. Start a new Claude Code session and ask it to check your template before you submit it. Connect the Webflow MCP for Designer checks; the published-site scanner works without MCP.
+To update later, run `claude plugin update webflow-templates@webflow-marketplace-skills`. For other agents, copy this folder into the skills location of your agent. Start a new Claude Code session and ask it to check your template before you submit it. Connect the Webflow MCP for Designer checks; the published-site scanner works without MCP.
 
 ## Scan a published site
 

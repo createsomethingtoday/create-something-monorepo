@@ -6,7 +6,7 @@ These are independent CREATE SOMETHING tools. They are not official Webflow vali
 
 | Skill                                                                       | Use it                                | Sample task                                                                                                | Measured 2026-11-26 (problems caught: no skill → with skill) |
 | --------------------------------------------------------------------------- | ------------------------------------- | ---------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------ |
-| [`template-preflight`](template-preflight/SKILL.md)                         | Before you submit a template          | [task](evals/tasks/template-preflight/task.md), [answer key](evals/tasks/template-preflight/expected.json) | 11 to 13 of 22 → 21 to 22 of 22                              |
+| [`template-preflight`](template-preflight/SKILL.md)                         | Before you submit a template          | [task](evals/tasks/template-preflight/task.md), [answer key](evals/tasks/template-preflight/expected.json) | 12 to 13 of 22 → 22 of 22                                    |
 | [`webflow-app-preflight`](webflow-app-preflight/SKILL.md)                   | Before you submit an App              | [task](evals/tasks/app-preflight/task.md), [answer key](evals/tasks/app-preflight/expected.json)           | 11 to 13 of 14 → 14 of 14                                    |
 | [`webflow-app-review-remediation`](webflow-app-review-remediation/SKILL.md) | After you receive App review findings | none yet                                                                                                   | not measured                                                 |
 
@@ -14,15 +14,24 @@ Full results and limits: [evals/results/2026-11-26.md](evals/results/2026-11-26.
 
 ## Install
 
-Copy the skill folder into the skills location of your agent. For Claude Code:
+For Claude Code:
 
 ```bash
-cp -R template-preflight ~/.claude/skills/
+claude plugin marketplace add https://raw.githubusercontent.com/createsomethingtoday/create-something-monorepo/main/skills/.claude-plugin/marketplace.json
+claude plugin install webflow-templates@webflow-marketplace-skills
+claude plugin install webflow-apps@webflow-marketplace-skills
 ```
 
-Then start a new session and give the agent your task in your own words, for example: "Check my template at https://my-template.webflow.io before I submit it."
+Install only the plugin you need. Each install downloads this folder only (about 1 MB), not the full repository. Then start a new session and give the agent your task in your own words, for example: "Check my template at https://my-template.webflow.io before I submit it."
 
-`.claude-plugin/marketplace.json` is a Claude Code plugin catalog with two plugins, `webflow-templates` and `webflow-apps`. It works when this folder is the root of a repository.
+To get the current rules later:
+
+```bash
+claude plugin marketplace update webflow-marketplace-skills
+claude plugin update webflow-templates@webflow-marketplace-skills
+```
+
+For other agents, copy the skill folder into the skills location of your agent.
 
 ## Report a wrong result
 

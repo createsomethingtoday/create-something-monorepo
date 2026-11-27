@@ -21,7 +21,7 @@ Pull the page list with names, slugs, and page-level SEO/custom-code settings.
 | Required pages exist | Pages with slugs exactly `style-guide`, `licenses`, `changelog` (and `instructions` when required — see group 2) |
 | Slug spelling | `licenses` plural; no nesting (not under a `/template/` folder) |
 | Page naming | Title Case names; name matches slug |
-| noindex on utility pages | `<meta name="robots" content="noindex">` in the required pages' custom head code — and on **no other page** (reviewers flag a noindexed FAQ or Services page as a defect) |
+| noindex on Licenses and Changelog | `<meta name="robots" content="noindex">` in the custom head code of the Licenses and Changelog pages (required). Not required on Style Guide or Instructions. On no content page (reviewers flag a noindexed FAQ or Services page as a defect) |
 | 404 page | Custom branded 404 exists with nav + CTAs |
 | Per-page SEO | Every page (incl. CMS templates): **unique** meta title < 60 chars; **unique** description that describes the page (150–160 chars recommended, not a blocker); OG title/description/image set (CMS template pages must bind an OG image field) |
 | Homepage title format | Exactly `{Template Name} - Webflow HTML website template` or `... - Webflow Ecommerce website template` — lowercase "website template", spaced hyphen; "Webflow HTML Website Template" is flagged |
@@ -35,7 +35,7 @@ Allowed — everything else is a **BLOCKER**:
 
 1. GSAP custom code → requires the Instructions "How to Edit GSAP Animations" section (Element Map, Customizing Key Variables, Removing GSAP Animations)
 2. Font smoothing CSS in project settings
-3. `noindex` meta on required utility pages
+3. `noindex` meta on the Licenses and Changelog pages
 4. Inline SVG embeds → requires an Instructions page documenting usage
 5. Lenis smooth scrolling, including its initialization code
 
