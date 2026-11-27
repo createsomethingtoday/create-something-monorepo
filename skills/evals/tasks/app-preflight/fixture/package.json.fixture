@@ -1,0 +1,21 @@
+{
+  "name": "formlight",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "build": "esbuild src/extension/index.ts --bundle --minify --outdir=dist",
+    "bundle": "npm run build && webflow extension bundle",
+    "start": "node dist/server/index.js"
+  },
+  "dependencies": {
+    "express": "4.21.2",
+    "react": "18.3.1",
+    "react-dom": "18.3.1",
+    "react-router": "7.1.1"
+  },
+  "devDependencies": {
+    "@webflow/webflow-cli": "2.3.0",
+    "esbuild": "0.24.2",
+    "typescript": "5.7.2"
+  }
+}

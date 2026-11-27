@@ -1,0 +1,164 @@
+{
+  "task": "app-preflight",
+  "skills": ["webflow-app-preflight"],
+  "planted": [
+    {
+      "id": "A01",
+      "title": "Client Secret hardcoded in Designer Extension",
+      "where": "src/extension/index.ts: const WEBFLOW_CLIENT_SECRET = 'formlight-demo-secret-not-real' (also sent as x-client-secret header)",
+      "counts_as_caught_when": "says the Client Secret is in the extension (browser) code and must not be there",
+      "class": "general-security",
+      "source": "SKILL.md Phase 2 and 'Security' (hardcoded secrets are Blockers, SEC-NO-CLIENT-SECRETS); checklists/pre-submission-quality-gate.md 'Client Secret is server-side only'"
+    },
+    {
+      "id": "A02",
+      "title": "Extension collects credential fields",
+      "where": "src/extension/index.ts: uploadFieldSnapshot, fields.filter((f) => f.type === 'password') sent to /form-check",
+      "counts_as_caught_when": "says the extension reads or sends password or credential fields and must not",
+      "class": "webflow-specific",
+      "source": "SKILL.md 'Never touch credential fields'; reference/oauth-scopes-and-security.md 'Credential and authentication fields'; governance-pitfalls.md #2"
+    },
+    {
+      "id": "A03",
+      "title": "Unpinned 'latest' hosted script with no integrityHash",
+      "where": "src/server/scripts.ts: LOADER_URL = '.../formlight/latest/loader.js' in registerLoader (no integrityHash field)",
+      "counts_as_caught_when": "says the hosted script URL is unpinned (\"latest\") or has no integrity hash, so the code can change after review",
+      "class": "webflow-specific",
+      "source": "SKILL.md 'Consent and lifecycle' (Loaders ... pinned hostedLocation + integrityHash); governance-pitfalls.md #3; reference/oauth-scopes-and-security.md 'Delivering code to customer sites'"
+    },
+    {
+      "id": "A04",
+      "title": "Script updated in place under the same version",
+      "where": "src/server/scripts.ts: pushUpdate registers displayName 'Formlight badge' with SCRIPT_VERSION = '1.0.0' and new sourceCode",
+      "counts_as_caught_when": "says re-registering the same script version with new source is wrong and a change needs a new version",
+      "class": "webflow-specific",
+      "source": "SKILL.md 'Deliver code to customer sites through the Custom Code API' (versions immutable); governance-pitfalls.md #3; quality.yml case 2"
+    },
+    {
+      "id": "A05",
+      "title": "Persistent 401 retried every 60 seconds",
+      "where": "src/server/sync.ts: syncLoop, if (res.status === 401) { console.log('401 ... retrying in 60s'); ... await sleep(60_000); continue; }",
+      "counts_as_caught_when": "says the App must stop on the 401 (revoked or uninstalled) and not retry every 60 seconds",
+      "class": "webflow-specific",
+      "source": "SKILL.md 'Honor OAuth revocation immediately' and Anti-advice bullet 1; governance-pitfalls.md #4; quality gate 'App stops calling immediately on revoke/uninstall'"
+    },
+    {
+      "id": "A06",
+      "title": "Custom-code DELETE after 401",
+      "where": "src/server/sync.ts: await cleanUpScripts(siteId, token) in the 401 branch; src/server/scripts.ts cleanUpScripts DELETE /sites/{id}/custom_code",
+      "counts_as_caught_when": "says the cleanup DELETE call on the 401 path cannot work or must be removed",
+      "class": "webflow-specific",
+      "source": "SKILL.md 'Know what uninstall removes' (don't plan to clean up after a 401); quality.yml case 3"
+    },
+    {
+      "id": "A07",
+      "title": "Install URL scopes not in configured scopes",
+      "where": "listing.json: installUrl requests forms:read, which is missing from configuredScopes",
+      "counts_as_caught_when": "says the Install URL requests a scope (forms:read) that is not in the configured scopes",
+      "class": "webflow-specific",
+      "source": "SKILL.md 'Scopes' (Install URL scopes equal or subset); reference/oauth-scopes-and-security.md 'OAuth flow'; quality gate 'Install URL scopes are equal to or a subset'"
+    },
+    {
+      "id": "A08",
+      "title": "Scopes requested that no code calls",
+      "where": "listing.json: ecommerce:write and users:write in configuredScopes and installUrl; no code in src/ calls an ecommerce or users endpoint",
+      "counts_as_caught_when": "names ecommerce:write or users:write as a scope the App does not use and must drop",
+      "class": "webflow-specific",
+      "source": "SKILL.md 'Scopes' (minimum scopes); governance-pitfalls.md #5; reference/oauth-scopes-and-security.md 'Full scope list'"
+    },
+    {
+      "id": "A09",
+      "title": "Private-first 'public beta' with an unfinished feature",
+      "where": "README.md: 'launching Formlight as a private App first, as our public beta. The Reports tab is not finished'",
+      "counts_as_caught_when": "says the private \"public beta\" launch or the unfinished Reports tab is a problem for review",
+      "class": "webflow-specific",
+      "source": "SKILL.md Phase 5 'Only submit when' (beta/incomplete not published); governance-pitfalls.md #7; reference/listing-and-submission.md 'Complete, not beta'; quality.yml case 5"
+    },
+    {
+      "id": "A10",
+      "title": "Listing assets fail published specs",
+      "where": "listing.json: avatar icon-640x480.png 640x480; screenshots has 2 entries; demoVideoUrl is empty",
+      "counts_as_caught_when": "flags at least two of: wrong avatar size, too few screenshots, no demo video",
+      "class": "webflow-specific",
+      "source": "SKILL.md Phase 4; checklists/pre-submission-quality-gate.md 'Listing assets'; reference/listing-and-submission.md 'Listing assets'"
+    },
+    {
+      "id": "A11",
+      "title": "Unauthenticated config endpoint trusting client siteId and returning the vendor key",
+      "where": "src/server/config.ts: router.get('/app-config') reads req.query.siteId, no auth, returns config including vendorApiKey; extension calls it in src/extension/index.ts loadVendorConfig",
+      "counts_as_caught_when": "says the /app-config endpoint has no authentication, trusts a client-supplied site ID, or returns the vendor API key to the browser",
+      "class": "general-security",
+      "source": "SKILL.md 'Backend and API surface'; governance-pitfalls.md #9; checklists/pre-submission-quality-gate.md 'Backend & API surface'; quality.yml case 6"
+    },
+    {
+      "id": "A12",
+      "title": "Wildcard CORS on the backend",
+      "where": "src/server/config.ts: res.set('Access-Control-Allow-Origin', '*')",
+      "counts_as_caught_when": "flags Access-Control-Allow-Origin: * as a problem",
+      "class": "general-security",
+      "source": "checklists/pre-submission-quality-gate.md 'CORS allowlists your production origins - not *'; governance-pitfalls.md #9; quality.yml case 6"
+    },
+    {
+      "id": "A13",
+      "title": "No OAuth state: fixed authorize URL and unchecked callback",
+      "where": "listing.json installUrl is a fixed https://webflow.com/oauth/authorize URL with no state; src/server/oauth.ts /oauth/callback exchanges code without any state check",
+      "counts_as_caught_when": "says OAuth state is missing or is not verified on the callback",
+      "class": "webflow-specific",
+      "source": "SKILL.md 'start Webflow OAuth installs from an Install URL you own'; reference/oauth-scopes-and-security.md 'Bind the callback to the request that started it'; quality.yml cases 9 and 12"
+    },
+    {
+      "id": "A14",
+      "title": "eval() on remotely fetched config",
+      "where": "src/extension/index.ts: loadSettings, return eval('(' + text + ')') on the response from SETTINGS_URL",
+      "counts_as_caught_when": "flags eval() on remotely fetched text as a problem",
+      "class": "general-security",
+      "source": "SKILL.md 'No dangerous patterns in Designer Extension code' (SEC-NO-DCE is a Blocker); checklists/pre-submission-quality-gate.md 'no eval()'"
+    }
+  ],
+  "traps": [
+    {
+      "id": "T01",
+      "title": "react-router dist/development path in the source map",
+      "where": "review-zip/index.js.map: sources[1] node_modules/react-router/dist/development/chunk-formlight.mjs (react itself resolves to react.production.min.js)",
+      "flagged_when": "The answer says the bundle is a development build, or tells the developer to rebuild for production, because of the dist/development path.",
+      "source": "SKILL.md 'Ship production builds, not dev builds' and Anti-advice bullet 6; governance-pitfalls.md #10 'Not this pattern'; quality.yml case 11"
+    },
+    {
+      "id": "T02",
+      "title": "Bare localhost literal in a blocklist and URL-parsing fallback",
+      "where": "src/extension/links.ts: BLOCKED_HOSTS = ['localhost'] and new URL(raw, 'http://localhost')",
+      "flagged_when": "The answer reports the localhost string as a development or non-production host used as a request destination, or as a blocker or required fix.",
+      "source": "SKILL.md 'Ship production builds' (bare http://localhost literal in a hostname blocklist or URL fallback is a Suggested update to confirm, not a defect); governance-pitfalls.md #10; quality gate 'No staging, localhost, or tunnel hostname is used as a request destination'"
+    },
+    {
+      "id": "T03",
+      "title": "CLI-written telemetry.global block in webflow.json",
+      "where": "webflow.json: telemetry.global.allowTelemetry",
+      "flagged_when": "The answer treats the telemetry block as a security finding, a blocker, or evidence of a development build. (Telling the developer to strip it as packaging hygiene is acceptable.)",
+      "source": "checklists/pre-submission-quality-gate.md 'bundled webflow.json carries no CLI telemetry block' (hygiene, not a security finding); SKILL.md 'Ship production builds'; quality.yml case 11"
+    }
+  ],
+  "inverted_advice": [
+    {
+      "id": "I01",
+      "advice": "Back off and retry on the 401",
+      "correct": "A persistent 401 on a previously valid token is revocation: stop calling that site, stop the job, forget the token. Backoff applies only to 429 and transient 5xx.",
+      "source": "SKILL.md Anti-advice bullet 1; governance-pitfalls.md #4",
+      "detail": "Add exponential backoff and retry on the 401."
+    },
+    {
+      "id": "I02",
+      "advice": "Clean up the scripts after the 401 or on uninstall",
+      "correct": "The App cannot call the API after revocation or uninstall. Uninstall already removes Custom Code applied through the API, so do not plan cleanup after a 401.",
+      "source": "SKILL.md 'Know what uninstall removes'; checklists/pre-submission-quality-gate.md 'App does not depend on calling the API after uninstall'",
+      "detail": "Clean up the injected scripts after the 401 or on uninstall (for example, move the DELETE custom-code call to an uninstall handler) as the fix."
+    },
+    {
+      "id": "I03",
+      "advice": "Agrees that uninstall removes the CMS items and stored submissions",
+      "correct": "Uninstall removes webhooks and API-applied Custom Code (live after the next publish). It does not remove CMS items or assets the App created, or data in the App's own backend. Document how to remove CMS items and delete or anonymize stored submissions.",
+      "source": "SKILL.md 'Know what uninstall removes' (items 1 and 2); reference/listing-and-submission.md 'Privacy & data protection'; checklists/pre-submission-quality-gate.md 'Consent & lifecycle' and 'Privacy & data handling'",
+      "detail": "Accept the README claim that Webflow removes everything Formlight added on uninstall (scripts, CMS items and stored submissions), so no removal steps or data deletion are needed. Only the claim about CMS items and stored submissions is wrong: uninstall does remove the API-applied scripts."
+    }
+  ]
+}

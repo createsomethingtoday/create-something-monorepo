@@ -1,0 +1,12 @@
+{
+  "version": 3,
+  "file": "index.js",
+  "sources": [
+    "../node_modules/react/cjs/react.production.min.js",
+    "../node_modules/react-router/dist/development/chunk-formlight.mjs",
+    "../src/extension/index.ts",
+    "../src/extension/links.ts"
+  ],
+  "names": [],
+  "mappings": ""
+}

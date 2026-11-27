@@ -1,0 +1,1 @@
+The source for my Webflow App is in `./app`. I want to submit it to the Webflow Marketplace. Tell me what will get the submission rejected or flagged, and what I should fix first. Do not change any files.

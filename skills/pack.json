@@ -1,0 +1,58 @@
+{
+  "name": "webflow-marketplace-skills",
+  "maintainer": { "name": "CREATE SOMETHING", "github": "createsomethingtoday" },
+  "review_every_days": 45,
+  "skills": [
+    {
+      "name": "template-preflight",
+      "domain": "templates",
+      "for": "Template creators, before a submission",
+      "works_with": ["Claude Code", "Agents that load SKILL.md folders"],
+      "needs": [
+        "Python 3.10 or later for the site scanner",
+        "Optional: the Webflow MCP for Designer checks"
+      ],
+      "sources": [
+        {
+          "name": "Template submission guidelines",
+          "url": "https://webflow.com/templates/submission-guidelines",
+          "version": "Updated November 9, 2026"
+        }
+      ],
+      "reviewed": "2026-11-26",
+      "task": "template-preflight"
+    },
+    {
+      "name": "webflow-app-preflight",
+      "domain": "apps",
+      "for": "App developers, before a submission",
+      "works_with": ["Claude Code", "Codex", "Agents that load SKILL.md folders"],
+      "needs": [],
+      "sources": [
+        {
+          "name": "Marketplace Guidelines",
+          "url": "https://developers.webflow.com/apps/docs/marketplace-guidelines",
+          "version": "App Review Preflight ruleset 1.7.0"
+        }
+      ],
+      "reviewed": "2026-11-20",
+      "task": "app-preflight"
+    },
+    {
+      "name": "webflow-app-review-remediation",
+      "domain": "apps",
+      "for": "App developers, after they receive review findings",
+      "works_with": ["Claude Code", "Codex", "Agents that load SKILL.md folders"],
+      "needs": ["The findings issued for your App"],
+      "sources": [
+        {
+          "name": "Marketplace Guidelines",
+          "url": "https://developers.webflow.com/apps/docs/marketplace-guidelines",
+          "version": "App Review Preflight ruleset 1.7.0"
+        }
+      ],
+      "reviewed": "2026-11-20",
+      "task": null
+    }
+  ]
+}

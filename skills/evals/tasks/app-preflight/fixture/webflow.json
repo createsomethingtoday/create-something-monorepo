@@ -1,0 +1,11 @@
+{
+  "name": "Formlight",
+  "apiVersion": "2",
+  "publicDir": "dist",
+  "size": "comfortable",
+  "telemetry": {
+    "global": {
+      "allowTelemetry": true
+    }
+  }
+}

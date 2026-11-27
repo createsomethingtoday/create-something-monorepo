@@ -1,0 +1,21 @@
+{
+  "appType": "hybrid",
+  "name": "Formlight",
+  "shortDescription": "Send Webflow form submissions to a CMS collection and show a thank-you badge.",
+  "description": "Formlight watches the forms on your site, copies each submission into a CMS collection you choose, and adds a thank-you badge to the published page.",
+  "homepageUrl": "https://formlight.example.com",
+  "avatar": { "file": "icon-640x480.png", "width": 640, "height": 480 },
+  "screenshots": [
+    { "file": "shot-sync.png", "width": 1280, "height": 846 },
+    { "file": "shot-badge.png", "width": 1280, "height": 846 }
+  ],
+  "demoVideoUrl": "",
+  "installUrl": "https://webflow.com/oauth/authorize?response_type=code&client_id=formlight-demo-client-id&scope=sites%3Aread+cms%3Awrite+custom_code%3Awrite+forms%3Aread+ecommerce%3Awrite+users%3Awrite",
+  "configuredScopes": [
+    "sites:read",
+    "cms:write",
+    "custom_code:write",
+    "ecommerce:write",
+    "users:write"
+  ]
+}
