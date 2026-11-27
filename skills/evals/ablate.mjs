@@ -24,6 +24,7 @@ import {
   mkdtempSync,
   readdirSync,
   readFileSync,
+  renameSync,
   writeFileSync
 } from 'node:fs';
 import { createServer } from 'node:http';
@@ -66,6 +67,15 @@ function claude(args, { cwd, stdin, timeoutMs = 20 * 60 * 1000 }) {
       done({ code, out, err });
     });
   });
+}
+
+/** A fixture file `x.fixture` is copied as `x`, so repository scanners do not read it as a real manifest. */
+function stripFixtureSuffix(dir) {
+  for (const entry of readdirSync(dir, { withFileTypes: true })) {
+    const full = join(dir, entry.name);
+    if (entry.isDirectory()) stripFixtureSuffix(full);
+    else if (entry.name.endsWith('.fixture')) renameSync(full, full.slice(0, -'.fixture'.length));
+  }
 }
 
 /** Serve fixture/site.mjs on a free local port. Unknown paths answer 404 with the site's 404 page. */
@@ -123,6 +133,7 @@ async function session({ taskDir, expected, arm, model, budget }) {
     prompt = prompt.replaceAll('{{URL}}', site.base);
   } else {
     cpSync(join(taskDir, 'fixture'), join(work, 'app'), { recursive: true });
+    stripFixtureSuffix(join(work, 'app'));
   }
   const started = Date.now();
   const { code, out, err } = await claude(
