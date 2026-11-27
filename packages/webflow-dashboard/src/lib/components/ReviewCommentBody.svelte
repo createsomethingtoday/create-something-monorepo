@@ -121,6 +121,23 @@
 		list-style: circle;
 	}
 
+	.body-list .body-list ul.body-list {
+		list-style: square;
+	}
+
+	/* Nested numbered lists read a, b, c and then i, ii, iii, as they do in the review team's editor. */
+	.body-list ol.body-list {
+		list-style: lower-alpha;
+	}
+
+	.body-list .body-list ol.body-list {
+		list-style: lower-roman;
+	}
+
+	.body-list .body-list .body-list ol.body-list {
+		list-style: decimal;
+	}
+
 	.body-list > li + li {
 		margin-top: calc(var(--space-xs) / 2);
 	}

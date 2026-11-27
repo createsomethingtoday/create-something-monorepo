@@ -336,6 +336,22 @@
 .portal-comment li > ul {
   padding-left: 1.5em;
 }
+/* Nested numbered lists read a, b, c and then i, ii, iii, as they do in the review team's editor. */
+.portal-comment li > ol {
+  list-style: lower-alpha;
+}
+.portal-comment li li > ol {
+  list-style: lower-roman;
+}
+.portal-comment li li li > ol {
+  list-style: decimal;
+}
+.portal-comment li > ul {
+  list-style: circle;
+}
+.portal-comment li li > ul {
+  list-style: square;
+}
 .portal-comment hr {
   border: 0;
   border-top: 1px solid #eee;

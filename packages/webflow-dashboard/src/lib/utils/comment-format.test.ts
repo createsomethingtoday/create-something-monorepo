@@ -28,6 +28,12 @@ function listText(list: ListBlock): string[] {
 	return list.items.flatMap((item) => [inlineText(item.children), ...item.lists.flatMap(listText)]);
 }
 
+/** The levels of a list as text: "ol[a,b>ul[c]]" is two numbered items, the second with one bullet under it. */
+function listShape(list: ListBlock): string {
+	const items = list.items.map((item) => inlineText(item.children) + (item.lists.length ? '>' + item.lists.map(listShape).join('+') : ''));
+	return `${list.ordered ? 'ol' : 'ul'}[${items.join(',')}]`;
+}
+
 /** Every word a reader gets, block by block. */
 function shown(blocks: Block[]): string[] {
 	return blocks.flatMap((block) => {
@@ -226,12 +232,44 @@ describe('blocks', () => {
 		expect(second.items.map((item) => item.value)).toEqual([3]);
 	});
 
-	it('reads bullets, one nested level and continuation lines', () => {
+	it('reads bullets, nested levels and continuation lines', () => {
 		const [list] = parseCommentBody('- Colors\n  - the sticker positions;\n    - deeper still\n  and more on the nested item\n- Type') as [ListBlock];
 		expect(list.ordered).toBe(false);
 		expect(list.items).toHaveLength(2);
 		expect(list.items[0].lists).toHaveLength(1);
 		expect(listText(list)).toEqual(['Colors', 'the sticker positions;', 'deeper still\nand more on the nested item', 'Type']);
+		expect(listShape(list)).toBe('ul[Colors>ul[the sticker positions;>ul[deeper still\nand more on the nested item]],Type]');
+	});
+
+	it('keeps each level of a numbered list that a rich text editor indents by 4 spaces', () => {
+		const body = '**Last review**\n1. One\n2. Two \n    1. Explanation: \n        1. **First.** Text.\n        2. Second.\n    2. Other\n3. Three';
+		const blocks = parseCommentBody(body);
+		expect(blocks.map((block) => block.type)).toEqual(['paragraph', 'list']);
+		const list = blocks[1] as ListBlock;
+		expect(listShape(list)).toBe('ol[One,Two>ol[Explanation:>ol[First. Text.,Second.],Other],Three]');
+		expect(list.items[1].lists[0].items[0].lists[0].items.map((item) => item.value)).toEqual([1, 2]);
+	});
+
+	it('goes back to the level that matches the indent of a line', () => {
+		const shape = (body: string) => (parseCommentBody(body) as ListBlock[]).map(listShape).join(' ');
+		expect(shape('1. a\n    - b\n        - c\n            - d\n    - e\n2. f')).toBe('ol[a>ul[b>ul[c>ul[d]],e],f]');
+		expect(shape('- a\n  - b\n    - c\n- d\n  - e')).toBe('ul[a>ul[b>ul[c]],d>ul[e]]');
+		expect(shape('1. a\n\t- b\n\t\t- c')).toBe('ol[a>ul[b>ul[c]]]');
+		// An indent between two levels joins the deeper list that is open.
+		expect(shape('1. a\n    - b\n   - c\n     - d')).toBe('ol[a>ul[b,c,d]]');
+		expect(shape('1. a\n        - b\n    - c')).toBe('ol[a>ul[b,c]]');
+	});
+
+	it('starts a new list in the same item when the marker type changes at a nested level', () => {
+		const shape = (body: string) => (parseCommentBody(body) as ListBlock[]).map(listShape).join(' ');
+		expect(shape('1. a\n  - b\n  1. c\n  - d\n2. e')).toBe('ol[a>ul[b]+ol[c]+ul[d],e]');
+		expect(shape('1. a\n    - b\n        - c\n        1. d\n    - e')).toBe('ol[a>ul[b>ul[c]+ol[d],e]]');
+	});
+
+	it('shows no more than 6 levels: a deeper line joins the deepest one', () => {
+		const body = Array.from({ length: 9 }, (_, level) => `${'    '.repeat(level)}- l${level}`).join('\n');
+		const [list] = parseCommentBody(body) as [ListBlock];
+		expect(listShape(list)).toBe('ul[l0>ul[l1>ul[l2>ul[l3>ul[l4>ul[l5,l6,l7,l8]]]]]]');
 	});
 
 	it('starts a new list when the marker type changes, and a paragraph at an unindented line', () => {
@@ -296,7 +334,11 @@ describe('large and hostile bodies', () => {
 			'[' + 'a.'.repeat(480) + '](https://a.example/) '.repeat(20),
 			'_a '.repeat(6600) + 'z_',
 			'` a '.repeat(5000),
-			'**a *b ~~c __d '.repeat(1300)
+			'**a *b ~~c __d '.repeat(1300),
+			Array.from({ length: 190 }, (_, level) => `${' '.repeat(level)}- x`).join('\n'),
+			Array.from({ length: 2400 }, (_, i) => `${'    '.repeat(i % 8)}1. x`).join('\n'),
+			Array.from({ length: 2400 }, (_, i) => `${'  '.repeat(i % 7)}${i % 2 ? '-' : '1.'} x`).join('\n'),
+			`1. a\n${' '.repeat(9000)}- b\n${' '.repeat(9000)}- c`
 		];
 		const started = performance.now();
 		for (const body of bodies) {

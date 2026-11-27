@@ -9,8 +9,8 @@
  *
  * Supported: bold, italic, strikethrough, inline code, links (labelled,
  * `<url>`, bare web addresses, email addresses), numbered and bulleted lists
- * with one nested level, section labels (`# Heading` or a short ALL-CAPS
- * line) and dividers. All other syntax stays on the page as it was typed.
+ * with nested levels (the indent of a line gives its level), section labels
+ * (`# Heading` or a short ALL-CAPS line) and dividers. All other syntax stays on the page as it was typed.
  * Images are not loaded: `![alt](url)` becomes a link.
  *
  * Two copies of this file must stay the same, because the app review portal
@@ -62,6 +62,8 @@ const INVISIBLE = /[\u00ad\u200b-\u200d\u2060\ufeff]/g;
 const MAX_LABEL = 1000;
 const MAX_URL = 2048;
 const MAX_DEPTH = 6;
+/** List levels the page shows. A line indented deeper than this joins the deepest level. */
+const MAX_LIST_LEVELS = 6;
 
 const RULE_LINE = /^\s*([-*_])\1{2,}\s*$/;
 // These match only the mark at the start of a line; the text after it is read by position.
@@ -396,8 +398,9 @@ function isCapsLabel(line: string): boolean {
 export function parseCommentBody(body: string): Block[] {
 	const blocks: Block[] = [];
 	let paragraph: string[] = [];
-	// The open list, the indent of its first line, and the item a continuation line joins.
-	const state: { open: { block: ListBlock; indent: number; last: ListItem } | null } = { open: null };
+	// The open lists from the top level down, each with the indent of its first line, and the
+	// item a continuation line joins.
+	const state: { open: { block: ListBlock; indent: number }[]; last: ListItem | null } = { open: [], last: null };
 	// Item text is parsed when the list ends, after its continuation lines are known.
 	const itemLines = new Map<ListItem, string[]>();
 
@@ -406,11 +409,12 @@ export function parseCommentBody(body: string): Block[] {
 		paragraph = [];
 	};
 	const endList = () => {
-		if (!state.open) return;
+		if (!state.open.length) return;
 		for (const [item, lines] of itemLines) item.children = parseLines(lines);
 		itemLines.clear();
-		blocks.push(state.open.block);
-		state.open = null;
+		blocks.push(state.open[0].block);
+		state.open = [];
+		state.last = null;
 	};
 
 	// Every kind of line break is one line break, so no pattern meets one inside a line.
@@ -436,33 +440,43 @@ export function parseCommentBody(body: string): Block[] {
 			const isOrdered = ordered !== null;
 			// A new marker type at the top level starts a new list. End the open one first:
 			// ending it reads and clears the stored lines, and the new item's lines must stay.
-			if (state.open && indent < state.open.indent + 2 && state.open.block.ordered !== isOrdered) endList();
+			if (state.open.length && indent < state.open[0].indent + 2 && state.open[0].block.ordered !== isOrdered) endList();
 			const item: ListItem = { value: ordered ? Number(ordered[2]) : null, children: [], lists: [] };
 			itemLines.set(item, [line.slice(mark[0].length)]);
+			state.last = item;
 
-			const list = state.open;
-			if (list && indent >= list.indent + 2) {
-				// One nested level; deeper lines join it.
-				const parent = list.block.items[list.block.items.length - 1];
-				const nested = parent.lists[parent.lists.length - 1];
-				if (nested && nested.ordered === isOrdered) nested.items.push(item);
-				else parent.lists.push({ type: 'list', ordered: isOrdered, items: [item] });
-				list.last = item;
+			const open = state.open;
+			if (!open.length) {
+				open.push({ block: { type: 'list', ordered: isOrdered, items: [item] }, indent });
 				continue;
 			}
-			if (list) {
-				list.block.items.push(item);
-				list.last = item;
-			} else {
-				state.open = { block: { type: 'list', ordered: isOrdered, items: [item] }, indent, last: item };
+			// Leave each nested list that this line is not deep enough for: a line belongs to a
+			// nested list only when its indent is 2 or more past the list that holds that list.
+			while (open.length > 1 && indent < open[open.length - 2].indent + 2) open.pop();
+			let list = open[open.length - 1];
+			if (indent >= list.indent + 2 && open.length < MAX_LIST_LEVELS) {
+				// One level down, in the last item of the list.
+				const block: ListBlock = { type: 'list', ordered: isOrdered, items: [item] };
+				list.block.items[list.block.items.length - 1].lists.push(block);
+				open.push({ block, indent });
+				continue;
 			}
+			if (open.length > 1 && list.block.ordered !== isOrdered) {
+				// A new marker type at a nested level: a new list in the same item.
+				open.pop();
+				const block: ListBlock = { type: 'list', ordered: isOrdered, items: [item] };
+				list = open[open.length - 1];
+				list.block.items[list.block.items.length - 1].lists.push(block);
+				open.push({ block, indent });
+				continue;
+			}
+			list.block.items.push(item);
 			continue;
 		}
 
 		// An indented line right after a list item continues that item.
-		const list = state.open;
-		if (list && indent >= 2) {
-			itemLines.get(list.last)?.push(line.trim());
+		if (state.last && indent >= 2) {
+			itemLines.get(state.last)?.push(line.trim());
 			continue;
 		}
 		endList();
