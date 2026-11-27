@@ -1,0 +1,217 @@
+{
+  "task": "template-preflight",
+  "skills": ["template-preflight"],
+  "guidelines_version": "0b2a9eadcdce5f54 (Updated November 9, 2026)",
+  "planted": [
+    {
+      "id": "P01",
+      "title": "Licenses page at the wrong slug",
+      "where": "footer links to /license; /licenses answers 404",
+      "counts_as_caught_when": "says the Licenses page must be at /licenses (plural), or that /licenses is missing",
+      "basis": "published",
+      "rule": "required-pages-10"
+    },
+    {
+      "id": "P02",
+      "title": "Licenses opening text reworded",
+      "where": "/license first paragraph",
+      "counts_as_caught_when": "says the required Licenses sentence is missing or not the exact text",
+      "basis": "published",
+      "rule": "required-pages-10"
+    },
+    {
+      "id": "P03",
+      "title": "Home title uses \"Website Template\" in capitals",
+      "where": "/ <title>",
+      "counts_as_caught_when": "says the home title must be exactly \"Quillmere - Webflow HTML website template\" (lower-case \"website template\")",
+      "basis": "reviewer-practice",
+      "rule": "seo-02"
+    },
+    {
+      "id": "P04",
+      "title": "Two pages share one title and description",
+      "where": "/about and /projects",
+      "counts_as_caught_when": "says /projects and /about have the same title or the same meta description, or that /projects carries the About title",
+      "basis": "published",
+      "rule": "seo-05"
+    },
+    {
+      "id": "P05",
+      "title": "Contact title: other separator and misspelled name",
+      "where": "/contact <title> is \"Contact | Quilmere\"",
+      "counts_as_caught_when": "names the misspelled template name or the different separator in the Contact title",
+      "basis": "reviewer-practice",
+      "rule": "design-systems-12"
+    },
+    {
+      "id": "P06",
+      "title": "Form has default names and an unlabeled field",
+      "where": "/contact form \"Email Form\", field \"Field 2\" with no label",
+      "counts_as_caught_when": "names the default form name, the default field name \"Field 2\", or the field with no label",
+      "basis": "published",
+      "rule": "forms-and-conversion-design-12, -13"
+    },
+    {
+      "id": "P07",
+      "title": "Default form success and error messages",
+      "where": "/contact .w-form-done and .w-form-fail",
+      "counts_as_caught_when": "says the Webflow default success or error message is still in the form",
+      "basis": "published",
+      "rule": "forms-and-conversion-design-09"
+    },
+    {
+      "id": "P08",
+      "title": "Images with no width and height",
+      "where": "/ slider images and /projects card images",
+      "counts_as_caught_when": "says images lack width and height attributes",
+      "basis": "published",
+      "rule": "images-and-assets-21"
+    },
+    {
+      "id": "P09",
+      "title": "Open Graph image is WebP",
+      "where": "og:image on every page",
+      "counts_as_caught_when": "says the OG image must be JPEG or PNG, not WebP",
+      "basis": "published",
+      "rule": "seo-05, seo-06"
+    },
+    {
+      "id": "P10",
+      "title": "\"Powered by Webflow\" link goes nowhere",
+      "where": "footer link href=\"#\"",
+      "counts_as_caught_when": "says the Powered by Webflow link must go to webflow.com (it is # now)",
+      "basis": "published",
+      "rule": "seo-03"
+    },
+    {
+      "id": "P11",
+      "title": "Third-party library in custom code (Swiper)",
+      "where": "/ loads swiper from jsDelivr and starts it",
+      "counts_as_caught_when": "says Swiper (the jsDelivr script or its init code) is custom code that is not allowed",
+      "basis": "published",
+      "rule": "custom-code-and-site-settings-03"
+    },
+    {
+      "id": "P12",
+      "title": "Hand-written count-up script",
+      "where": "/ inline script that sets textContent on .stat-number",
+      "counts_as_caught_when": "says the count-up script is custom JavaScript that is not allowed (or must be done with GSAP or Interactions)",
+      "basis": "published",
+      "rule": "custom-code-and-site-settings-03"
+    },
+    {
+      "id": "P13",
+      "title": "Custom GSAP code with no \"How to Edit GSAP Animations\" section",
+      "where": "inline gsap.from / ScrollTrigger.batch on every page; /instructions has no GSAP section",
+      "counts_as_caught_when": "says the Instructions page needs the GSAP documentation (How to Edit GSAP Animations: element map, variables, removal)",
+      "basis": "published",
+      "rule": "interactions-and-gsap-07"
+    },
+    {
+      "id": "P14",
+      "title": "Copy from another category",
+      "where": "/about: \"Our dental clinic has cared for families...\"",
+      "counts_as_caught_when": "names the dental clinic sentence as wrong for an architecture template",
+      "basis": "published",
+      "rule": "layout-and-content-09"
+    },
+    {
+      "id": "P15",
+      "title": "Sentence that stops mid-way",
+      "where": "/ hero text ends \"...light, climate and the\"",
+      "counts_as_caught_when": "names the unfinished hero sentence",
+      "basis": "published",
+      "rule": "design-systems-12"
+    },
+    {
+      "id": "P16",
+      "title": "Same excerpt on all three project cards",
+      "where": "/projects .project-excerpt",
+      "counts_as_caught_when": "says the three project cards repeat one excerpt",
+      "basis": "reviewer-practice",
+      "rule": "design-systems-08"
+    },
+    {
+      "id": "P17",
+      "title": "noindex on a content page",
+      "where": "/about has <meta name=\"robots\" content=\"noindex\">",
+      "counts_as_caught_when": "says /about must not be noindex",
+      "basis": "published",
+      "rule": "custom-code-and-site-settings-03"
+    },
+    {
+      "id": "P18",
+      "title": "Changelog page missing",
+      "where": "/changelog answers 404 and the footer has no link",
+      "counts_as_caught_when": "says the Changelog page is missing or must be at /changelog",
+      "basis": "published",
+      "rule": "required-pages-04, -07"
+    },
+    {
+      "id": "P19",
+      "title": "Two H1 headings outside section or article",
+      "where": "/about",
+      "counts_as_caught_when": "says /about has more than one H1",
+      "basis": "published",
+      "rule": "seo-07"
+    },
+    {
+      "id": "P20",
+      "title": "Real brand logos",
+      "where": "/ logo strip: Stripe and Slack",
+      "counts_as_caught_when": "says the Stripe or Slack logos must be replaced with fictional brands",
+      "basis": "published",
+      "rule": "images-and-assets-11"
+    },
+    {
+      "id": "P21",
+      "title": "Self-promotion",
+      "where": "nav \"Buy this template\" button; footer \"More templates by Quill Studio\"",
+      "counts_as_caught_when": "says the Buy button or the More templates link must be removed",
+      "basis": "published",
+      "rule": "layout-and-content-18"
+    },
+    {
+      "id": "P22",
+      "title": "Trademark symbol in the copy",
+      "where": "/ hero text \"Quillmere™\"",
+      "counts_as_caught_when": "says the ™ symbol must be removed",
+      "basis": "published",
+      "rule": "layout-and-content-19"
+    }
+  ],
+  "traps": [
+    {
+      "id": "T01",
+      "title": "No sitemap.xml",
+      "where": "/sitemap.xml answers 404",
+      "flagged_when": "tells the creator to add or enable a sitemap before submission",
+      "basis": "reviewer-practice",
+      "note": "A webflow.io staging site has no sitemap; it is not a template requirement."
+    },
+    {
+      "id": "T02",
+      "title": "No password (401) page",
+      "where": "/401 answers 404",
+      "flagged_when": "tells the creator a password or 401 page is required",
+      "basis": "published",
+      "rule": "required-pages-06"
+    },
+    {
+      "id": "T03",
+      "title": "Meta descriptions shorter than 150 characters",
+      "where": "every page, about 80 to 100 characters",
+      "flagged_when": "lists description length as a blocker or a required fix (an optional suggestion does not count)",
+      "basis": "reviewer-practice",
+      "note": "The guidelines give 150 to 160 characters; reviewers do not send a template back for length alone."
+    },
+    {
+      "id": "T04",
+      "title": "Lenis smooth scrolling",
+      "where": "unpkg.com/lenis script and its init code on every page",
+      "flagged_when": "says Lenis must be removed or is not allowed",
+      "basis": "reviewer-practice",
+      "note": "Lenis is a pre-approved library in the creator GSAP guide; the guidelines page does not list it."
+    }
+  ]
+}

@@ -190,3 +190,6 @@ packages/webflow-automation/*/runs/
 
 !apps/draw-landing-webflow/
 !apps/draw-landing-webflow/**
+
+# With/without test: raw session records (answers, token use). The summary in results/ is kept.
+skills/evals/runs/
