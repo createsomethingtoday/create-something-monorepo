@@ -381,7 +381,8 @@ class Scanner:
         else:self.emit('MANUAL','seo/identity',f'Confirm listing name/description and visible logo wordmark exactly match {self.name!r}; image pixels are not inferred from URLs or alt text.')
         for src in sorted(self.scripts):self.emit('WARN','scripts/external',f'{src}: verify custom-code allowance; GSAP requires instructions, other exceptions are the Validator snippet, Lenis smooth scrolling, font smoothing, noindex on Licenses and Changelog, and documented SVG.')
         if self.gsap:
-            ins=self.pages.get(urljoin(self.base,'instructions'))
+            want=urlsplit(urljoin(self.base,'instructions')).path.rstrip('/')
+            ins=next((d for u,d in self.pages.items() if urlsplit(u).path.rstrip('/')==want),None)  # also found after a redirect to /instructions/
             if not ins:self.emit('FAIL','scripts/gsap','Custom GSAP detected; /instructions missing from checked pages.')
             else:
                 # The GSAP documentation can be on /instructions or on a separate guide page (for example /gsap-guide).

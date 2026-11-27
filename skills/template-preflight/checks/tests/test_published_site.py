@@ -108,6 +108,8 @@ class Tests(unittest.TestCase):
         text,code=self.scan();self.assertIn('missing Customizing Key Variables',text);self.assertIn('missing Removing GSAP',text);self.assertNotEqual(code,0)
         self.routes['/instructions']=page('/instructions',docs);del self.routes['/gsap-guide']
         text,code=self.scan();self.assertNotIn('scripts/gsap',text)
+        self.routes['/instructions']=(301,'/instructions/');self.routes['/instructions/']=page('/instructions',docs)
+        text,code=self.scan();self.assertNotIn('scripts/gsap',text)
     def test_incomplete_crawl_fails(self):
         self.routes['/']=page('/','<a href="/about">About</a>');self.routes['/about']=page('/about')
         text,code=self.scan('--max-pages','2');self.assertIn('FAIL   coverage/incomplete',text);self.assertNotEqual(code,0)
