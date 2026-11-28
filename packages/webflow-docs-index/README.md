@@ -5,7 +5,7 @@ returns exact passages for a question. The App Review MCP calls it through a ser
 binding (`app_review_search_developer_docs`, mode `passages`), so a reviewer can check an
 app against the docs and quote the rule as the docs state it.
 
-Status: built and tested locally. Not deployed (see First deploy).
+Status: live since 2026-11-27 at `https://webflow-docs-index.createsomething.workers.dev` (1,117 pages, 9,207 passages).
 
 ## Tier Mapping
 
@@ -55,7 +55,7 @@ chosen on this same set, so read the numbers as a first check, not as a benchmar
 | Result text | generated summary | exact docs text |
 | Cites a v2 beta or v1 URL | 21 of 30 answers | 0 |
 | Refused to answer | 1 (password fields on a user's site) | 0 |
-| Median time | 7.3 s | 0.9 s (local run, see limits) |
+| Median time | 7.3 s | 0.8 s (deployed Worker) |
 
 Without the reranker the index scored 24 of 30 in the top 5 and 15 first.
 
@@ -63,9 +63,9 @@ The docs site search also showed a conflict in the docs: it gave 2,000 character
 inline script limit (the `register-inline` reference), and the Custom Code guide states
 10,000.
 
-Limits of the local run: SQLite in memory stands in for D1, and exact nearest-neighbour
-search stands in for Vectorize (which is approximate). The embedding and rerank models
-are the real ones. The time includes a local proxy to Workers AI and no Vectorize call.
+The index numbers are from the deployed Worker (`pnpm eval:remote`, 2026-11-27). The
+local run (`pnpm eval:local`: SQLite in memory for D1, exact nearest-neighbour search for
+Vectorize, the real embedding and rerank models) gave the same ranks for all 30 questions.
 
 Run it again:
 
@@ -74,11 +74,14 @@ pnpm eval:docs-site            # the docs site search
 pnpm eval:embed-proxy          # second terminal: local Worker with the AI binding
 pnpm eval:local                # this index, real crawl + chunk + search code
 EVAL_SHOW=misses pnpm eval:local   # print the top results of each miss
+# the deployed index, through POST /search
+DOCS_INDEX_URL=https://webflow-docs-index.createsomething.workers.dev DOCS_INDEX_ADMIN_TOKEN=... pnpm eval:remote
 ```
 
 ## First deploy
 
-Each step changes the Cloudflare account. Get approval before you run them.
+Done on 2026-11-27. These are the steps for a new environment. Each step changes the
+Cloudflare account. Get approval before you run them.
 
 ```bash
 wrangler d1 create webflow-docs-index          # put the ID in wrangler.toml
