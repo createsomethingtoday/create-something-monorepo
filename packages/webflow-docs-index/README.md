@@ -87,7 +87,7 @@ wrangler vectorize create webflow-docs --dimensions=768 --metric=cosine
 # Before any vector is written: the search filters on `version`.
 wrangler vectorize create-metadata-index webflow-docs --property-name=version --type=string
 wrangler secret put DOCS_INDEX_ADMIN_TOKEN
-pnpm deploy
+pnpm run deploy
 ```
 
 Then load the index (about 1,100 pages; the cron would take about a day):

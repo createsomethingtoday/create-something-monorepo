@@ -19,8 +19,7 @@ crons = ["23 * * * *", "7 9 * * *"]
 [[d1_databases]]
 binding = "DB"
 database_name = "webflow-docs-index"
-# Set after `wrangler d1 create webflow-docs-index` (see README, First deploy).
-database_id = "00000000-0000-0000-0000-000000000000"
+database_id = "ff7ab93f-09a7-49ff-b252-c477186ca41f"
 migrations_dir = "migrations"
 
 [[vectorize]]
