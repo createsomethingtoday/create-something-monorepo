@@ -1,5 +1,7 @@
 ## Pi-Specific Operational Notes
 
+For repository context discovery, follow [Repository context search](../AGENTS.md#repository-context-search).
+
 ### Tool Names
 
 Pi's built-in tools are lowercase: `read`, `write`, `edit`, `bash`. When skills or rules reference Claude Code tools, use Pi equivalents:

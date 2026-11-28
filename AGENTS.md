@@ -2,6 +2,16 @@
 
 For marketing, development, socials, and future casting, start with [How CREATE SOMETHING works](docs/COMPANY_OPERATING_WIKI.md).
 
+## Repository context search
+
+When investigating behavior, ownership, or a flow across packages, make your first
+source lookup a hybrid search: `cs-complete-search "describe the behavior" --limit 3`.
+Open the relevant path in the current checkout and verify the implementation before
+citing or editing it. Each search hit identifies the indexed Git revision. Use
+`rg` for a known symbol, read a known path directly, and fall back to local search
+if the command is unavailable or the snapshot misses newer work. Use the dedicated
+Atlas/Substrate reader below for topology and readiness questions.
+
 ## Atlas/Substrate agent context
 
 For Atlas/Substrate orientation, use the shared repository skill at

@@ -1,5 +1,7 @@
 # CREATE SOMETHING Monorepo
 
+For repository context discovery, follow [Repository context search](AGENTS.md#repository-context-search).
+
 ## Atlas/Substrate agent context
 
 For Atlas/Substrate orientation, use the shared repository skill at
