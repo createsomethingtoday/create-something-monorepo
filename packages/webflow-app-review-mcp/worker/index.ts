@@ -30,6 +30,7 @@ import { registerPrompts } from '../src/prompts.js';
 import { attachRequestProps } from '../src/request-context.js';
 import { registerResources } from '../src/resources.js';
 import { registerTools } from '../src/tools.js';
+import type { DocsIndexBinding } from '../src/developer-docs.js';
 import { reviewerSession } from '../src/session-identity.js';
 import { buildReviewCommentsClient } from '../src/review-comments.js';
 import { parseZendeskGroupId, ZendeskClient } from '../src/zendesk.js';
@@ -75,6 +76,8 @@ interface Env {
   REVIEW_COMMENTS_API_KEY?: string;
   /** Marketplace admin key for the live listing route (secret via `wrangler secret put`). Unset = the live listing tools are off. */
   MARKETPLACE_ADMIN_API_KEY?: string;
+  /** Service binding to the webflow-docs-index Worker. Unset = the docs search uses the docs site answer only. */
+  DOCS_INDEX?: DocsIndexBinding;
 }
 
 type RequestProps = {
@@ -130,9 +133,15 @@ export class WebflowAppReviewMCP extends McpAgent<Env, unknown, RequestProps> {
     // Read per call: props belong to the session, and only Cloudflare Access sets an email.
     const getReviewer = () => (this.props?.email ? { email: this.props.email } : null);
 
-    registerTools(this.server, getClient, getReviewer, getZendesk, () => reviewComments, () => ({
-      apiKey: this.env.MARKETPLACE_ADMIN_API_KEY,
-    }));
+    registerTools(
+      this.server,
+      getClient,
+      getReviewer,
+      getZendesk,
+      () => reviewComments,
+      () => ({ apiKey: this.env.MARKETPLACE_ADMIN_API_KEY }),
+      () => ({ index: this.env.DOCS_INDEX ?? null }),
+    );
     registerPrompts(this.server);
   }
 }

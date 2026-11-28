@@ -1,0 +1,9 @@
+# Local helper for `pnpm eval:local`: gives the Node harness the same embedding
+# model the Worker uses. Run with `pnpm eval:embed-proxy`. Never deployed.
+name = "webflow-docs-index-embed-proxy"
+main = "embed-worker.ts"
+compatibility_date = "2026-05-12"
+account_id = "9645bd52e640b8a4f40a3a55ff1dd75a"
+
+[ai]
+binding = "AI"

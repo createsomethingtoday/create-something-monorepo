@@ -151,6 +151,7 @@ export function registerResources(server: McpServer, getClient: ClientFactory): 
           'Call app_review_get_version when a specific version record needs confirmation.',
           'To prepare, start, or kick off a new MCP review cycle, call app_review_get_review_context. This is read-only: preserve the reviewer and status, and wait for the bundle if needed. Read context.assetExceptions first: the exception decisions and standing conditions from every version of the app. If context.assetExceptionNotesOmitted is true, call app_review_list_asset_exceptions with the same version_id for the notes.',
           'Use app_review_decision_support and app_review_feedback_refiner for recommendation drafting only.',
+          'Call app_review_search_developer_docs to check an app against developers.webflow.com and before you cite a docs rule in feedback. Quote the passage text and link its URL; a generated answer (mode "answer") is for orientation only.',
           'Use app_review_list_governance_findings and app_review_get_governance_finding to inspect cross-app policy, docs, platform, and transparency findings.',
           'Use app_review_governance_finding_capture, then app_review_create_governance_finding or app_review_update_governance_finding, to capture Slack/Zendesk/docs findings into the tracking hub.',
           'Use app_review_save_draft_feedback, app_review_set_review_status, app_review_request_changes, app_review_approve_version, or app_review_reject_version only when the operator has authorized the Airtable write.',
