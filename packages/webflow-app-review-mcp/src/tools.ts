@@ -4,6 +4,8 @@ import { createHash } from 'node:crypto';
 
 import type { AirtableClient, AppReviewVersion, CollaboratorRef } from './airtable.js';
 import { AirtableClientError, assertReviewerAssignmentReadOnly, compareExceptionItems } from './airtable.js';
+import type { DeveloperDocsConfig } from './developer-docs.js';
+import { DOCS_SEARCH_MODES, searchDeveloperDocs } from './developer-docs.js';
 import type { LiveListing, LiveListingConfig } from './live-listing.js';
 import { LIVE_LISTING_STATUSES, LIVE_LISTING_VISIBILITIES, readLiveListing, writeLiveListing } from './live-listing.js';
 import type { ZendeskClient } from './zendesk.js';
@@ -46,6 +48,8 @@ type ZendeskFactory = () => ZendeskClient | null;
 type ReviewCommentsFactory = () => ReviewCommentsClient | null;
 /** Config for the live Marketplace listing route. No apiKey = the live listing tools refuse to run. */
 type LiveListingFactory = () => LiveListingConfig;
+/** Config for the developer docs search. No index = the search uses the docs site answer only. */
+type DeveloperDocsFactory = () => DeveloperDocsConfig;
 
 const collaboratorRefSchema = z.object({
   id: z.string().min(1),
@@ -573,6 +577,7 @@ export function registerTools(
   getZendesk: ZendeskFactory = () => null,
   getReviewComments: ReviewCommentsFactory = () => null,
   getLiveListing: LiveListingFactory = () => ({}),
+  getDeveloperDocs: DeveloperDocsFactory = () => ({}),
 ): void {
   // Null until the comments Worker URL and key are set; every comment behaviour below is then off.
   const reviewComments = getReviewComments();
@@ -2175,6 +2180,31 @@ export function registerTools(
           visibility: params.visibility,
         });
         return asSuccess({ before, after, changed_by: actor, airtable_updated: false });
+      } catch (error) {
+        return asError(error);
+      }
+    },
+  );
+
+  server.tool(
+    'app_review_search_developer_docs',
+    'Read-only: find what the Webflow developer docs (developers.webflow.com) state about a rule, API method, scope, or limit. Use it to check an app against the docs and before you cite a rule in feedback. Mode "passages" (the default) returns exact text from the current docs with the section URL: quote that text and link that URL. Mode "answer" returns a summary that the docs site search generated, with source URLs: use it to find your way, and do not quote it as the rule. Ask one question per call and include the exact identifier when you know it (custom_code:write, setExtensionSize). The docs are public and the question leaves this MCP, so do not put secrets or developer personal data in it. The docs do not hold exception decisions: for those use the review context.',
+    {
+      query: z.string().trim().min(3).max(500),
+      mode: z.enum(DOCS_SEARCH_MODES).optional(),
+      top_k: z.number().int().min(1).max(10).optional(),
+      include_beta: z.boolean().optional().describe('Also search the v2 beta docs. Passages mode only.'),
+    },
+    async (params) => {
+      try {
+        return asSuccess(
+          await searchDeveloperDocs(getDeveloperDocs(), {
+            query: params.query,
+            mode: params.mode,
+            topK: params.top_k,
+            includeBeta: params.include_beta,
+          }),
+        );
       } catch (error) {
         return asError(error);
       }

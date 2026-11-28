@@ -97,6 +97,17 @@ Optional:
 - `app_review_set_marketplace_status`
 - `app_review_get_live_listing`
 - `app_review_set_live_listing`
+- `app_review_search_developer_docs`
+
+Developer docs search:
+
+- `app_review_search_developer_docs` is read-only. Mode `passages` (the default) returns exact
+  text from developers.webflow.com with the section URL, from the docs index Worker
+  (`packages/webflow-docs-index`, service binding `DOCS_INDEX`). Mode `answer` returns the
+  summary that the docs site search generates (`https://developers.webflow.com/_mcp/server`).
+  With no mode, the tool falls back to the answer when the index is not bound or fails, and
+  says so in `fallback_reason`. Deploy the index Worker before this one: the binding in
+  `worker/wrangler.toml` makes the deploy fail when that service does not exist.
 
 Write posture:
 

@@ -47,6 +47,13 @@ EXCEPTION_DECISIONS_VIEW_URL = "https://airtable.com/appMoIgXMTTTNIc3p/tblHxZ2hg
 EXCEPTIONS_KB_BASE_ID = "appXfYXnivsUT1kLg"
 EXCEPTIONS_KB_TABLE_ID = "tblqkbW0SptshgPiw"
 
+# Docs index (packages/webflow-docs-index): exact passages for
+# app_review_search_developer_docs. That Worker must be deployed before this
+# one, or the deploy of this Worker fails on the missing service.
+[[services]]
+binding = "DOCS_INDEX"
+service = "webflow-docs-index"
+
 [[d1_databases]]
 binding = "TELEMETRY_DB"
 database_name = "cs-telemetry"
